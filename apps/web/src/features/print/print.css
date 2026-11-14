@@ -1,0 +1,27 @@
+/* Print route (US-096): one A4 landscape page per tab; cards never split across pages; colours kept. */
+@page {
+  size: A4 landscape;
+}
+
+html:has(.print-export),
+html:has(.print-export) body {
+  background: var(--tl-surface-raised);
+}
+
+.print-export {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  padding: 0;
+}
+
+.print-export .print-tab + .print-tab {
+  break-before: page;
+}
+
+.print-export .print-card {
+  break-inside: avoid;
+}
+
+.print-export .print-card-long tr {
+  break-inside: avoid;
+}

@@ -1,0 +1,30 @@
+# PMO value synonyms — DRAFT for STK-008 review (ENH-011 US-173, FEAT-062 / FEAT-014).
+# The words people use for a stored value ("Saudi Arabia" for region KSA). Each model version approved from this pack
+# adds them to the connection as *pending review*: an Admin approves them under Admin → Knowledge → Value synonyms
+# before Ask links them (a reviewed synonym keeps its review on later versions). `value` is the stored spelling;
+# `dimensions` the dimension keys it applies to (a value that is not in the data is never linked). Values that are
+# already written the way people say them (Jordan, Critical, Digital) need no entry: they link as they are, and
+# small spelling slips ("Jordon") and unique parts of a name ("Lina" for Lina Farouk) link without one.
+version: 0.1.0
+status: draft
+values:
+  - {dimensions: [region, request_region], value: KSA, synonyms: [Saudi, Saudi Arabia, Kingdom of Saudi Arabia]}
+  - {dimensions: [region, request_region], value: GCC - UAE, synonyms: [UAE, United Arab Emirates, Emirates, Dubai, Abu Dhabi]}
+  - {dimensions: [region, request_region], value: Jordan, synonyms: [Hashemite Kingdom of Jordan, Amman]}
+  - {dimensions: [region, request_region], value: Francophone, synonyms: [Francophone Africa, French speaking Africa, French Africa]}
+  - {dimensions: [region, request_region], value: East Africa, synonyms: [Eastern Africa, EA region]}
+  - {dimensions: [budget_type], value: CAPEX, synonyms: [capital expenditure, capital spend, capital budget]}
+  - {dimensions: [budget_type], value: OPEX, synonyms: [operating expenditure, operational expenditure, operating budget]}
+  - {dimensions: [priority, request_priority], value: Critical, synonyms: [P1, priority 1, top priority]}
+  - {dimensions: [priority, request_priority], value: High, synonyms: [P2, priority 2]}
+  - {dimensions: [priority, request_priority], value: Moderate, synonyms: [P3, priority 3, medium priority]}
+  - {dimensions: [priority, request_priority], value: Low, synonyms: [P4, priority 4]}
+  - {dimensions: [platform], value: Network One, synonyms: [N1, NetworkOne]}
+  - {dimensions: [platform], value: Network Flex, synonyms: [NFlex, N Flex, NetworkFlex]}
+  - {dimensions: [platform], value: Legacy / Other, synonyms: [legacy platforms, legacy platform, legacy systems]}
+  - {dimensions: [lifecycle_phase], value: UAT, synonyms: [user acceptance testing, acceptance testing]}
+  - {dimensions: [lifecycle_phase], value: Assign PM, synonyms: [PM assignment, awaiting a PM]}
+  - {dimensions: [lifecycle_phase], value: Closure, synonyms: [closing phase, close out]}
+  - {dimensions: [request_state], value: Return to Requester, synonyms: [returned to requester, sent back]}
+  - {dimensions: [hold_reason], value: Awaiting funding, synonyms: [no funding, funding not approved]}
+  - {dimensions: [hold_reason], value: Resource constraint, synonyms: [no resources, short of resources]}

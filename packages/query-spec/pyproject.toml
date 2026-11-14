@@ -1,0 +1,15 @@
+[project]
+name = "tela-query-spec"
+version = "1.0.0"
+description = "Tela Query Spec and model snapshot contract (ADR-001): the typed language agents propose and the query engine compiles"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.9",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tela_query_spec"]

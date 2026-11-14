@@ -1,0 +1,68 @@
+# PMO business terms — DRAFT for STK-008 review (ENH-008 US-164, FEAT-060 / FEAT-016).
+# Indexed as `glossary` knowledge with each approved model version of a connection built from this pack, as
+# *pending review*: an Admin approves it under Admin → Knowledge before Ask reads it (an unchanged glossary keeps
+# its review on the next model version). Free-hand questions read a term as its `means` words ("S2 plan planned end
+# date" → "planning stage plan planned end date" → Planning stage planned end); `fields` keeps a term only when the
+# model has those fields. Terms name fields and stages only, never values.
+# 0.2.0 (US-182): the ambiguity library — phrases with more than one reading. A term with `reading` (a measure key)
+# is read as that measure, not as those in `instead_of`, by the rules planner once approved; Ask says how it read it,
+# and a person who chose "ask freely" is asked which one they meant. It is not a word replacement for free-hand.
+version: 0.2.0
+status: draft
+terms:
+  - term: S2
+    means: planning stage
+    explain: The second delivery stage, Plan. Its end date is the Planning stage planned end.
+    fields: [projects.planning_stage_end_date]
+  - term: EAC
+    means: forecast cost
+    explain: Estimate at completion, the forecast cost of the whole project (Forecast cost (EAC, USD)).
+    fields: [projects.cost_total_usd]
+  - term: TCV
+    means: estimated tcv
+    explain: Total contract value, as estimated on the project (Estimated TCV (USD)).
+    fields: [projects.estimated_tcv_usd]
+  - term: PCR
+    means: change request
+    explain: A project change request; approved ones are counted in Approved change requests.
+    fields: [projects.approved_pcr_counter]
+  - term: PM
+    means: project manager
+    explain: The project manager named on the project.
+    fields: [projects.project_manager]
+  - term: DM
+    means: delivery manager
+    explain: The delivery manager named on the project.
+    fields: [projects.delivery_manager]
+  # ---- ambiguity library (US-182): known traps, each still to be confirmed by STK-008
+  - term: late projects
+    means: overdue go-lives
+    explain: >-
+      "Late" has no agreed definition yet (open with STK-008); it is read as projects past their planned go-live and
+      not yet deployed, not as every project, nor as those deployed more than 60 days late.
+    reading: overdue_go_lives
+    instead_of: [deployed_over_60_late, overdue_over_90, total_projects]
+  - term: cost
+    means: forecast cost
+    explain: >-
+      On its own, "cost" is the forecast cost at completion (EAC), not the approved budget nor a request's estimated
+      cost; there is no actual-spend figure in this data.
+    reading: forecast_cost_total
+    instead_of: [approved_budget_total, estimated_cost_total]
+  - term: active projects
+    means: open projects
+    explain: Active projects are the open portfolio (in progress or on hold), not every project ever recorded.
+    reading: open_projects
+    instead_of: [total_projects]
+  - term: active requests
+    means: open demand requests
+    explain: Active requests are the open demand requests, not every request ever raised.
+    reading: open_demand
+    instead_of: [total_requests]
+  - term: pending change requests
+    means: PCRs awaiting approval
+    explain: >-
+      A pending change request is a project change request (PCR) still awaiting approval, not a demand request of the
+      change-request kind (Change requests).
+    reading: pcrs_pending
+    instead_of: [change_request_count, total_pcrs]

@@ -1,0 +1,341 @@
+version: 0.2.0
+status: draft
+values:
+- dimensions:
+  - region
+  - request_region
+  value: KSA
+  synonyms:
+  - Saudi
+  - Saudi Arabia
+  - Kingdom of Saudi Arabia
+- dimensions:
+  - region
+  - request_region
+  value: GCC - UAE
+  synonyms:
+  - UAE
+  - United Arab Emirates
+  - Emirates
+  - Dubai
+  - Abu Dhabi
+- dimensions:
+  - region
+  - request_region
+  value: Jordan
+  synonyms:
+  - Hashemite Kingdom of Jordan
+  - Amman
+- dimensions:
+  - region
+  - request_region
+  value: Francophone
+  synonyms:
+  - Francophone Africa
+  - French speaking Africa
+  - French Africa
+- dimensions:
+  - region
+  - request_region
+  value: East Africa
+  synonyms:
+  - Eastern Africa
+  - EA region
+- dimensions:
+  - budget_type
+  value: CAPEX
+  synonyms:
+  - capital expenditure
+  - capital spend
+  - capital budget
+- dimensions:
+  - budget_type
+  value: OPEX
+  synonyms:
+  - operating expenditure
+  - operational expenditure
+  - operating budget
+- dimensions:
+  - priority
+  - request_priority
+  value: Critical
+  synonyms:
+  - P1
+  - priority 1
+  - top priority
+- dimensions:
+  - priority
+  - request_priority
+  value: High
+  synonyms:
+  - P2
+  - priority 2
+- dimensions:
+  - priority
+  - request_priority
+  value: Moderate
+  synonyms:
+  - P3
+  - priority 3
+  - medium priority
+- dimensions:
+  - priority
+  - request_priority
+  value: Low
+  synonyms:
+  - P4
+  - priority 4
+- dimensions:
+  - platform
+  value: Network One
+  synonyms:
+  - N1
+  - NetworkOne
+- dimensions:
+  - platform
+  value: Network Flex
+  synonyms:
+  - NFlex
+  - N Flex
+  - NetworkFlex
+- dimensions:
+  - platform
+  value: Legacy / Other
+  synonyms:
+  - legacy platforms
+  - legacy platform
+  - legacy systems
+- dimensions:
+  - lifecycle_phase
+  value: UAT
+  synonyms:
+  - user acceptance testing
+  - acceptance testing
+- dimensions:
+  - lifecycle_phase
+  value: Assign PM
+  synonyms:
+  - PM assignment
+  - awaiting a PM
+- dimensions:
+  - lifecycle_phase
+  value: Closure
+  synonyms:
+  - closing phase
+  - close out
+- dimensions:
+  - request_state
+  value: Return to Requester
+  synonyms:
+  - returned to requester
+  - sent back
+- dimensions:
+  - hold_reason
+  value: Awaiting funding
+  synonyms:
+  - no funding
+  - funding not approved
+- dimensions:
+  - hold_reason
+  value: Resource constraint
+  synonyms:
+  - no resources
+  - short of resources
+- dimensions:
+  - region
+  - request_region
+  value: GCC - ENBD
+  synonyms:
+  - ENBD
+  - Emirates NBD
+  - ENBD group
+- dimensions:
+  - region
+  - request_region
+  value: GCC - Other
+  synonyms:
+  - other GCC
+  - rest of GCC
+  - GCC other
+- dimensions:
+  - region
+  - request_region
+  value: North Africa
+  synonyms:
+  - Northern Africa
+  - N Africa
+- dimensions:
+  - region
+  - request_region
+  value: West Africa
+  synonyms:
+  - Western Africa
+  - WA region
+- dimensions:
+  - region
+  - request_region
+  value: Southern Africa
+  synonyms:
+  - South Africa region
+  - SA region
+- dimensions:
+  - region
+  - request_region
+  value: Magnati
+  synonyms:
+  - Magnati business
+- dimensions:
+  - region
+  - request_region
+  value: PayFast
+  synonyms:
+  - Pay Fast
+- dimensions:
+  - region
+  - request_region
+  value: DPO
+  synonyms:
+  - DPO Group
+  - DPO Pay
+- dimensions:
+  - platform
+  - request_platform
+  value: Magnati
+  synonyms:
+  - Magnati platform
+- dimensions:
+  - reported_status
+  - schedule_status
+  value: Yellow
+  synonyms:
+  - Amber
+  - orange
+- dimensions:
+  - reported_status
+  - schedule_status
+  value: Red
+  synonyms:
+  - off track
+  - RAG red
+- dimensions:
+  - reported_status
+  - schedule_status
+  value: Green
+  synonyms:
+  - on track
+  - RAG green
+- dimensions:
+  - size
+  value: Very Large
+  synonyms:
+  - XL
+  - extra large
+- dimensions:
+  - size
+  value: Very Small
+  synonyms:
+  - XS
+  - extra small
+  - tiny
+- dimensions:
+  - kpi_due_to
+  value: NI - Tech
+  synonyms:
+  - NI tech
+  - internal tech
+  - our technology team
+- dimensions:
+  - kpi_due_to
+  value: NI -Business
+  synonyms:
+  - NI business
+  - internal business
+- dimensions:
+  - kpi_due_to
+  value: Client
+  synonyms:
+  - customer
+  - client side
+- dimensions:
+  - kpi_due_to
+  value: External
+  synonyms:
+  - third party
+  - external party
+- dimensions:
+  - pcr_responsible_entity
+  value: NI
+  synonyms:
+  - Network International
+  - internal
+  - us
+- dimensions:
+  - pcr_responsible_entity
+  value: Client
+  synonyms:
+  - customer
+- dimensions:
+  - pcr_responsible_entity
+  value: Vendor
+  synonyms:
+  - supplier
+  - third party vendor
+- dimensions:
+  - pcr_change_type
+  value: Initial Baseline
+  synonyms:
+  - first baseline
+  - IB
+  - baseline PCR
+- dimensions:
+  - pcr_change_type
+  value: Schedule
+  synonyms:
+  - date change
+  - timeline change
+  - re-plan
+- dimensions:
+  - pcr_change_type
+  value: Scope
+  synonyms:
+  - scope change
+- dimensions:
+  - client_type
+  value: Non Client
+  synonyms:
+  - internal project
+  - non-client
+- dimensions:
+  - client_type
+  value: Client
+  synonyms:
+  - client project
+  - customer project
+- dimensions:
+  - project_objective
+  value: Revenue Generating
+  synonyms:
+  - revenue
+  - revenue projects
+  - growth
+- dimensions:
+  - project_objective
+  value: Regulatory
+  synonyms:
+  - compliance projects
+  - mandatory
+  - central bank
+- dimensions:
+  - current_state
+  value: Project Created
+  synonyms:
+  - not started
+  - not yet started
+  - new project
+- dimensions:
+  - current_state
+  value: Dropped
+  synonyms:
+  - cancelled
+  - canceled
+  - killed

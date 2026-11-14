@@ -1,0 +1,490 @@
+version: 0.2.0
+status: draft
+recipes:
+- id: variance_bridge
+  title: Variance bridge
+  triggers:
+  - variance bridge
+  - budget bridge
+  - forecast bridge
+  - bridge of the variance
+  - what makes up the variance
+  - variance walk
+  question: Which {dimension} make up the forecast variance against budget?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - net_forecast_variance
+      - budget_variance
+      default: net_forecast_variance
+    dimension:
+      kind: dimension
+      options:
+      - portfolio
+      - programme
+      - region
+      - cio
+      - platform
+      - budget_type
+      default: portfolio
+  spec:
+    measure: '{measure}'
+    breakdowns:
+    - '{dimension}'
+    sort:
+    - by: measure
+      dir: desc
+    limit: 12
+  operations:
+  - sort
+  - limit
+  chart: waterfall
+  insights:
+  - driver
+  - concentration
+  - outlier
+- id: pareto_80_20
+  title: Pareto 80/20
+  triggers:
+  - pareto
+  - 80/20
+  - 80 20
+  - eighty twenty
+  - vital few
+  question: Which few {dimension} account for most of {measure}?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - forecast_cost_total
+      - approved_budget_total
+      - overdue_go_lives
+      - open_projects
+      - tcv_open_total
+      - open_risks
+      - high_exposure_risks
+      - open_demand
+      - trouble_projects
+      - slipped_projects
+      - green_hard_warning
+      default: forecast_cost_total
+    dimension:
+      kind: dimension
+      options:
+      - portfolio
+      - programme
+      - region
+      - cio
+      - platform
+      - delivery_manager
+      - risk_category
+      - request_cio
+      - business_unit_department
+      - client
+      - kpi_due_to
+      default: portfolio
+  spec:
+    measure: '{measure}'
+    breakdowns:
+    - '{dimension}'
+    share_of_total:
+    - '{measure}'
+    sort:
+    - by: measure
+      dir: desc
+    limit: 25
+  operations:
+  - share_of_total
+  - sort
+  - limit
+  chart: pareto
+  insights:
+  - concentration
+  - outlier
+- id: aging_buckets
+  title: Aging buckets
+  triggers:
+  - aging buckets
+  - ageing buckets
+  - aging
+  - ageing
+  - age bands
+  - how long overdue
+  question: How long have {measure} been waiting, in age bands?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - overdue_go_lives
+      - on_hold
+      - open_projects
+      - open_demand
+      default: overdue_go_lives
+    dimension:
+      kind: dimension
+      options:
+      - lateness_bucket
+      - on_hold_aging
+      - request_aging
+      - request_on_hold_aging
+      default: lateness_bucket
+  spec:
+    measure: '{measure}'
+    breakdowns:
+    - '{dimension}'
+  operations: []
+  chart: columns
+  insights:
+  - concentration
+  - data_note
+- id: funnel_by_gate
+  title: Funnel by gate
+  triggers:
+  - funnel by gate
+  - gate funnel
+  - intake funnel
+  - demand funnel
+  - funnel
+  question: How many {measure} reach each {dimension}?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - total_requests
+      - open_demand
+      default: total_requests
+    dimension:
+      kind: dimension
+      options:
+      - intake_gate
+      - request_state
+      default: intake_gate
+  spec:
+    measure: '{measure}'
+    breakdowns:
+    - '{dimension}'
+  operations: []
+  chart: funnel
+  insights:
+  - concentration
+  - data_note
+- id: overdue_trend
+  title: Overdue trend
+  triggers:
+  - overdue trend
+  - trend of overdue
+  - overdue over time
+  - lateness trend
+  question: How has {measure} moved by {grain} of the planned go-live?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - overdue_go_lives
+      - overdue_over_90
+      - schedule_risk
+      default: overdue_go_lives
+    date:
+      kind: dimension
+      options:
+      - planned_deployment_date
+      default: planned_deployment_date
+    grain:
+      kind: grain
+      options:
+      - month
+      - quarter
+      - week
+      default: month
+  spec:
+    measure: '{measure}'
+    time:
+      ref: '{date}'
+      grain: '{grain}'
+    moving_avg:
+      window: 3
+  operations:
+  - moving_avg
+  chart: trend
+  insights:
+  - trend
+  - break
+- id: compliance_rate
+  title: Compliance rate
+  triggers:
+  - compliance rate
+  - compliance rates
+  - governance compliance
+  - compliance league
+  question: How does {measure} compare across {dimension}, against its target?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - status_reporting_compliance_pct
+      - baselining_compliance_pct
+      - budget_code_compliance_pct
+      - pm_assignment_compliance_pct
+      - closure_compliance_pct
+      - request_budget_code_pct
+      - request_pm_assignment_pct
+      default: status_reporting_compliance_pct
+    dimension:
+      kind: dimension
+      options:
+      - portfolio
+      - programme
+      - region
+      - cio
+      - delivery_manager
+      - request_cio
+      - business_unit_department
+      default: portfolio
+  spec:
+    measure: '{measure}'
+    breakdowns:
+    - '{dimension}'
+    sort:
+    - by: measure
+      dir: asc
+  operations:
+  - sort
+  chart: bullet
+  insights:
+  - gap
+  - outlier
+- id: attention_ranking
+  title: Attention ranking
+  triggers:
+  - attention list
+  - who to call
+  - projects to call about
+  - worst projects
+  - needs attention first
+  question: Which open projects are in trouble (reported Red or overdue), to call about first?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - trouble_projects
+      default: trouble_projects
+    dimension:
+      kind: dimension
+      options:
+      - delivery_manager
+      - cio
+      - business_unit_department
+      default: delivery_manager
+  spec:
+    measure: '{measure}'
+    breakdowns:
+    - field:projects.project_number
+    - field:projects.name
+    - '{dimension}'
+    sort:
+    - by: measure
+      dir: desc
+    limit: 10
+  operations:
+  - sort
+  - limit
+  chart: table
+  insights:
+  - driver
+  - concentration
+- id: promise_kept
+  title: Slip with and without a change request
+  triggers:
+  - agreed vs silent
+  - silent slip
+  - who moved the promise
+  - how the promise moved
+  - is change control working
+  - slip explained
+  question: How many slipped projects went through change control, and how many did not, by {dimension}?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - slipped_no_pcr
+      - slipped_with_pcr
+      default: slipped_no_pcr
+    dimension:
+      kind: dimension
+      options:
+      - cio
+      - delivery_manager
+      - business_unit_department
+      - region
+      - client
+      default: cio
+  spec:
+    measure: '{measure}'
+    extra_measures:
+    - slipped_with_pcr
+    breakdowns:
+    - '{dimension}'
+    sort:
+    - by: measure
+      dir: desc
+    limit: 12
+  operations:
+  - sort
+  - limit
+  chart: paired_bars
+  insights:
+  - driver
+  - concentration
+  - data_note
+- id: book_vs_trouble
+  title: Share of the book vs share of the trouble
+  triggers:
+  - share of trouble
+  - pressure concentrates
+  - where the pressure is
+  - book vs trouble
+  - who carries the trouble
+  question: Does each {dimension} carry more trouble than its share of the book?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - trouble_projects
+      - overdue_go_lives
+      - slipped_projects
+      default: trouble_projects
+    dimension:
+      kind: dimension
+      options:
+      - delivery_manager
+      - cio
+      - business_unit_department
+      - region
+      - client
+      default: delivery_manager
+  spec:
+    measure: '{measure}'
+    extra_measures:
+    - open_projects
+    breakdowns:
+    - '{dimension}'
+    share_of_total:
+    - '{measure}'
+    - open_projects
+    sort:
+    - by: measure
+      dir: desc
+    limit: 15
+  operations:
+  - share_of_total
+  - sort
+  - limit
+  chart: dumbbell
+  insights:
+  - gap
+  - outlier
+- id: green_challenge
+  title: Is Green really green?
+  triggers:
+  - is green really green
+  - false greens
+  - watermelon
+  - greens to challenge
+  - green with warnings
+  question: How many Green projects carry a hard warning, by {dimension}?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - green_hard_warning
+      default: green_hard_warning
+    dimension:
+      kind: dimension
+      options:
+      - cio
+      - delivery_manager
+      - business_unit_department
+      - region
+      default: cio
+  spec:
+    measure: '{measure}'
+    extra_measures:
+    - reported_green
+    breakdowns:
+    - '{dimension}'
+    derived:
+    - key: percent_of
+      op: percent_of
+      of: measure:{measure}
+      to: measure:reported_green
+    sort:
+    - by: measure
+      dir: desc
+  operations:
+  - sort
+  chart: paired_bars
+  insights:
+  - gap
+  - concentration
+- id: stage_storyboard
+  title: Stage storyboard
+  triggers:
+  - storyboard
+  - stage by status
+  - where projects sit
+  - lifecycle by colour
+  - stage heatmap
+  question: Where do open projects sit by lifecycle phase, and what colour do they report there?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - open_projects
+      - trouble_projects
+      - slipped_projects
+      default: open_projects
+    dimension:
+      kind: dimension
+      options:
+      - reported_status
+      - business_unit_department
+      - cio
+      default: reported_status
+  spec:
+    measure: '{measure}'
+    breakdowns:
+    - lifecycle_phase
+    - '{dimension}'
+  operations: []
+  chart: heat_grid
+  insights:
+  - concentration
+  - data_note
+- id: request_lead_times
+  title: Request lead times
+  triggers:
+  - speed to approval
+  - request lead time
+  - how long to approve
+  - time to project
+  - gate cycle times
+  question: How long does a request take at each step until it is a committed project?
+  slots:
+    measure:
+      kind: measure
+      options:
+      - request_to_darb_median
+      - darb_to_project_median
+      - project_to_baseline_median
+      default: request_to_darb_median
+  spec:
+    measure: '{measure}'
+    extra_measures:
+    - darb_to_project_median
+    - project_to_baseline_median
+  operations: []
+  chart: columns
+  insights:
+  - driver
+  - data_note

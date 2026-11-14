@@ -1,0 +1,31 @@
+[project]
+name = "tela-runner"
+version = "0.1.0"
+description = "Tela connector runner (COMP-005): isolated read-only execution of signed tasks"
+requires-python = ">=3.12"
+dependencies = [
+    "tela-common[secrets,crypto,sql,storage,otel]",
+    "sqlglot>=26.0",
+    "psycopg[binary]>=3.2",
+    "psycopg-pool>=3.2",
+    "pymysql>=1.1.1",
+    "pyodbc>=5.2",
+    "duckdb>=1.1",
+    "openpyxl>=3.1",
+    "pymongo>=4.10",
+    "msal>=1.31",
+    "asyncssh>=2.21",
+    "httpx>=0.28",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "prometheus-client>=0.21",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tela_runner"]

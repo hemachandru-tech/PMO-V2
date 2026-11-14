@@ -1,0 +1,184 @@
+{
+  "note": "Gzip kB a first visit downloads per route (entry + the route's chunks). Viewer routes are kept lean. Check with `pnpm bundle:check`; `node scripts/check-bundle.mjs --update` resets to current + 10 % for review.",
+  "routes": [
+    {
+      "route": "/ (Home, entry)",
+      "viewer": true,
+      "budget_kb": 211
+    },
+    {
+      "route": "/ask",
+      "module": "src/features/ask/AskPage.tsx",
+      "budget_kb": 505,
+      "viewer": true
+    },
+    {
+      "route": "/reports",
+      "module": "src/features/reports/ReportsPage.tsx",
+      "budget_kb": 252
+    },
+    {
+      "route": "/reports/new",
+      "module": "src/features/reports/ReportPlannerPage.tsx",
+      "budget_kb": 218
+    },
+    {
+      "route": "/reports/:id",
+      "module": "src/features/reports/ReportCanvasPage.tsx",
+      "budget_kb": 563
+    },
+    {
+      "route": "/shared",
+      "module": "src/features/dashboards/DashboardsPage.tsx",
+      "budget_kb": 296,
+      "viewer": true
+    },
+    {
+      "route": "/dashboards",
+      "module": "src/features/dashboards/DashboardsPage.tsx",
+      "budget_kb": 296
+    },
+    {
+      "route": "/dashboards/new",
+      "module": "src/features/dashboards/DashboardsPage.tsx",
+      "budget_kb": 296
+    },
+    {
+      "route": "/dashboards/:id",
+      "module": "src/features/viewer/DashboardPage.tsx",
+      "budget_kb": 420,
+      "viewer": true
+    },
+    {
+      "route": "/dashboards/:id/draft",
+      "module": "src/features/viewer/DashboardPage.tsx",
+      "budget_kb": 420
+    },
+    {
+      "route": "/dashboards/:id/edit",
+      "module": "src/features/dashboards/ComposerPage.tsx",
+      "budget_kb": 501
+    },
+    {
+      "route": "/dashboards/:id/publish",
+      "module": "src/features/dashboards/PublishPage.tsx",
+      "budget_kb": 274
+    },
+    {
+      "route": "/dashboards/:id/versions",
+      "module": "src/features/dashboards/VersionsPage.tsx",
+      "budget_kb": 216
+    },
+    {
+      "route": "/fields",
+      "module": "src/features/fields/FieldsPage.tsx",
+      "budget_kb": 253
+    },
+    {
+      "route": "/fields/new",
+      "module": "src/features/fields/FieldBuilderPage.tsx",
+      "budget_kb": 276
+    },
+    {
+      "route": "/fields/:id",
+      "module": "src/features/fields/FieldBuilderPage.tsx",
+      "budget_kb": 276
+    },
+    {
+      "route": "/sql",
+      "module": "src/features/sql/CustomSqlPage.tsx",
+      "budget_kb": 260
+    },
+    {
+      "route": "/sql/new",
+      "module": "src/features/sql/CustomSqlPage.tsx",
+      "budget_kb": 260
+    },
+    {
+      "route": "/sql/:id",
+      "module": "src/features/sql/CustomSqlPage.tsx",
+      "budget_kb": 260
+    },
+    {
+      "route": "/notifications",
+      "module": "src/features/notifications/NotificationsPage.tsx",
+      "budget_kb": 217,
+      "viewer": true
+    },
+    {
+      "route": "/admin",
+      "module": "src/features/admin/overview/OverviewPage.tsx",
+      "budget_kb": 217
+    },
+    {
+      "route": "/govern/certification",
+      "module": "src/features/govern/CertificationPage.tsx",
+      "budget_kb": 308
+    },
+    {
+      "route": "/govern/publish-requests",
+      "module": "src/features/govern/PublishRequestsPage.tsx",
+      "budget_kb": 248
+    },
+    {
+      "route": "/admin/starter",
+      "module": "src/features/admin/starter/StarterContentPage.tsx",
+      "budget_kb": 252
+    },
+    {
+      "route": "/admin/packs",
+      "module": "src/features/admin/packs/PacksPage.tsx",
+      "budget_kb": 328
+    },
+    {
+      "route": "/admin/packs/:id",
+      "module": "src/features/admin/packs/PackPage.tsx",
+      "budget_kb": 343
+    },
+    {
+      "route": "/admin/knowledge",
+      "module": "src/features/admin/knowledge/KnowledgePage.tsx",
+      "budget_kb": 255
+    },
+    {
+      "route": "/admin/knowledge/gold",
+      "module": "src/features/admin/knowledge/GoldExamplesPage.tsx",
+      "budget_kb": 261
+    },
+    {
+      "route": "/admin/audit",
+      "module": "src/features/admin/audit/AuditPage.tsx",
+      "budget_kb": 255
+    },
+    {
+      "route": "/admin/ai",
+      "module": "src/features/admin/ai/AiSettingsPage.tsx",
+      "budget_kb": 493
+    },
+    {
+      "route": "/admin/access/*",
+      "module": "src/features/admin/access/AccessPage.tsx",
+      "budget_kb": 310
+    },
+    {
+      "route": "/admin/connections",
+      "module": "src/features/admin/connections/ConnectionsPage.tsx",
+      "budget_kb": 252
+    },
+    {
+      "route": "/admin/connections/new",
+      "module": "src/features/admin/connections/AddConnectionPage.tsx",
+      "budget_kb": 270
+    },
+    {
+      "route": "/admin/models/:id",
+      "module": "src/features/admin/model/ModelStudioPage.tsx",
+      "budget_kb": 258
+    },
+    {
+      "route": "/admin/models/:id/approve",
+      "module": "src/features/admin/model/ApproveModelPage.tsx",
+      "budget_kb": 263
+    }
+  ]
+}

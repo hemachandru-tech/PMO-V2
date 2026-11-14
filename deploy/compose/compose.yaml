@@ -1,0 +1,619 @@
+# Tela — Docker Compose stack (ADR-005; US-002, US-003; diagrams/deployment-docker.md).
+#
+#   ./deploy/compose/dev-setup.sh                         # once: generate local secrets + dev realm
+#   docker compose -f deploy/compose/compose.yaml --profile core up -d --build
+#   open http://tela.localhost:8088                        # sign in as admin / nomsa / viewer
+#
+# Profiles: core (the platform), dev (synthetic sample sources), ai-local (Ollama),
+# observability (OTel collector, Prometheus, Grafana, Loki).
+# Only the edge proxy publishes a host port. Internal services sit on the internal "app" network;
+# only the connector runner joins "sources" and only the LLM gateway joins "llm-egress".
+
+name: tela
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: ["/tmp"]
+  restart: unless-stopped
+
+x-python-build: &python-build
+  context: ../..
+  dockerfile: deploy/docker/python.Dockerfile
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+networks:
+  edge: {}
+  app: { internal: true }
+  sources: {}
+  llm-egress: {}
+
+volumes:
+  pg_data: {}
+  prometheus_data: {}
+  tempo_data: {}
+  loki_data: {}
+  grafana_data: {}
+  objectstore_data: {}
+  ollama_models: {}
+  reranker_models: {}
+
+secrets:
+  postgres_owner_password: { file: ./secrets/postgres_owner_password }
+  tela_app_password: { file: ./secrets/tela_app_password }
+  keycloak_db_password: { file: ./secrets/keycloak_db_password }
+  redis_password: { file: ./secrets/redis_password }
+  database_url: { file: ./secrets/database_url }
+  migrate_database_url: { file: ./secrets/migrate_database_url }
+  redis_url: { file: ./secrets/redis_url }
+  service_signing_key: { file: ./secrets/service_signing_key }
+  execution_signing_key: { file: ./secrets/execution_signing_key }
+  execution_verify_key: { file: ./secrets/execution_verify_key }
+  bao_token: { file: ./secrets/bao_token }  # OpenBao dev root token: openbao-init only
+  bao_api_role_id: { file: ./secrets/bao_api_role_id }
+  bao_api_secret_id: { file: ./secrets/bao_api_secret_id }
+  bao_runner_role_id: { file: ./secrets/bao_runner_role_id }
+  bao_runner_secret_id: { file: ./secrets/bao_runner_secret_id }
+  bao_gateway_role_id: { file: ./secrets/bao_gateway_role_id }
+  bao_gateway_secret_id: { file: ./secrets/bao_gateway_secret_id }
+  s3_secret_key: { file: ./secrets/s3_secret_key }
+  sample_tpg_owner_password: { file: ./secrets/sample_tpg_owner_password }
+  sample_tpg_ro_password: { file: ./secrets/sample_tpg_ro_password }
+  s3_runner_secret_key: { file: ./secrets/s3_runner_secret_key }
+  sample_mysql_root_password: { file: ./secrets/sample_mysql_root_password }
+  sample_mysql_ro_password: { file: ./secrets/sample_mysql_ro_password }
+  sample_mssql_sa_password: { file: ./secrets/sample_mssql_sa_password }
+  sample_mongo_root_password: { file: ./secrets/sample_mongo_root_password }
+  sample_mongo_ro_password: { file: ./secrets/sample_mongo_ro_password }
+  sample_mssql_ro_password: { file: ./secrets/sample_mssql_ro_password }
+
+services:
+  # ------------------------------------------------------------------ edge
+  proxy:
+    image: nginx:1.27-alpine
+    profiles: [core]
+    ports: ["127.0.0.1:8088:8088"]
+    volumes: ["./proxy.nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+    networks: [edge]
+    depends_on:
+      web: { condition: service_healthy }
+      api: { condition: service_healthy }
+      keycloak: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "--header", "Host: tela.localhost", "http://127.0.0.1:8088/"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    <<: *logging
+
+  web:
+    build: { context: ../.., dockerfile: apps/web/Dockerfile }
+    image: tela-web:${TELA_VERSION:-dev}
+    profiles: [core]
+    <<: [*hardening, *logging]
+    volumes: ["./web-config.json:/usr/share/nginx/html/config.json:ro"]
+    # On the internal network too, so the worker's PDF renderer can load the print route (US-096).
+    networks: [edge, app]
+
+  # ------------------------------------------------------------------ application
+  migrate:
+    build: { <<: *python-build, target: migrate, args: { SERVICE: api } }
+    image: tela-migrate:${TELA_VERSION:-dev}
+    profiles: [core]
+    <<: *logging
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp"]
+    environment:
+      TELA_MIGRATE_DATABASE_URL_FILE: /run/secrets/migrate_database_url
+    secrets: [migrate_database_url]
+    networks: [app]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  bootstrap:
+    # One-shot: create the local dev tenant and its first group mappings (idempotent).
+    image: tela-api:${TELA_VERSION:-dev}
+    pull_policy: never  # built by the api service
+    profiles: [core]
+    <<: *logging
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    secrets: [migrate_database_url]
+    environment:
+      TELA_MIGRATE_DATABASE_URL_FILE: /run/secrets/migrate_database_url
+      TELA_PACKS_DIR: /app/packs
+    command:
+      - sh
+      - -c
+      - >
+        tela-admin bootstrap-tenant --slug tela-dev --name "Tela (local)"
+        --issuer http://auth.localhost:8088/realms/tela
+        --admin-group TELA-Admins --admin-group-name TELA-Admins
+        --group creator=TELA-Creators:TELA-Creators --group viewer=TELA-Viewers:TELA-Viewers
+        --group cio=TELA-CIO:TELA-CIO && tela-admin load-packs
+    networks: [app]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: "no"
+
+  api:
+    build: { <<: *python-build, target: api, args: { SERVICE: api } }
+    image: tela-api:${TELA_VERSION:-dev}
+    profiles: [core]
+    <<: [*hardening, *logging]
+    environment:
+      TELA_ENV: dev
+      TELA_DATABASE_URL_FILE: /run/secrets/database_url
+      TELA_REDIS_URL_FILE: /run/secrets/redis_url
+      TELA_OIDC_ISSUER: http://auth.localhost:8088/realms/tela
+      TELA_OIDC_JWKS_URL: http://keycloak:8080/realms/tela/protocol/openid-connect/certs
+      TELA_OIDC_AUDIENCE: tela-api
+      TELA_CORS_ORIGINS: '["http://tela.localhost:8088", "http://localhost:5173"]'
+      # Its own AppRole identity (US-007): may write and patch credentials, never read them.
+      TELA_SECRETS_BACKEND: openbao
+      TELA_SECRETS_ADDR: http://openbao:8200
+      TELA_SECRETS_ROLE_ID_FILE: /run/secrets/bao_api_role_id
+      TELA_SECRETS_SECRET_ID_FILE: /run/secrets/bao_api_secret_id
+      TELA_SECRETS_MOUNT: secret
+      TELA_RUNNER_URL: http://connector-runner:8100
+      TELA_GATEWAY_URL: http://llm-gateway:8200
+      # Knowledge chunks sent to the reranker per question (US-174); fewer for a CPU-only reranker.
+      TELA_KNOWLEDGE_RERANK_POOL: ${TELA_KNOWLEDGE_RERANK_POOL:-30}
+      TELA_LLM_ALLOW_AGGREGATES: ${TELA_LLM_ALLOW_AGGREGATES:-true}  # DEC-01; the tenant toggle still decides
+      TELA_SERVICE_SIGNING_KEY_FILE: /run/secrets/service_signing_key
+      TELA_EXECUTION_SIGNING_KEY_FILE: /run/secrets/execution_signing_key
+      TELA_OTEL_EXPORTER_OTLP_ENDPOINT: ${TELA_OTEL_ENDPOINT:-}
+      PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus  # gunicorn workers share one /metrics
+      # Exports (US-095): files in the S3-compatible store; SeaweedFS's gateway has no server-side encryption.
+      TELA_OBJECT_STORE_ENDPOINT: http://objectstore:8333
+      TELA_OBJECT_STORE_BUCKET: tela
+      TELA_OBJECT_STORE_ACCESS_KEY: tela
+      TELA_OBJECT_STORE_SECRET_KEY_FILE: /run/secrets/s3_secret_key
+      TELA_OBJECT_STORE_SSE: none
+    secrets: [database_url, redis_url, bao_api_role_id, bao_api_secret_id, service_signing_key, execution_signing_key,
+              s3_secret_key]
+    networks: [edge, app]
+    depends_on:
+      bootstrap: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+      openbao-init: { condition: service_completed_successfully }
+      objectstore: { condition: service_healthy }
+
+  connector-runner:
+    build: { <<: *python-build, target: runner, args: { SERVICE: runner } }
+    image: tela-connector-runner:${TELA_VERSION:-dev}
+    profiles: [core]
+    <<: [*hardening, *logging]
+    environment:
+      TELA_ENV: dev
+      TELA_SERVICE_SIGNING_KEY_FILE: /run/secrets/service_signing_key
+      TELA_EXECUTION_VERIFY_KEY_FILE: /run/secrets/execution_verify_key
+      # The runner reads source credentials with its own AppRole identity (US-007, US-023): read only.
+      TELA_SECRETS_BACKEND: openbao
+      TELA_SECRETS_ADDR: http://openbao:8200
+      TELA_SECRETS_ROLE_ID_FILE: /run/secrets/bao_runner_role_id
+      TELA_SECRETS_SECRET_ID_FILE: /run/secrets/bao_runner_secret_id
+      TELA_SECRETS_MOUNT: secret
+      # Uploaded Excel/CSV files (US-109): a read-only identity of its own; converted copies live in tmpfs.
+      TELA_OBJECT_STORE_ENDPOINT: http://objectstore:8333
+      TELA_OBJECT_STORE_BUCKET: tela
+      TELA_OBJECT_STORE_ACCESS_KEY: tela-runner
+      TELA_OBJECT_STORE_SECRET_KEY_FILE: /run/secrets/s3_runner_secret_key
+      # Development only: MSAL's login.microsoftonline.com requests go to the Dataverse fake (ignored outside dev).
+      TELA_DATAVERSE_AUTHORITY_ROUTE: ${TELA_DATAVERSE_AUTHORITY_ROUTE:-login.microsoftonline.com}
+      TELA_OTEL_EXPORTER_OTLP_ENDPOINT: ${TELA_OTEL_ENDPOINT:-}
+    secrets: [service_signing_key, execution_verify_key, bao_runner_role_id, bao_runner_secret_id,
+              s3_runner_secret_key]
+    networks: [app, sources]
+    depends_on:
+      openbao-init: { condition: service_completed_successfully }
+
+  llm-gateway:
+    build: { <<: *python-build, target: gateway, args: { SERVICE: gateway } }
+    image: tela-llm-gateway:${TELA_VERSION:-dev}
+    profiles: [core]
+    <<: [*hardening, *logging]
+    environment:
+      TELA_ENV: dev
+      TELA_DATABASE_URL_FILE: /run/secrets/database_url
+      TELA_SERVICE_SIGNING_KEY_FILE: /run/secrets/service_signing_key
+      # DEC-01 approves Ollama, Anthropic, OpenAI, Azure OpenAI and Gemini, and aggregates (never rows). Nothing
+      # is used until an Admin chooses a provider in AI settings; hosted providers use the tenant's own key, read
+      # with the gateway's read-only OpenBao identity. Narrow the list with TELA_LLM_ALLOWED_PROVIDERS.
+      TELA_LLM_PROVIDER: ${TELA_LLM_PROVIDER:-}
+      TELA_LLM_ALLOWED_PROVIDERS: ${TELA_LLM_ALLOWED_PROVIDERS:-["ollama","anthropic","openai","azure_openai","gemini"]}
+      TELA_LLM_ALLOW_AGGREGATES: ${TELA_LLM_ALLOW_AGGREGATES:-true}
+      TELA_LLM_MODEL_DEFAULT: ${TELA_LLM_MODEL_DEFAULT:-}
+      TELA_LLM_TIMEOUT_SECONDS: "110"
+      TELA_SECRETS_BACKEND: openbao
+      TELA_SECRETS_ADDR: http://openbao:8200
+      TELA_SECRETS_ROLE_ID_FILE: /run/secrets/bao_gateway_role_id
+      TELA_SECRETS_SECRET_ID_FILE: /run/secrets/bao_gateway_secret_id
+      TELA_SECRETS_MOUNT: secret
+      TELA_OLLAMA_URL: ${TELA_OLLAMA_URL:-http://host.docker.internal:11434}
+      # Knowledge reranker (US-174): empty = off (plain reciprocal rank fusion). With --profile ai-local set it to
+      # http://reranker:80.
+      TELA_RERANK_URL: ${TELA_RERANK_URL:-}
+      # Seconds the gateway waits for the reranker; raise it for a CPU-only reranker (measuring, not everyday use).
+      TELA_RERANK_TIMEOUT_SECONDS: ${TELA_RERANK_TIMEOUT_SECONDS:-10}
+      TELA_OTEL_EXPORTER_OTLP_ENDPOINT: ${TELA_OTEL_ENDPOINT:-}
+    secrets: [database_url, service_signing_key, bao_gateway_role_id, bao_gateway_secret_id]
+    networks: [app, llm-egress]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      openbao-init: { condition: service_completed_successfully }
+
+  worker:
+    build: { <<: *python-build, target: worker, args: { SERVICE: worker } }
+    image: tela-worker:${TELA_VERSION:-dev}
+    profiles: [core]
+    <<: [*hardening, *logging]
+    environment:
+      TELA_DATABASE_URL_FILE: /run/secrets/database_url
+      TELA_REDIS_URL_FILE: /run/secrets/redis_url
+      # Exports (US-095): the worker renders; the API re-checks access, runs queries and stores files.
+      TELA_API_URL: http://api:8000
+      TELA_WEB_URL: http://web:8080
+      TELA_SERVICE_SIGNING_KEY_FILE: /run/secrets/service_signing_key
+      TELA_OTEL_EXPORTER_OTLP_ENDPOINT: ${TELA_OTEL_ENDPOINT:-}
+    secrets: [database_url, redis_url, service_signing_key]
+    shm_size: 256m  # Chromium for PDF export
+    networks: [app]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  beat:
+    image: tela-worker:${TELA_VERSION:-dev}
+    pull_policy: never  # built by the worker service; single replica
+    profiles: [core]
+    <<: [*hardening, *logging]
+    command: ["celery", "-A", "tela_worker.celery_app", "beat", "--loglevel=INFO", "--schedule", "/tmp/celerybeat-schedule"]
+    healthcheck: { disable: true }
+    environment:
+      TELA_REDIS_URL_FILE: /run/secrets/redis_url
+      TELA_DATABASE_URL_FILE: /run/secrets/database_url
+      TELA_API_URL: http://api:8000
+      TELA_SERVICE_SIGNING_KEY_FILE: /run/secrets/service_signing_key
+    secrets: [redis_url, database_url, service_signing_key]
+    networks: [app]
+    depends_on:
+      redis: { condition: service_healthy }
+      worker: { condition: service_started }
+
+  # ------------------------------------------------------------------ data services
+  postgres:
+    image: pgvector/pgvector:pg16
+    profiles: [core]
+    <<: *logging
+    environment:
+      POSTGRES_USER: tela_owner
+      POSTGRES_DB: tela
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_owner_password
+    secrets: [postgres_owner_password, tela_app_password, keycloak_db_password]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    networks: [app]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tela_owner -d tela"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    profiles: [core]
+    <<: *logging
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$(cat /run/secrets/redis_password)\" --save '' --appendonly no"]
+    secrets: [redis_password]
+    networks: [app]
+    read_only: true
+    tmpfs: ["/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$(cat /run/secrets/redis_password)\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    profiles: [core]
+    <<: *logging
+    # start-dev is for the local profile only; every other environment runs `start` (production mode).
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?run deploy/compose/dev-setup.sh and pass --env-file deploy/compose/secrets/.env}
+      KC_HOSTNAME: http://auth.localhost:8088
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: kcadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?}
+    volumes: ["./secrets/realm-tela.json:/opt/keycloak/data/import/realm-tela.json:ro"]
+    networks: [edge, app]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  openbao:
+    image: quay.io/openbao/openbao:2.1.0
+    profiles: [core]
+    <<: *logging
+    # Dev mode (in-memory, unsealed) for the local profile only.
+    command: ["server", "-dev", "-dev-listen-address=0.0.0.0:8200"]
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ${BAO_DEV_ROOT_TOKEN_ID:?}
+    cap_add: [IPC_LOCK]
+    networks: [app]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8200/v1/sys/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  openbao-init:
+    # Policies and one AppRole identity per service (US-007; deploy/openbao). Dev-mode OpenBao forgets
+    # everything on restart: after restarting openbao, run `up -d openbao-init` (and re-enter source passwords).
+    image: quay.io/openbao/openbao:2.1.0
+    profiles: [core]
+    <<: *logging
+    entrypoint: ["sh", "/init/init.sh"]
+    environment:
+      BAO_ADDR: http://openbao:8200
+      BAO_TOKEN_FILE: /run/secrets/bao_token
+      TELA_SECRETS_MOUNT: secret
+      POLICY_DIR: /init/policies
+      CREDS_DIR: /run/secrets
+    volumes: ["../openbao:/init:ro"]
+    secrets: [bao_token, bao_api_role_id, bao_api_secret_id, bao_runner_role_id, bao_runner_secret_id,
+              bao_gateway_role_id, bao_gateway_secret_id]
+    networks: [app]
+    depends_on:
+      openbao: { condition: service_healthy }
+    restart: "no"
+
+  objectstore:
+    # S3-compatible object storage for the local profile (COMP-014). MinIO community images are
+    # no longer distributed, so local development uses SeaweedFS's S3 gateway; other profiles use
+    # any S3-compatible service or Azure Blob.
+    image: chrislusf/seaweedfs:3.80
+    profiles: [core]
+    <<: *logging
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json", "-ip.bind=0.0.0.0"]
+    volumes:
+      - objectstore_data:/data
+      - ./secrets/s3.json:/etc/seaweedfs/s3.json:ro
+    networks: [app]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9333/cluster/status"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------ dev profile: synthetic sample sources
+  sample-tpg:
+    # Synthetic TPG extract (packs/pmo/fixtures/tpg_synthetic.py). Reachable only on the "sources"
+    # network, i.e. only by the connector runner. Connect in Tela with host sample-tpg, database tpg,
+    # user tela_ro and the password in secrets/sample_tpg_ro_password (TLS mode "disable" is dev-only).
+    image: postgres:16-alpine
+    profiles: [dev]
+    <<: *logging
+    environment:
+      POSTGRES_USER: tpg_owner
+      POSTGRES_DB: tpg
+      POSTGRES_PASSWORD_FILE: /run/secrets/sample_tpg_owner_password
+    secrets: [sample_tpg_owner_password, sample_tpg_ro_password]
+    volumes: ["./sample-tpg:/docker-entrypoint-initdb.d:ro"]
+    networks: [sources]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tpg_owner -d tpg"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  sample-mysql:
+    # Synthetic TPG extract on MySQL (US-113). Connect with host sample-mysql, database tpg, user tela_ro and the
+    # password in secrets/sample_mysql_ro_password (TLS mode "disable" or "require" in dev).
+    image: mysql:8.4.10
+    profiles: [dev]
+    <<: *logging
+    environment:
+      MYSQL_DATABASE: tpg
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/sample_mysql_root_password
+    secrets: [sample_mysql_root_password, sample_mysql_ro_password]
+    volumes: ["./sample-mysql:/docker-entrypoint-initdb.d:ro"]
+    networks: [sources]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p\"$$(cat /run/secrets/sample_mysql_root_password)\" --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  sample-mssql:
+    # Synthetic TPG extract on SQL Server 2022 (US-114; amd64 image, Rosetta on Apple silicon, about 2 GB).
+    # Connect with host sample-mssql, database tpg, user tela_ro, password in secrets/sample_mssql_ro_password and
+    # "Trust server certificate" (dev only: the image has a self-signed certificate).
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    profiles: [dev]
+    <<: *logging
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+    entrypoint: ["/bin/bash", "-c", "MSSQL_SA_PASSWORD=$$(cat /run/secrets/sample_mssql_sa_password) exec /opt/mssql/bin/sqlservr"]
+    secrets: [sample_mssql_sa_password]
+    networks: [sources]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$(cat /run/secrets/sample_mssql_sa_password)\" -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  sample-mssql-seed:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    profiles: [dev]
+    <<: *logging
+    entrypoint: ["/bin/bash", "/seed/seed.sh"]
+    secrets: [sample_mssql_sa_password, sample_mssql_ro_password]
+    volumes: ["./sample-mssql:/seed:ro"]
+    networks: [sources]
+    depends_on:
+      sample-mssql: { condition: service_healthy }
+    restart: "no"
+
+  sample-mongo:
+    # Synthetic TPG extract as documents (US-112). Connect with connection string mongodb://sample-mongo:27017/
+    # ?authSource=tpg, database tpg, user tela_ro, password in secrets/sample_mongo_ro_password, TLS off (dev).
+    image: mongo:7.0
+    profiles: [dev]
+    <<: *logging
+    environment:
+      MONGO_INITDB_DATABASE: tpg
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/sample_mongo_root_password
+    secrets: [sample_mongo_root_password, sample_mongo_ro_password]
+    volumes: ["./sample-mongo:/docker-entrypoint-initdb.d:ro"]
+    networks: [sources]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping: 1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  dataverse-fake:
+    # A fake Dataverse environment (US-110, US-111; tests/fakes/dataverse_fake.py): Entra token endpoint, Web API
+    # metadata and reads over the synthetic extract under TPG logical names. Development only; DEC-09 pending.
+    # Connect with environment URL http://dataverse-fake:8099, tenant 00000000-0000-4000-8000-000000000001,
+    # client 00000000-0000-4000-8000-0000000000a1, secret fake-reader-secret, tables tpg_project and
+    # tpg_projectrequest. TDS mode needs the stand-in: dev TDS server sample-mssql,1433 with the tela_ro login.
+    image: tela-connector-runner:${TELA_VERSION:-dev}
+    profiles: [dev]
+    <<: *logging
+    command: ["uvicorn", "dataverse_fake:app", "--app-dir", "/src/tests/fakes", "--host", "0.0.0.0", "--port", "8099"]
+    volumes: ["../../tests/fakes:/src/tests/fakes:ro", "../../packs:/src/packs:ro"]
+    networks: [sources]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8099/fake/state', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------ optional profiles
+  ollama:
+    image: ollama/ollama:0.5.4
+    profiles: [ai-local]
+    <<: *logging
+    volumes: ["ollama_models:/root/.ollama"]
+    networks: [app]
+    restart: unless-stopped
+
+  # Local cross-encoder for knowledge retrieval (US-174): text-embeddings-inference serving bge-reranker-v2-m3 on
+  # /rerank. The model (~2.3 GB) downloads on first start. The cpu-1.8 image is amd64 only; on Apple silicon set
+  # TELA_RERANKER_IMAGE=ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9 (native arm64 build).
+  # Not recommended (US-197, EXEC-106): on the gold sets it lowered recall and took 45-160 s per question on CPU.
+  reranker:
+    image: ${TELA_RERANKER_IMAGE:-ghcr.io/huggingface/text-embeddings-inference:cpu-1.8}
+    profiles: [ai-local]
+    <<: *logging
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3", "--max-client-batch-size", "64"]
+    volumes: ["reranker_models:/data"]
+    networks: [app, llm-egress]
+    restart: unless-stopped
+
+  # Observability (US-010): docker compose ... --profile observability up -d, with TELA_OTEL_ENDPOINT=http://otel-collector:4317
+  # in the environment so the services send traces. Grafana: http://localhost:3000 (admin / TELA_GRAFANA_PASSWORD).
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.116.1
+    profiles: [observability]
+    <<: *logging
+    command: ["--config=/etc/otelcol/config.yaml"]
+    user: "0:0"  # reads the docker json-file logs of the other containers
+    volumes:
+      - ../observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks: [app]
+    depends_on: [tempo, loki]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    profiles: [observability]
+    <<: *logging
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=15d"]
+    volumes:
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    networks: [app]
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    profiles: [observability]
+    <<: *logging
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ../observability/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    networks: [app]
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.3.2
+    profiles: [observability]
+    <<: *logging
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ../observability/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki_data:/loki
+    networks: [app]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    profiles: [observability]
+    <<: *logging
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${TELA_GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports: ["127.0.0.1:3000:3000"]
+    networks: [edge, app]
+    depends_on: [prometheus, loki, tempo]
+    restart: unless-stopped

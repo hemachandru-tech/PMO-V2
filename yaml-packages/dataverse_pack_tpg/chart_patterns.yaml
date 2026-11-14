@@ -1,0 +1,525 @@
+version: 0.5.0
+status: draft
+patterns:
+- id: forecast_vs_budget
+  title: Forecast cost next to approved budget
+  when:
+    measure:
+    - forecast_cost_total
+    no_measure:
+    - approved_budget_total
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:approved_budget_total
+    visual: paired_bars
+  reason: Show the forecast (EAC) next to the approved budget; the gap between them is what matters.
+  guidance: 'Forecast cost (EAC) is a forecast, not actual spend. Never label it spend or actuals. Read it against the approved
+    budget of the same comparable projects: paired bars by portfolio or region, or a table when there are more than about
+    12 groups.'
+- id: budget_vs_forecast
+  title: Approved budget next to forecast cost
+  when:
+    measure:
+    - approved_budget_total
+    no_measure:
+    - forecast_cost_total
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:forecast_cost_total
+    visual: paired_bars
+  reason: Put the forecast (EAC) beside the approved budget, so over- and under-runs show at a glance.
+  guidance: Approved budget and forecast cost are totals over the same comparable open projects (budget above 0, forecast
+    0 or more), so they can be shown side by side. Projects without a comparable budget are excluded and counted separately.
+- id: variance_ranked
+  title: Forecast variance as ranked bars
+  when:
+    measure:
+    - budget_variance
+    - budget_variance_pct
+  suggest:
+    ops:
+    - op: set_visual
+      value: ranked_bar
+    - op: sort
+      dir: desc
+    visual: ranked_bar
+  reason: Variance can be negative (under budget), so rank it — largest overrun first — rather than slicing it.
+  guidance: Forecast variance is forecast minus approved budget; negative means under budget. It is not additive across a
+    whole and can be negative, so never show it as a donut or stacked parts of a whole. Ranked bars sorted by variance, largest
+    overrun first, read best.
+- id: overdue_with_schedule_risk
+  title: Overdue go-lives next to schedule risk
+  when:
+    measure:
+    - overdue_go_lives
+    no_measure:
+    - schedule_risk
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:schedule_risk
+    visual: paired_bars
+  reason: Compare what is actually overdue with what project managers flag as at risk.
+  guidance: Overdue go-lives are past the planned deployment date and not deployed; schedule risk is the project manager's
+    Red/Amber schedule KPI. They are different measures and disagree on purpose; showing them side by side by region or delivery
+    manager surfaces optimistic reporting.
+- id: go_live_horizon
+  title: Next go-live horizon
+  when:
+    measure:
+    - go_lives_0_30
+    no_measure:
+    - go_lives_31_60
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:go_lives_31_60
+    visual: paired_bars
+  reason: Show the 31–60 day horizon next to the next 30 days, so the coming load is visible early.
+  guidance: Go-live horizons (0–30, 31–60, 61–90 days by planned deployment date) are counted from the reporting date. Show
+    neighbouring horizons together; do not add them up into one figure without saying so.
+- id: rag_mix
+  title: Reported status mix per group
+  when:
+    measure:
+    - open_projects
+    - total_projects
+    - in_delivery
+    breakdown:
+    - region
+    - portfolio
+    - programme
+    - cio
+    - delivery_manager
+    - platform
+    - priority
+    - business_unit_department
+    - client
+  suggest:
+    ops:
+    - op: add_breakdown
+      ref: dimension:reported_status
+    visual: stacked_status
+  reason: Split each bar by reported status (Green, Amber, Red) to see where the trouble sits.
+  guidance: Reported status (overall KPI) is shown Green, Amber, Red; Amber is stored as Yellow. Stacked status bars, always
+    in Green, Amber, Red order and with the status colours, show the mix per region or portfolio.
+- id: lifecycle_in_order
+  title: Lifecycle phases in their order
+  when:
+    breakdown:
+    - lifecycle_phase
+  suggest:
+    ops:
+    - op: set_visual
+      value: columns
+    visual: columns
+  reason: Lifecycle phases have a natural order; columns keep Assign PM to Closure left to right.
+  guidance: Lifecycle phase runs Assign PM, Initiation, Planning, Execution, UAT, Deployment, Closure. Keep that order (columns),
+    rather than ranking phases by count.
+- id: headline_by_region
+  title: Headline figure by region
+  when:
+    measure:
+    - open_projects
+    - in_delivery
+    - overdue_go_lives
+    - schedule_risk
+    - over_budget
+    - stale_projects
+    - rag_contradictions
+    - slipped_projects
+    - trouble_projects
+    - green_hard_warning
+    - no_report_60d
+    no_breakdown: true
+  suggest:
+    ops:
+    - op: add_breakdown
+      ref: dimension:region
+    visual: ranked_bar
+  reason: One number hides where it comes from; break it down by region.
+  guidance: PMO headline counts (open, in delivery, overdue, at risk, over budget, stale, RAG contradictions) are read first
+    as a figure, then by region or portfolio to find where to act.
+- id: demand_by_state
+  title: Demand by request state
+  when:
+    measure:
+    - open_demand
+    - total_requests
+    no_breakdown: true
+  suggest:
+    ops:
+    - op: add_breakdown
+      ref: dimension:request_state
+    visual: ranked_bar
+  reason: See where requests are waiting by breaking them down by request state.
+  guidance: Demand requests carry their own region and priority. Break requests down by the request's own fields (request
+    region, request priority), never by the project region, which would count a request once per linked project.
+- id: many_categories
+  title: Many categories
+  guidance: More than 7 slices is too many for a donut; more than about 12 bars is hard to read. Rank the bars and show the
+    top 10, and offer a table for the full list.
+- id: trends
+  title: Trends over time
+  guidance: Trends need a date breakdown with at least three points; use columns for fewer. Compare a period with the previous
+    one of equal length rather than with an arbitrary earlier date.
+- id: region_by_status_heat_grid
+  title: Region by status as a heat grid
+  when:
+    breakdown:
+    - region
+    - portfolio
+    - cio
+    - platform
+    - priority
+    - delivery_manager
+    - project_manager
+    also_breakdown:
+    - reported_status
+    - schedule_status
+    - calculated_health
+  suggest:
+    ops:
+    - op: set_visual
+      value: heat_grid
+    visual: heat_grid
+  reason: A heat grid shows where Red and Amber concentrate across every group at once, with the count in each cell.
+  guidance: 'Two breakdowns with one of them a status (Region × Reported status, Portfolio × Calculated health) read best
+    as a heat grid: one row per group, the status words as columns in the order Green, Amber, Red, Not set, each cell coloured
+    by its status and showing its number. Keep it to about 25 rows and 12 columns.'
+- id: portfolio_by_phase_heat_grid
+  title: Portfolio by phase as a heat grid
+  when:
+    breakdown:
+    - portfolio
+    - region
+    - cio
+    also_breakdown:
+    - lifecycle_phase
+  suggest:
+    ops:
+    - op: set_visual
+      value: heat_grid
+    visual: heat_grid
+  reason: A heat grid shows which portfolios have work bunched in which lifecycle phase.
+  guidance: 'Portfolio × Lifecycle phase is a density question: a heat grid with the phases in their order as columns and
+    a single-hue ramp, each cell showing its count.'
+- id: ordered_buckets_as_columns
+  title: Ordered buckets as columns
+  when:
+    breakdown:
+    - lateness_bucket
+    - go_live_horizon
+    - on_hold_aging
+    - variance_spread
+    - schedule_variance_bucket
+    - request_aging
+    - request_on_hold_aging
+  suggest:
+    ops:
+    - op: set_visual
+      value: columns
+    visual: columns
+  reason: Aging, lateness and variance bands have an order; columns keep it from first band to last.
+  guidance: 'Banded dimensions (days past planned go-live, go-live horizon, time on hold, forecast vs budget spread, schedule
+    variance, request age) are ordinal: show them as columns in band order with the ordinal ramp and the value on every column,
+    never ranked by size or as a donut.'
+- id: compliance_meter
+  title: Compliance as a meter
+  when:
+    measure:
+    - baselined
+    no_measure:
+    - baselining_in_scope
+    no_breakdown: true
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:baselining_in_scope
+    visual: meter
+  reason: Show baselined projects against the projects that should have a baseline, as a compliance meter.
+  guidance: 'Governance compliance (baselining, budget code, PM assignment) is a part of a whole: a meter with the passing
+    count, the population it is out of and the percentage, plus a note saying what passing means.'
+- id: budget_code_meter
+  title: Budget code compliance as a meter
+  when:
+    measure:
+    - budget_code_set
+    no_measure:
+    - total_projects
+    no_breakdown: true
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:total_projects
+    visual: meter
+  reason: Show projects with a budget code against all projects, as a compliance meter.
+  guidance: Every project in any state should carry a budget code; the meter reads "with a budget code out of all projects".
+- id: pm_assignment_meter
+  title: PM assignment as a meter
+  when:
+    measure:
+    - pm_assigned
+    no_measure:
+    - in_delivery
+    no_breakdown: true
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:in_delivery
+    visual: meter
+  reason: Show projects with a delivery manager against all projects in delivery, as a compliance meter.
+  guidance: PM assignment applies to projects in delivery (Active) only; the meter reads "assigned out of in delivery".
+- id: status_donut
+  title: Status mix as a donut
+  guidance: A donut suits a part of a whole with at most 4 categories, such as reported status (Green, Amber, Red, Not set)
+    or calculated health. Not set and Insufficient data are shown in grey and left out of the percentages. With more categories,
+    or values that can be negative, use ranked bars.
+- id: ranked_groups
+  title: Groups as ranked bars
+  guidance: Plain categories (portfolio, CIO, project manager, platform) are compared as ranked bars, largest first, with
+    the value at the end of each bar; the top 10 when there are more than about 12.
+- id: paired_measures
+  title: Two measures on one scale
+  guidance: Two measures of the same unit per group (approved budget and forecast cost (EAC), internal and external effort,
+    in scope and compliant) read as paired bars on one scale. Never pair measures of different units.
+- id: status_stack
+  title: Status per group as stacked bars
+  guidance: The status mix of each group (reported status by portfolio) reads as stacked status bars in the order Green, Amber,
+    Red, Not set, with the status colours, each segment labelled with its count.
+- id: budget_bridge
+  title: Budget to forecast as a bridge
+  when:
+    measure:
+    - approved_budget_total
+    no_measure:
+    - forecast_cost_total
+    breakdown:
+    - portfolio
+    - programme
+    - region
+    - cio
+    - platform
+    - budget_type
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:forecast_cost_total
+    - op: set_visual
+      value: waterfall
+    visual: waterfall
+  reason: A bridge walks from the approved budget to the forecast (EAC), one step per group, so the groups that move the total
+    stand out.
+  guidance: 'Approved budget → forecast cost (EAC) by portfolio or component reads as a waterfall (bridge): the budget total
+    first, then each group''s change (forecast minus budget, rises and falls labelled with their sign), then the forecast
+    total. Keep it to 12 steps; rank the rest into a table.'
+- id: overdue_pareto
+  title: Where most of it sits (Pareto)
+  when:
+    measure:
+    - overdue_go_lives
+    - schedule_risk
+    - over_budget
+    - stale_projects
+    - overdue_actions
+    - health_red
+    - overdue_gates_total
+    - trouble_projects
+    - slipped_projects
+    - slipped_no_pcr
+    - green_hard_warning
+    - no_report_60d
+    breakdown:
+    - region
+    - portfolio
+    - programme
+    - cio
+    - delivery_manager
+    - project_manager
+    - platform
+    - business_unit_department
+    - client
+  suggest:
+    ops:
+    - op: set_visual
+      value: pareto
+    visual: pareto
+  reason: A Pareto shows the few groups that hold most of the problem, with the cumulative share up to 80 %.
+  guidance: 'Counts of problems by group (overdue go-lives by delivery manager, Red health by portfolio) read as a Pareto:
+    bars largest first, a cumulative share line on a 0–100 % axis with an 80 % reference, and the groups past the vital few
+    muted. Needs 3 – 25 groups and values that are never negative.'
+- id: compliance_bullet
+  title: Compliance against target as bullets
+  when:
+    measure:
+    - baselining_compliance_pct
+    - budget_code_compliance_pct
+    - pm_assignment_compliance_pct
+    - closure_compliance_pct
+    - status_reporting_compliance_pct
+    - pcr_approval_pct
+    - request_budget_code_pct
+    - request_pm_assignment_pct
+  suggest:
+    ops:
+    - op: set_visual
+      value: bullet
+    visual: bullet
+  reason: Bullets set each compliance share against its target band (critical, warning, good), with the target marked.
+  guidance: 'A compliance percentage with a target (the pack''s tones: warning 90 %, critical 75 %, higher is better) reads
+    as a bullet: one bar per group on a 0–100 % track coloured by band, the target as a tick and the band in words.'
+- id: request_funnel
+  title: Request pipeline as a funnel
+  when:
+    measure:
+    - total_requests
+    no_measure:
+    - approved_for_delivery
+    no_breakdown: true
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:approved_for_delivery
+    - op: add_measure
+      ref: measure:converted_requests
+    - op: set_visual
+      value: funnel
+    visual: funnel
+  reason: A funnel shows how many requests reach each stage and how many drop off on the way.
+  guidance: The demand pipeline (requests → DOU → DARB → SOW → approved for delivery → converted) reads as a funnel, the stages
+    in pipeline order, each with its count, its share of the first stage and its drop from the stage before. Only stages that
+    never grow make a funnel; otherwise use columns.
+- id: baseline_vs_forecast_dumbbell
+  title: Two figures per group as a dumbbell
+  guidance: 'Two measures of one unit per group where the gap matters more than the size (approved budget vs forecast cost,
+    in scope vs compliant) read as a dumbbell: one dot per measure joined by a line, widest gap first, the gap written at
+    the end. Paired bars stay the default; offer the dumbbell beside them. At most 25 groups.'
+- id: control_chart
+  title: Monthly figure as a control chart
+  guidance: 'A monthly or weekly figure with 8 or more periods (status reports filed, go-lives, open risks) can be read as
+    an XmR control chart: the line, its mean and the natural process limits (mean ± 2.66 × average moving range); points past
+    a limit are marked. Use it to tell a real shift from ordinary variation, not for fewer periods.'
+- id: delivery_timeline
+  title: Projects on a timeline (Gantt)
+  guidance: 'Projects with a planned start and a planned go-live (each as a day breakdown) read as a Gantt: one bar per project
+    from start to go-live on a time axis, at most 40 rows. Rows missing a date, or ending before they start, are listed in
+    the table and counted in a note, not drawn.'
+- id: trend_per_group
+  title: One trend per group (small multiples)
+  guidance: 'A trend split by a group (open projects per month by region) reads as small multiples: one small line per group
+    on one shared axis, largest group first, at most 12 panels, rather than many lines on one chart.'
+- id: portfolio_treemap
+  title: Open value by portfolio and programme as a treemap
+  when:
+    measure:
+    - tcv_open_total
+    - approved_budget_total
+    - estimated_cost_total
+    - request_budget_total
+    breakdown:
+    - portfolio
+    - programme
+    - platform
+    - budget_type
+  suggest:
+    ops:
+    - op: set_visual
+      value: treemap
+    visual: treemap
+  reason: A treemap shows where the money sits at a glance, each tile sized by its value and labelled with its share of the
+    total.
+  guidance: 'Money by portfolio, or by portfolio → programme (TCV, approved budget, estimated cost), reads as a treemap: the
+    outer level holds the inner one, largest first, each tile with its value and share. Only values that add up and are never
+    negative; ranked bars stay the default for one level.'
+- id: request_flow
+  title: Requests through their gates (sankey)
+  guidance: 'Requests counted by kind, intake gate and outcome (converted, rejected, on hold) read as a sankey: one column
+    per breakdown, left to right, each flow as wide as its count. Two to four breakdowns with at most 12 values each; three
+    or more breakdowns show as a sankey by default.'
+- id: compliance_gaps_together
+  title: Which compliance gaps occur together (UpSet)
+  guidance: 'Projects counted by two to six yes/no gaps (no budget code, no PM, not baselined, no status report) read as an
+    UpSet: one bar per combination, largest first, a dot matrix naming the gaps in it, and each gap''s total on the left.
+    "None of these" is kept, so the bars add up to all projects. A result of yes/no breakdowns only is shown this way by default.'
+- id: reports_calendar
+  title: Daily activity as a calendar heatmap
+  guidance: 'A daily figure over 3 to 24 months (status reports filed per day, go-lives per day) reads as a calendar heatmap:
+    one cell per day in a calendar per year, coloured in four steps whose edges are the quartiles of the days, with a legend
+    naming each step''s values. Fewer than 3 months reads better as a trend.'
+- id: spread_by_group
+  title: The spread of a figure across projects (beeswarm, ridgeline)
+  guidance: 'One figure per project (slip vs baseline, days on hold, budget) reads as a beeswarm: one dot per project along
+    the value axis, the median marked, in up to 8 groups. With 3 to 8 groups and 5 or more projects each, a ridgeline (raincloud)
+    shows each group''s shape: its density, its quartile box and every project as a dot.'
+- id: time_to_go_live
+  title: Time from start to go-live (time to event)
+  guidance: 'Projects with a start date and a go-live date (blank while not yet live) read as a time-to-event curve: the Kaplan–Meier
+    share of projects not yet live by days since start, projects still open counted until today and marked as ticks, the median
+    at 50 %. Up to 6 groups (by portfolio) as separate lines. Use it for "how long until go-live", not for a single project''s
+    plan (that is a Gantt).'
+- id: rank_over_time
+  title: Rank by month (bump chart)
+  guidance: 'Up to 10 groups ranked by a figure each month (regions by overdue go-lives) read as a bump chart: rank 1 at the
+    top, one line per group named at its end. Use it when the order matters more than the values; small multiples stay the
+    default for the values themselves.'
+- id: share_out_of_100
+  title: A share out of 100 (waffle)
+  guidance: 'A part and its whole (31 of 111 open projects have a budget code) or up to 6 parts of a whole read as a waffle:
+    100 cells, each part filling its share, the values and shares listed beside it. Good for one share that people should
+    feel, not for comparing many.'
+- id: direct_labels
+  title: Labels on the marks, and the rest in grey
+  guidance: Name lines at their ends instead of a legend, and write the value on the bar or point being talked about. When
+    an answer names one or two items, keep their colour and grey the others (highlight-and-grey); labels that would collide
+    are moved apart.
+- id: slipped_with_overdue
+  title: Slipped next to overdue
+  when:
+    measure:
+    - overdue_go_lives
+    no_measure:
+    - slipped_projects
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:slipped_projects
+    visual: paired_bars
+  reason: Overdue says what is late against today's plan; slipped says what is late against the first promise.
+  guidance: 'Overdue (Active, planned go-live passed, not live) and slipped (later than the first-baselined go-live) disagree
+    on purpose: a re-planned project can be on time against its plan yet slipped against its promise. Show them side by side
+    and name both rules in the footnote.'
+- id: book_vs_trouble_dumbbell
+  title: Share of book vs share of trouble
+  when:
+    measure:
+    - trouble_projects
+    breakdown:
+    - delivery_manager
+    - cio
+    - business_unit_department
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:open_projects
+    - op: set_visual
+      value: dumbbell
+    visual: dumbbell
+  reason: A large book naturally holds more trouble; the gap between the two shares is what matters.
+  guidance: 'One row per owner: a dot for share of open projects and a dot for share of Red-or-overdue projects, joined by
+    a line, widest gap first. Owners whose trouble share exceeds their book share by 10 points or more are named in the text.'
+- id: warnings_next_to_colour
+  title: Hard warnings next to the colour
+  when:
+    measure:
+    - green_hard_warning
+  suggest:
+    ops:
+    - op: add_measure
+      ref: measure:reported_green
+    visual: paired_bars
+  reason: A Green that its own records contradict is read against all Greens.
+  guidance: Show Greens and Greens with a hard warning together (paired bars or a waffle of the Greens). The table lists each
+    project with the warnings that apply as chips (Overdue, Slipped no PCR, Blocker, Overdue action, Late critical task).
+    Never recolour the project.

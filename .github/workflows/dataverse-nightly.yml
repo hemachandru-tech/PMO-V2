@@ -1,0 +1,43 @@
+# Dataverse sandbox check (US-117): the adapter against a real environment, nightly, read-only.
+# Needs DEC-09 (environment, app registration and a read-only application user) and these repository secrets:
+# DATAVERSE_SANDBOX_URL, DATAVERSE_TENANT_ID, DATAVERSE_CLIENT_ID, DATAVERSE_CLIENT_SECRET, DATAVERSE_TABLES.
+# Without them the suite skips. Never point it at production.
+name: dataverse-nightly
+
+on:
+  schedule:
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox:
+    name: Dataverse sandbox (TDS and Web API)
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        mode: [tds, webapi]
+    env:
+      TELA_DATAVERSE_SANDBOX_URL: ${{ secrets.DATAVERSE_SANDBOX_URL }}
+      TELA_DATAVERSE_TENANT_ID: ${{ secrets.DATAVERSE_TENANT_ID }}
+      TELA_DATAVERSE_CLIENT_ID: ${{ secrets.DATAVERSE_CLIENT_ID }}
+      TELA_DATAVERSE_CLIENT_SECRET: ${{ secrets.DATAVERSE_CLIENT_SECRET }}
+      TELA_DATAVERSE_TABLES: ${{ secrets.DATAVERSE_TABLES }}
+      TELA_DATAVERSE_MODE: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with: { version: "0.9.7" }
+      - run: uv python install 3.13
+      - run: uv sync --frozen
+      - name: Microsoft ODBC Driver 18
+        run: |
+          if ! odbcinst -q -d 2>/dev/null | grep -q "ODBC Driver 18"; then
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" \
+              | sudo tee /etc/apt/sources.list.d/mssql-release.list
+            sudo apt-get update && sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc
+          fi
+      - run: uv run pytest -q services/connector-runner/tests/test_dataverse_sandbox.py -rs

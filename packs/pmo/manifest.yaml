@@ -1,0 +1,1396 @@
+# PMO starter pack for TPG (FEAT-051; US-037 – US-039; RULE-026 – RULE-039).
+#
+# Measures are data, not code: each expression is the typed AST compiled by the query engine.
+# Field candidates list the synthetic extract name first, then the Dataverse / CRM logical name
+# (db_scheme §18). 1.2.0: status, current state and request state also bind to Dataverse's standard
+# statecode / statuscode choices through the label columns the TDS endpoint exposes (statecodename,
+# statuscodename), and the request key to tpg_projectrequestid (US-110). Rules are the reference rules from business_rules.md and still need STK-008
+# sign-off (DEC-19). "asof_offset_days" is relative to the reporting date (RULE-018).
+# 1.3.0 (US-156): the report catalogue's measures and dimensions — health, slip, lateness, aging, compliance,
+# cost components, demand effort, conversion and flow — with a one-line definition on every measure, banded
+# dimensions (aging, go-live horizon, variance spread) and the catalogue's columns, bound to the real TPG
+# Dataverse names where they exist (see the field check in task.md US-156).
+# 1.3.1 (US-158): every starter report states its population and data limits in a footnote; callouts where a
+# figure needs a caveat; detail tables (records with the catalogue's columns, default sort, export name).
+# 2.0.0 (US-155): Starter Pack 2.0 replaces the 1.x starter reports. The starter reports are the report blueprints
+# (report_blueprints.yaml, read through ``reports_from``): the PMO — Projects and PMO — Requests dashboards with the
+# catalogue's screens as tabs. Bound first to the real TPG Dataverse names (decision D1): current state
+# tpg_projectstatusname, request state tpg_requeststatename, planned go-live tpgmea_productdeploydate. New entities
+# for the screens the TPG source supports beyond projects and requests: PCRs (tpg_change), status reports, risks,
+# issues, action items, decisions, timesheets and project tasks, each linked to its project.
+# 2.1.0 (US-194): dimensions name the question shapes they answer (``answers``): hold and change reasons "why",
+# time on hold and request age "how long", days past go-live and schedule variance "how late", go-live horizon
+# "when". The rules planner adds that breakdown when a question asks that way. Timesheets get a date (Entered on), so
+# "hours per month" is read on their own date, not the project's go-live.
+# 2.2.0 (US-202, DEC-24): an open project is one whose current state is Project Created, Active or On Hold (RULE-026),
+# as the Dataverse model counts it; Closed projects are every other state. Status stays the record state
+# (statecode): on TPG Dataverse every project, completed or dropped, is record-Active, so it can't tell open from closed.
+pack_key: pmo_tpg
+pack_version: 2.2.1
+title: PMO starter pack (TPG)
+released_at: "2026-10-27T00:00:00Z"
+
+signature:
+  # A connection matches when every required field of the primary entity is present. Confidence is the
+  # share of pack fields found; a low-confidence match still installs, with missing items Unavailable.
+  primary_entity: projects
+  # 1.3.0 lowered from 0.15: the catalogue fields grew the pack to 72 fields, so the same 9-column extract
+  # now finds 12.5 % (the required project fields still have to be there).
+  # 2.0.0 lowered to 0.05: the activity entities (US-155) grew the pack to ~160 fields.
+  min_confidence: 0.05
+
+entities:
+  - key: projects
+    label: Projects
+    grain: One row per project
+    object_candidates: [projects, tpg_project]
+    primary_key: [project_id]
+    display_fields: [project_number, name, region, cio, current_state, delivery_manager, planned_deployment_date, actual_deployment_date]
+    fields:
+      - {key: project_id, label: Project id, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_projectid]}
+      - {key: project_number, label: Project number, data_type: text, semantic_type: identifier, columns: [project_number, tpgmea_projectnumber, tpgmea_pprojectnumber]}
+      - {key: name, label: Project name, data_type: text, columns: [name, tpg_title, tpg_name]}
+      - {key: portfolio, label: Portfolio, data_type: text, columns: [portfolio]}
+      - {key: program, label: Programme, data_type: text, columns: [program, programme]}
+      - {key: status, label: Status, data_type: text, required: true, columns: [status, statecodename], blank_handling: "Blank status is excluded and counted as 'status not set'."}
+      - {key: current_state, label: Current state, data_type: text, required: true, columns: [current_state, tpg_projectstatusname, statuscodename]}
+      - {key: lifecycle_phase, label: Lifecycle phase, data_type: text, columns: [lifecycle_phase]}
+      - {key: cio, label: CIO, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [cio, tpgmea_customcio]}
+      - {key: region, label: Region, data_type: text, columns: [region, tpgmea_region]}
+      - {key: delivery_manager, label: Delivery manager, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [delivery_manager, tpgmea_deliverymanager]}
+      - {key: project_manager, label: Project manager, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [project_manager, tpgmea_pdeliverymanager]}
+      - {key: priority, label: Priority, data_type: text, columns: [priority]}
+      - {key: platform, label: Platform, data_type: text, columns: [platform]}
+      - {key: key_priority_project, label: Key priority project, data_type: text, columns: [key_priority_project, tpgmea_keypriorityprojectname]}
+      - {key: percent_complete, label: Percent complete, data_type: decimal, semantic_type: percent, columns: [percent_complete]}
+      - {key: overall_kpi, label: Reported status, data_type: text, columns: [overall_kpi]}
+      - {key: schedule_kpi, label: Schedule KPI, data_type: text, columns: [schedule_kpi]}
+      - {key: cost_kpi, label: Cost KPI, data_type: text, columns: [cost_kpi]}
+      - {key: issue_kpi, label: Issues KPI, data_type: text, columns: [issue_kpi]}
+      - {key: planned_deployment_date, label: Planned deployment date, data_type: date, required: true, columns: [planned_deployment_date, tpgmea_planneddeploymentdate, tpgmea_productdeploydate]}
+      - {key: first_baselined_deployment_date, label: First baselined deployment date, data_type: date, columns: [first_baselined_deployment_date, tpgmea_firstbaselineddate, tpgmea_firstbaselinedpdd]}
+      - {key: actual_deployment_date, label: Actual deployment date, data_type: date, columns: [actual_deployment_date, tpgmea_actualdeploymentdate]}
+      - {key: actual_project_start_date, label: Actual start date, data_type: date, columns: [actual_project_start_date]}
+      - {key: on_hold_date, label: On hold since, data_type: date, columns: [on_hold_date, tpgmea_projectputonholddate]}
+      - {key: on_hold_reason, label: Hold reason, data_type: text, columns: [on_hold_reason, tpgmea_projectputonholdreason]}
+      - {key: budget_code, label: Budget code, data_type: text, columns: [budget_code, tpgmea_budgetcode]}
+      - {key: budget_type, label: Budget type, data_type: text, values: [CAPEX, OPEX], columns: [budget_type, tpgmea_budgettype]}
+      - {key: approved_budget_value_usd, label: Approved budget (USD), data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, columns: [approved_budget_value_usd, tpgmea_approvedbudgetvaluesusd]}
+      - {key: cost_total_usd, label: "Forecast cost (EAC, USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, description: "Forecast at completion (EAC). Not actual spend.", columns: [cost_total_usd, tpgmea_costtotal_usd, tpgmea_customcosttotalusd]}
+      - {key: cost_internal_usd, label: "Forecast cost: internal (USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, columns: [cost_internal_usd, tpgmea_costinternalusd]}
+      - {key: cost_external_usd, label: "Forecast cost: external (USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, columns: [cost_external_usd, tpgmea_costexternalusd]}
+      - {key: cost_contingency_usd, label: "Forecast cost: contingency (USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, columns: [cost_contingency_usd, tpgmea_costcontingencyusd]}
+      - {key: cost_hw_usd, label: "Forecast cost: hardware (USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, columns: [cost_hw_usd, tpgmea_costhwusd]}
+      - {key: cost_sw_usd, label: "Forecast cost: software (USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, columns: [cost_sw_usd, tpgmea_costswusd]}
+      - {key: estimated_tcv_usd, label: Estimated TCV (USD), data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, description: Estimated total contract value., columns: [estimated_tcv_usd, tpgmea_estimatedtcvusd]}
+      - {key: approved_pcr_counter, label: Approved change requests, data_type: integer, columns: [approved_pcr_counter, tpgmea_approvedpcrcounter]}
+      - {key: project_request_id, label: Originating request, data_type: text, semantic_type: identifier, columns: [project_request_id, tpg_projectrequest]}
+      - {key: modified_on, label: Last modified, data_type: datetime, columns: [modified_on, modifiedon]}
+      - {key: created_on, label: Created on, data_type: datetime, columns: [created_on, createdon]}
+      - {key: planning_stage_end_date, label: Planning stage planned end, data_type: date, columns: [planning_stage_end_date, tpgmea_planningstagedate]}
+      - {key: design_stage_end_date, label: Design stage planned end, data_type: date, columns: [design_stage_end_date, tpgmea_designedstagedate]}
+      - {key: build_stage_end_date, label: Build stage planned end, data_type: date, columns: [build_stage_end_date, tpgmea_buildenddate]}
+      - {key: test_stage_end_date, label: Test stage planned end, data_type: date, columns: [test_stage_end_date, tpgmea_testenddate]}
+      - {key: implementation_stage_end_date, label: Implementation stage planned end, data_type: date, columns: [implementation_stage_end_date, tpgmea_implementationenddate]}
+      - {key: warranty_stage_end_date, label: Warranty and closure planned end, data_type: date, columns: [warranty_stage_end_date, tpgmea_warrantyandclosurestagedate]}
+      - {key: closure_approval_status, label: Closure approval, data_type: text, columns: [closure_approval_status, tpgmea_closeapprovalstatus]}
+      - {key: closure_date, label: Closure date, data_type: date, columns: [closure_date, tpgmea_projectclosuredate]}
+
+  - key: project_requests
+    label: Project requests
+    grain: One row per demand request
+    object_candidates: [project_requests, tpg_projectrequests, tpg_projectrequest]
+    primary_key: [project_request_id]
+    display_fields: [title, request_state, region, cio, priority, dou_planned_date, sow_planned_date]
+    fields:
+      - {key: project_request_id, label: Request id, data_type: text, semantic_type: identifier, required: true, columns: [project_request_id, tpg_projectrequestid]}
+      - {key: project_number, label: Converted project number, data_type: text, semantic_type: identifier, columns: [project_number]}
+      - {key: title, label: Request title, data_type: text, columns: [title]}
+      - {key: request_state, label: Request state, data_type: text, required: true, columns: [request_state, tpg_requeststatename, statuscodename]}
+      - {key: cio, label: CIO, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [cio, tpgmea_customcio]}
+      - {key: region, label: Region, data_type: text, columns: [region, tpgmea_region]}
+      - {key: priority, label: Priority, data_type: text, columns: [priority]}
+      - {key: dou_required, label: DOU required, data_type: text, columns: [dou_required, tpgmea_dourequired]}
+      - {key: dou_planned_date, label: DOU planned date, data_type: date, columns: [dou_planned_date, tpgmea_planneddouissuancedate]}
+      - {key: dou_issued_date, label: DOU issued date, data_type: date, columns: [dou_issued_date, tpgmea_dousubmissiondate]}
+      - {key: darb_exempted, label: DARB exempted, data_type: text, columns: [darb_exempted]}
+      - {key: darb_review_date, label: DARB review date, data_type: date, columns: [darb_review_date, tpgmea_darbreviewdate]}
+      - {key: darb_approval_date, label: DARB approval date, data_type: date, columns: [darb_approval_date, tpgmea_darbapprovaltimestamp]}
+      - {key: sow_planned_date, label: SOW planned date, data_type: date, columns: [sow_planned_date, tpgmea_tentativedateofsowissuance]}
+      - {key: sow_issued_date, label: SOW issued date, data_type: date, columns: [sow_issued_date, tpgmea_sowissueddate]}
+      - {key: approved_budget_value_usd, label: Approved budget (USD), data_type: decimal, semantic_type: currency, sensitivity: confidential, columns: [approved_budget_value_usd, tpgmea_approvedbudgetvaluesusd]}
+      - {key: cost_total_usd, label: Estimated cost (USD), data_type: decimal, semantic_type: currency, sensitivity: confidential, description: "Estimate recorded on the request. Not actual spend.", columns: [cost_total_usd, tpgmea_costtotal_usd]}
+      - {key: total_setup_revenue_usd, label: Setup revenue (USD), data_type: decimal, semantic_type: currency, sensitivity: confidential, columns: [total_setup_revenue_usd]}
+      - {key: recurring_revenue_annual_baseline_usd, label: Annual recurring revenue (USD), data_type: decimal, semantic_type: currency, sensitivity: confidential, columns: [recurring_revenue_annual_baseline_usd]}
+      - {key: efforts_internal_mandays, label: "Internal effort (man-days)", data_type: integer, columns: [efforts_internal_mandays, tpgmea_totalinternalmds]}
+      - {key: efforts_external_mandays, label: "External effort (man-days)", data_type: integer, columns: [efforts_external_mandays, tpgmea_totalexternalmds]}
+      - {key: efforts_saba_mandays, label: "SA/BA effort (man-days)", data_type: integer, columns: [efforts_saba_mandays, tpgmea_baplannedefforts]}
+      - {key: intake_gate, label: Intake gate, data_type: text, columns: [intake_gate, tpgmea_stage]}
+      - {key: delivery_manager, label: Delivery manager, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [delivery_manager, tpgmea_deliverymanager]}
+      - {key: platform, label: Platform, data_type: text, columns: [platform, tpgmea_platform]}
+      - {key: budget_type, label: Budget type, data_type: text, values: [CAPEX, OPEX], columns: [budget_type, tpgmea_budgettype]}
+      - {key: budget_code, label: Budget code, data_type: text, columns: [budget_code, tpgmea_budgetcode]}
+      - {key: on_hold_date, label: On hold since, data_type: date, columns: [on_hold_date, tpgmea_onholddate]}
+      - {key: on_hold_reason, label: Hold reason, data_type: text, columns: [on_hold_reason, tpgmea_onholdreason]}
+      - {key: stage1_discovery_planned_end_date, label: Discovery planned end, data_type: date, columns: [stage1_discovery_planned_end_date, tpgmea_stage1discoveryplannedenddate]}
+      - {key: stage1_discovery_actual_end_date, label: Discovery actual end, data_type: date, columns: [stage1_discovery_actual_end_date, tpgmea_stage1discoveryactualenddate]}
+      - {key: created_on, label: Raised on, data_type: datetime, columns: [created_on, createdon]}
+      - {key: is_change_request, label: Change request, data_type: text, values: ["Yes", "No"], columns: [is_change_request, tpgmea_isthisacrrequestname]}
+      - {key: cr_reason, label: Change request reason, data_type: text, columns: [cr_reason, tpgmea_crreasonname]}
+      - {key: master_project_id, label: Master project, data_type: text, semantic_type: identifier, columns: [master_project_id, tpgmea_masterprojectidforcrname]}
+
+  # ---- activity entities (US-155): one row per record, linked to its project by project_id
+  - key: change_requests
+    label: Project changes (PCRs)
+    grain: One row per project change request (PCR)
+    object_candidates: [change_requests, tpg_change]
+    synonyms: [pcrs, pcr]
+    primary_key: [change_request_id]
+    display_fields: [pcr_number, project_name, reason, approval_status, golive_change, requested_on]
+    fields:
+      - {key: change_request_id, label: PCR id, data_type: text, semantic_type: identifier, required: true, columns: [change_request_id, tpg_changeid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: pcr_number, label: PCR number, data_type: text, semantic_type: identifier, columns: [pcr_number, tpgmea_pcrnumber]}
+      - {key: title, label: PCR title, data_type: text, columns: [title, tpg_title]}
+      - {key: reason, label: PCR reason, data_type: text, columns: [reason, tpgmea_reasonforpcrname]}
+      - {key: change_type, label: Change type, data_type: text, columns: [change_type, tpg_changetypename]}
+      - {key: approval_status, label: PCR approval, data_type: text, columns: [approval_status, tpg_approvalname]}
+      - {key: golive_change, label: Changes the go-live date, data_type: text, values: ["Yes", "No"], columns: [golive_change, tpgmea_changeinplannedgolivedatename]}
+      - {key: additional_cost_usd, label: "Additional cost (USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, description: "Cost the change adds to the forecast. Not actual spend.", columns: [additional_cost_usd, tpgmea_additionalcostusd]}
+      - {key: requested_on, label: Requested on, data_type: date, columns: [requested_on, tpg_requesteddate]}
+
+  - key: status_reports
+    label: Status reports
+    grain: One row per project status report
+    object_candidates: [status_reports, tpg_statusreport]
+    primary_key: [status_report_id]
+    display_fields: [project_name, report_date, title, submitted_to]
+    fields:
+      - {key: status_report_id, label: Status report id, data_type: text, semantic_type: identifier, required: true, columns: [status_report_id, tpg_statusreportid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: title, label: Report title, data_type: text, columns: [title, tpg_title]}
+      - {key: report_date, label: Report date, data_type: date, required: true, columns: [report_date, tpg_reportdate]}
+      - {key: submitted_to, label: Submitted to, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [submitted_to, tpg_submittedtoname]}
+
+  - key: risks
+    label: Risks
+    grain: One row per project risk
+    object_candidates: [risks, tpg_risk]
+    primary_key: [risk_id]
+    display_fields: [project_name, title, category, state, exposure, due_date, owner]
+    fields:
+      - {key: risk_id, label: Risk id, data_type: text, semantic_type: identifier, required: true, columns: [risk_id, tpg_riskid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: title, label: Risk, data_type: text, columns: [title, tpg_title]}
+      - {key: category, label: Risk category, data_type: text, columns: [category, tpg_categoryname]}
+      - {key: state, label: Risk state, data_type: text, columns: [state, tpg_statename]}
+      - {key: likelihood, label: Likelihood, data_type: integer, columns: [likelihood, tpg_likelihood]}
+      - {key: consequence, label: Consequence, data_type: integer, columns: [consequence, tpg_consequence]}
+      - {key: exposure, label: Exposure, data_type: decimal, description: "Likelihood × consequence, as recorded on the risk.", columns: [exposure, tpg_exposure]}
+      - {key: cost_exposure_usd, label: "Cost exposure (USD)", data_type: decimal, semantic_type: currency, sensitivity: confidential, format: {currency: USD}, columns: [cost_exposure_usd, tpg_costexposure]}
+      - {key: due_date, label: Due date, data_type: date, columns: [due_date, tpg_duedate]}
+      - {key: owner, label: Owner, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [owner, tpg_assignedtoname]}
+
+  - key: issues
+    label: Issues
+    grain: One row per project issue
+    object_candidates: [issues, tpg_issue]
+    primary_key: [issue_id]
+    display_fields: [project_name, title, priority, status, due_date, owner]
+    fields:
+      - {key: issue_id, label: Issue id, data_type: text, semantic_type: identifier, required: true, columns: [issue_id, tpg_issueid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: title, label: Issue, data_type: text, columns: [title, tpg_title]}
+      - {key: category, label: Issue category, data_type: text, columns: [category, tpg_categoryname]}
+      - {key: priority, label: Issue priority, data_type: text, columns: [priority, tpg_priorityname]}
+      - {key: status, label: Issue status, data_type: text, columns: [status, tpg_statusname]}
+      - {key: due_date, label: Due date, data_type: date, columns: [due_date, tpg_duedate]}
+      - {key: owner, label: Owner, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [owner, tpg_assignedtoname]}
+
+  - key: action_items
+    label: Action items
+    grain: One row per project action item
+    object_candidates: [action_items, tpg_actionitem]
+    primary_key: [action_item_id]
+    display_fields: [project_name, title, state, due_date, owner]
+    fields:
+      - {key: action_item_id, label: Action item id, data_type: text, semantic_type: identifier, required: true, columns: [action_item_id, tpg_actionitemid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: title, label: Action item, data_type: text, columns: [title, tpg_title]}
+      - {key: state, label: Action state, data_type: text, columns: [state, tpg_statename]}
+      - {key: due_date, label: Due date, data_type: date, columns: [due_date, tpg_duedate]}
+      - {key: owner, label: Owner, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [owner, tpg_assignedtoname]}
+
+  - key: decisions
+    label: Decisions
+    grain: One row per project decision
+    object_candidates: [decisions, tpg_decision]
+    primary_key: [decision_id]
+    display_fields: [project_name, decision, status, target_date]
+    fields:
+      - {key: decision_id, label: Decision id, data_type: text, semantic_type: identifier, required: true, columns: [decision_id, tpg_decisionid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: decision, label: Decision, data_type: text, columns: [decision, tpg_decision]}
+      - {key: status, label: Decision status, data_type: text, columns: [status, tpg_statusname]}
+      - {key: target_date, label: Target date, data_type: date, columns: [target_date, tpg_targetdate]}
+
+  - key: timesheets
+    label: Timesheets
+    grain: One row per timesheet line (hours of one person on one task)
+    object_candidates: [timesheets, tpg_timesheet]
+    primary_key: [timesheet_id]
+    display_fields: [project_name, submitter, task_name, status, total_hours]
+    fields:
+      - {key: timesheet_id, label: Timesheet id, data_type: text, semantic_type: identifier, required: true, columns: [timesheet_id, tpg_timesheetid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: submitter, label: Person, data_type: text, sensitivity: personal, semantic_type: person_name, columns: [submitter, tpg_submittername]}
+      - {key: task_name, label: Task, data_type: text, columns: [task_name, tpg_taskname]}
+      - {key: status, label: Timesheet status, data_type: text, columns: [status, tpg_statusname]}
+      - {key: total_hours, label: Hours, data_type: decimal, required: true, columns: [total_hours, tpg_total]}
+      - {key: created_on, label: Entered on, data_type: datetime, columns: [created_on, createdon]}
+
+  - key: project_tasks
+    label: Project tasks
+    grain: One row per task of a project plan
+    object_candidates: [project_tasks, tpg_projecttask]
+    primary_key: [task_id]
+    display_fields: [project_name, subject, is_critical, progress, start_date, finish_date]
+    fields:
+      - {key: task_id, label: Task id, data_type: text, semantic_type: identifier, required: true, columns: [task_id, tpg_projecttaskid]}
+      - {key: project_id, label: Project, data_type: text, semantic_type: identifier, required: true, columns: [project_id, tpg_project]}
+      - {key: project_name, label: Project name, data_type: text, columns: [project_name, tpg_projectname]}
+      - {key: subject, label: Task, data_type: text, columns: [subject, tpg_subject]}
+      - {key: is_critical, label: On the critical path, data_type: text, values: ["Yes", "No"], columns: [is_critical, tpg_iscriticalname]}
+      - {key: is_summary, label: Summary task, data_type: text, values: ["Yes", "No"], columns: [is_summary, tpg_issummaryname]}
+      - {key: progress, label: Progress (%), data_type: decimal, semantic_type: percent, columns: [progress, tpg_progress]}
+      - {key: start_date, label: Start, data_type: date, columns: [start_date, tpg_start]}
+      - {key: finish_date, label: Finish, data_type: date, columns: [finish_date, tpg_finish]}
+
+links:
+  - {from_entity: projects, to_entity: project_requests, from_fields: [project_request_id], to_fields: [project_request_id], cardinality: many_to_one}
+  # US-155: an activity row (PCR, status report, risk …) is visible only when its project is in the person's scope.
+  - {from_entity: change_requests, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+  - {from_entity: status_reports, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+  - {from_entity: risks, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+  - {from_entity: issues, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+  - {from_entity: action_items, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+  - {from_entity: decisions, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+  - {from_entity: timesheets, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+  - {from_entity: project_tasks, to_entity: projects, from_fields: [project_id], to_fields: [project_id], cardinality: many_to_one, inherits_scope: true}
+
+measures:
+  - key: total_projects
+    label: Projects
+    entity: projects
+    plain_rule: Every project record.
+    definition: "Every project record in any state."
+    expression: {agg: count}
+  - key: open_projects
+    label: Open projects
+    entity: projects
+    rule_ref: RULE-026
+    synonyms: [open portfolio, active projects]
+    plain_rule: "Projects whose current state is Project Created, Active or On Hold."
+    blank_handling: Projects with a blank current state are not counted.
+    definition: "Projects not yet closed: Project Created, Active and On Hold."
+    expression: {agg: count, where: &open_project {field: current_state, op: in, values: [Project Created, Active, On Hold]}}
+  - key: inactive_projects
+    label: Closed projects
+    entity: projects
+    rule_ref: RULE-026
+    plain_rule: "Projects whose current state is anything other than Project Created, Active or On Hold."
+    definition: "Projects closed in any way (completed, dropped, cancelled…)."
+    expression: {agg: count, where: {field: current_state, op: not_in, values: [Project Created, Active, On Hold]}}
+  - key: in_delivery
+    label: Projects in delivery
+    entity: projects
+    rule_ref: RULE-027
+    plain_rule: "Projects whose current state is Active. Project Created and On Hold are open but not in delivery."
+    definition: "Projects actively being delivered (current state Active)."
+    expression: {agg: count, where: {field: current_state, op: "=", value: Active}}
+  - key: on_hold
+    label: Projects on hold
+    entity: projects
+    rule_ref: RULE-027
+    plain_rule: Open projects whose current state is On Hold.
+    definition: "Open projects currently paused."
+    expression: {agg: count, where: {all: [*open_project, {field: current_state, op: "=", value: On Hold}]}}
+  - key: project_created
+    label: Projects not yet started
+    entity: projects
+    rule_ref: RULE-027
+    plain_rule: Open projects whose current state is Project Created.
+    definition: "Open projects created but not yet started."
+    expression: {agg: count, where: {all: [*open_project, {field: current_state, op: "=", value: Project Created}]}}
+  - key: overdue_go_lives
+    label: Overdue go-lives
+    entity: projects
+    rule_ref: RULE-028
+    synonyms: [overdue projects, late go-lives]
+    plain_rule: "Projects in delivery whose planned deployment date is before the reporting date and that are not yet deployed. A planned date equal to the reporting date is not overdue."
+    definition: "Projects in delivery past their planned go-live and not deployed; due today is not overdue."
+    expression:
+      agg: count
+      where: {all: [{field: current_state, op: "=", value: Active}, {field: planned_deployment_date, op: "<", value: {asof_offset_days: 0}}, {field: actual_deployment_date, op: is_null}]}
+  - key: schedule_risk
+    label: Schedule risk
+    entity: projects
+    rule_ref: RULE-029
+    plain_rule: "Open projects whose schedule KPI is Red or Amber (Yellow). A PM signal, distinct from overdue."
+    definition: "Open projects whose PM reports schedule Red or Amber."
+    expression: {agg: count, where: {all: [*open_project, {field: schedule_kpi, op: in, values: [Red, Yellow, Amber]}]}}
+  - key: rag_contradictions
+    label: RAG contradictions
+    entity: projects
+    rule_ref: RULE-030
+    plain_rule: "Open, undeployed projects reported Green at least 15 days after their planned date, or reported Red at least 30 days before it."
+    definition: "Reported schedule colour disagrees with the dates (Green 15+ days late, Red 30+ days out)."
+    expression:
+      agg: count
+      where:
+        all:
+          - *open_project
+          - {field: actual_deployment_date, op: is_null}
+          - any:
+              - all: [{field: schedule_kpi, op: "=", value: Green}, {field: planned_deployment_date, op: "<=", value: {asof_offset_days: -15}}]
+              - all: [{field: schedule_kpi, op: "=", value: Red}, {field: planned_deployment_date, op: ">=", value: {asof_offset_days: 30}}]
+  - key: stale_projects
+    label: Stale projects
+    entity: projects
+    rule_ref: RULE-031
+    plain_rule: "Projects in delivery not modified for more than 30 days. Any edit resets this, so it is not a status-report compliance measure."
+    definition: "Projects in delivery not edited for more than 30 days."
+    expression: {agg: count, where: {all: [{field: current_state, op: "=", value: Active}, {field: modified_on, op: "<", value: {asof_offset_days: -30}}]}}
+  - key: go_lives_0_30
+    label: Go-lives in the next 30 days
+    entity: projects
+    rule_ref: RULE-032
+    plain_rule: "Open, undeployed projects planned from the reporting date up to 30 days after it (by planned deployment date)."
+    definition: "Undeployed open projects planned to go live within 30 days."
+    expression:
+      agg: count
+      where: {all: [*open_project, {field: actual_deployment_date, op: is_null}, {field: planned_deployment_date, op: ">=", value: {asof_offset_days: 0}}, {field: planned_deployment_date, op: "<=", value: {asof_offset_days: 30}}]}
+  - key: go_lives_31_60
+    label: Go-lives in 31–60 days
+    entity: projects
+    rule_ref: RULE-032
+    plain_rule: Open, undeployed projects planned more than 30 and up to 60 days after the reporting date.
+    definition: "Undeployed open projects planned to go live in 31–60 days."
+    expression:
+      agg: count
+      where: {all: [*open_project, {field: actual_deployment_date, op: is_null}, {field: planned_deployment_date, op: ">", value: {asof_offset_days: 30}}, {field: planned_deployment_date, op: "<=", value: {asof_offset_days: 60}}]}
+  - key: go_lives_61_90
+    label: Go-lives in 61–90 days
+    entity: projects
+    rule_ref: RULE-032
+    plain_rule: Open, undeployed projects planned more than 60 and up to 90 days after the reporting date.
+    definition: "Undeployed open projects planned to go live in 61–90 days."
+    expression:
+      agg: count
+      where: {all: [*open_project, {field: actual_deployment_date, op: is_null}, {field: planned_deployment_date, op: ">", value: {asof_offset_days: 60}}, {field: planned_deployment_date, op: "<=", value: {asof_offset_days: 90}}]}
+  - key: over_budget
+    label: Over-budget projects
+    entity: projects
+    rule_ref: RULE-036
+    plain_rule: "Projects whose forecast cost (EAC) is above the approved budget, where the budget is above 0. EAC is a forecast, not actual spend."
+    blank_handling: A blank or zero budget is never over budget; a blank forecast is not flagged.
+    definition: "Projects whose forecast (EAC) is above an approved budget; not spend."
+    expression: {agg: count, where: {all: [{field: approved_budget_value_usd, op: ">", value: 0}, {field: cost_total_usd, op: ">", other_field: approved_budget_value_usd}]}}
+  - key: approved_budget_total
+    label: Approved budget (USD)
+    entity: projects
+    rule_ref: RULE-037
+    format: currency
+    plain_rule: "Sum of approved budget over open projects with a budget above 0 and a forecast of 0 or more."
+    definition: "Approved budget over open projects that have both a budget and a forecast."
+    expression: &comparable_budget
+      agg: sum
+      field: approved_budget_value_usd
+      where: &comparable {all: [*open_project, {field: approved_budget_value_usd, op: ">", value: 0}, {field: cost_total_usd, op: ">=", value: 0}]}
+  - key: forecast_cost_total
+    label: "Forecast cost (EAC, USD)"
+    entity: projects
+    rule_ref: RULE-037
+    format: currency
+    plain_rule: "Sum of forecast cost (EAC) over the same comparable open projects. Not actual spend."
+    definition: "Forecast at completion over the same projects; not actual spend."
+    expression: &comparable_cost {agg: sum, field: cost_total_usd, where: *comparable}
+  - key: budget_variance
+    label: Forecast variance (USD)
+    entity: projects
+    rule_ref: RULE-037
+    format: currency
+    plain_rule: Forecast cost (EAC) minus approved budget over comparable open projects. Negative means under budget.
+    definition: "Forecast minus approved budget; negative is under budget."
+    expression: {op: sub, left: *comparable_cost, right: *comparable_budget}
+  - key: budget_variance_pct
+    label: Forecast variance (%)
+    entity: projects
+    rule_ref: RULE-037
+    format: percent
+    plain_rule: Forecast variance divided by approved budget, as a percentage (blank when the approved total is 0).
+    definition: "Forecast variance as a percentage of approved budget."
+    expression: {op: div, scale: 100, left: {op: sub, left: *comparable_cost, right: *comparable_budget}, right: *comparable_budget}
+  - key: projects_excluded
+    label: Projects excluded from finance totals
+    entity: projects
+    rule_ref: RULE-037
+    plain_rule: Open projects without a comparable budget and forecast (shown alongside the totals).
+    definition: "Open projects left out of finance totals for lack of a budget or forecast."
+    expression:
+      op: sub
+      left: {agg: count, where: *open_project}
+      right: {agg: count, where: *comparable}
+  - key: open_demand
+    label: Open demand requests
+    entity: project_requests
+    rule_ref: RULE-038
+    plain_rule: Requests in state New, Active, On Hold or Return to Requester.
+    definition: "Requests still in the pipeline: New, Active, On Hold, Return to Requester."
+    expression: &open_request {agg: count, where: {field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}}
+  - key: overdue_dou
+    label: Overdue DOU gates
+    entity: project_requests
+    rule_ref: RULE-039
+    plain_rule: Open requests that need a DOU, whose planned DOU date is before the reporting date, with no DOU issued.
+    definition: "Open requests past the planned DOU date with no DOU issued."
+    expression:
+      agg: count
+      where: {all: [{field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}, {field: dou_required, op: "=", value: "Yes"}, {field: dou_planned_date, op: "<", value: {asof_offset_days: 0}}, {field: dou_issued_date, op: is_null}]}
+  - key: overdue_darb
+    label: Overdue DARB gates
+    entity: project_requests
+    rule_ref: RULE-039
+    plain_rule: Open, non-exempt requests whose DARB review date is before the reporting date and that are not yet approved.
+    definition: "Open, non-exempt requests past the DARB review date and not approved."
+    expression:
+      agg: count
+      where: {all: [{field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}, {field: darb_exempted, op: "=", value: "No"}, {field: darb_review_date, op: "<", value: {asof_offset_days: 0}}, {field: darb_approval_date, op: is_null}]}
+  - key: overdue_sow
+    label: Overdue SOW gates
+    entity: project_requests
+    rule_ref: RULE-039
+    plain_rule: Open requests whose planned SOW date is before the reporting date with no SOW issued.
+    definition: "Open requests past the planned SOW date with no SOW issued."
+    expression:
+      agg: count
+      where: {all: [{field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}, {field: sow_planned_date, op: "<", value: {asof_offset_days: 0}}, {field: sow_issued_date, op: is_null}]}
+  - key: total_requests
+    label: Requests
+    entity: project_requests
+    plain_rule: Every demand request.
+    definition: "Every demand request in any state."
+    expression: {agg: count}
+
+  # ---------------------------------------------------------------- US-156: the report catalogue's measures
+  # Populations: open projects = current state Project Created, Active or On Hold; in delivery = current state
+  # Active; open requests = New, Active, On Hold, Return to Requester. Every date rule uses the reporting date.
+  - key: reported_green_pct
+    label: Reported Green (%)
+    entity: projects
+    format: percent
+    plain_rule: "Open projects reported Green, as a share of open projects with a reported status. Not set is left out of the denominator."
+    definition: Share of open projects whose PM reports Green; projects without a reported status are not counted.
+    expression: &rag_pct {op: div, scale: 100, left: {agg: count, where: {all: [*open_project, {field: overall_kpi, op: "=", value: Green}]}}, right: &rag_known {agg: count, where: {all: [*open_project, {field: overall_kpi, op: in, values: [Green, Yellow, Amber, Red]}]}}}
+  - key: reported_amber_pct
+    label: Reported Amber (%)
+    entity: projects
+    format: percent
+    plain_rule: "Open projects reported Amber (Yellow), as a share of open projects with a reported status."
+    definition: Share of open projects whose PM reports Amber; Not set is left out.
+    expression: {op: div, scale: 100, left: {agg: count, where: {all: [*open_project, {field: overall_kpi, op: in, values: [Yellow, Amber]}]}}, right: *rag_known}
+  - key: reported_red_pct
+    label: Reported Red (%)
+    entity: projects
+    format: percent
+    plain_rule: "Open projects reported Red, as a share of open projects with a reported status."
+    definition: Share of open projects whose PM reports Red; Not set is left out.
+    expression: {op: div, scale: 100, left: {agg: count, where: {all: [*open_project, {field: overall_kpi, op: "=", value: Red}]}}, right: *rag_known}
+  - key: status_not_set
+    label: Reported status not set
+    entity: projects
+    plain_rule: Open projects with no reported status. Shown as Not set, never as Green.
+    definition: Open projects whose PM has not reported a status.
+    expression: {agg: count, where: {all: [*open_project, {any: [{field: overall_kpi, op: is_null}, {field: overall_kpi, op: not_in, values: [Green, Yellow, Amber, Red]}]}]}}
+
+  - key: avg_health_score
+    label: Average calculated health
+    entity: projects
+    rule_ref: RULE-033
+    format: decimal
+    plain_rule: "Average calculated health score (0–100) of open projects with enough evidence (at least 60 % of the weight). Projects with insufficient data are left out."
+    definition: Mean of the 4-factor health score (schedule, cost, progress, issues) over open projects with enough data.
+    expression: {agg: avg, value: {calculator: pmo_health_v1, output: score}, where: *open_project}
+  - key: health_green
+    label: Calculated Green
+    entity: projects
+    rule_ref: RULE-033
+    plain_rule: Open projects whose calculated health is Green (score 75–100, no override).
+    definition: Open projects scoring 75 or more on calculated health.
+    expression: {agg: count, where: {all: [*open_project, {of: &health {calculator: pmo_health_v1, output: status}, op: "=", value: Green}]}}
+  - key: health_amber
+    label: Calculated Amber
+    entity: projects
+    rule_ref: RULE-033
+    plain_rule: Open projects whose calculated health is Amber (score 50–74, or capped by a cost score of 25).
+    definition: Open projects scoring 50–74 on calculated health.
+    expression: {agg: count, where: {all: [*open_project, {of: *health, op: "=", value: Amber}]}}
+  - key: health_red
+    label: Calculated Red
+    entity: projects
+    rule_ref: "RULE-033, RULE-035"
+    plain_rule: Open projects whose calculated health is Red (score below 50, or a schedule, cost or issues score of 0).
+    definition: Open projects scoring below 50, or with a fatal schedule, cost or issues factor.
+    expression: {agg: count, where: {all: [*open_project, {of: *health, op: "=", value: Red}]}}
+  - key: health_insufficient
+    label: Insufficient data
+    entity: projects
+    rule_ref: RULE-034
+    plain_rule: Open projects whose health factors cover less than 60 % of the weight. Never counted as Green.
+    definition: Open projects without enough data to score health.
+    expression: {agg: count, where: {all: [*open_project, {of: *health, op: "=", value: Insufficient data}]}}
+  - key: key_priorities_attention
+    label: Key priorities needing attention
+    entity: projects
+    plain_rule: Open key priority projects whose calculated health is Red or Amber.
+    definition: Key priority projects with calculated Red or Amber health.
+    expression: {agg: count, where: {all: [*open_project, {field: key_priority_project, op: "=", value: "Yes"}, {of: *health, op: in, values: [Red, Amber]}]}}
+
+  - key: slip_vs_baseline_median
+    label: Median slip vs first baseline (days)
+    entity: projects
+    format: decimal
+    plain_rule: "Median of planned deployment date minus first baselined date, over open projects with both dates. Positive means later than first planned."
+    definition: Typical number of days open projects have moved from their first baselined go-live.
+    expression: {agg: median, value: &slip {days_from: first_baselined_deployment_date, days_to: planned_deployment_date}, where: *open_project}
+  - key: slip_vs_baseline_avg
+    label: Average slip vs first baseline (days)
+    entity: projects
+    format: decimal
+    plain_rule: Average of planned deployment date minus first baselined date, over open projects with both dates.
+    definition: Average days open projects have moved from their first baselined go-live.
+    expression: {agg: avg, value: *slip, where: *open_project}
+  - key: slip_vs_baseline_p85
+    label: Slip vs first baseline, 85th percentile (days)
+    entity: projects
+    format: decimal
+    plain_rule: The slip (planned minus first baselined date) that 85 % of open projects with both dates stay within.
+    definition: Predictability — 85 % of open projects have slipped no more than this.
+    expression: {agg: percentile, p: 0.85, value: *slip, where: *open_project}
+  - key: overdue_over_90
+    label: Overdue more than 90 days
+    entity: projects
+    rule_ref: RULE-028
+    plain_rule: "Overdue go-lives (in delivery, planned date before the reporting date, not deployed) more than 90 days past the planned date."
+    definition: Projects in delivery more than 90 days past their planned go-live.
+    expression: {agg: count, where: {all: [{field: current_state, op: "=", value: Active}, {field: planned_deployment_date, op: "<", value: {asof_offset_days: -90}}, {field: actual_deployment_date, op: is_null}]}}
+  - key: most_overdue_days
+    label: Most overdue (days)
+    entity: projects
+    rule_ref: RULE-028
+    format: integer
+    plain_rule: The largest number of days an overdue go-live is past its planned date, at the reporting date.
+    definition: Days past planned go-live of the latest project in delivery.
+    expression: {agg: max, value: &days_past_due {days_from: planned_deployment_date, days_to: {asof_offset_days: 0}}, where: &overdue {all: [{field: current_state, op: "=", value: Active}, {field: planned_deployment_date, op: "<", value: {asof_offset_days: 0}}, {field: actual_deployment_date, op: is_null}]}}
+  - key: deployed_projects
+    label: Deployed projects
+    entity: projects
+    plain_rule: Projects with an actual deployment date.
+    definition: Projects that have gone live.
+    expression: {agg: count, where: {field: actual_deployment_date, op: not_null}}
+  - key: deployed_on_time
+    label: Deployed on time
+    entity: projects
+    plain_rule: Deployed projects whose actual deployment date is on or before the planned deployment date.
+    definition: Go-lives on or before their planned date.
+    expression: {agg: count, where: {all: [{field: actual_deployment_date, op: not_null}, {field: actual_deployment_date, op: "<=", other_field: planned_deployment_date}]}}
+  - key: median_schedule_variance
+    label: Median schedule variance (days)
+    entity: projects
+    format: decimal
+    plain_rule: Median of actual minus planned deployment date over deployed projects. Positive means late.
+    definition: Typical days between planned and actual go-live; positive is late.
+    expression: {agg: median, value: &variance_days {days_from: planned_deployment_date, days_to: actual_deployment_date}}
+  - key: deployed_over_60_late
+    label: Deployed more than 60 days late
+    entity: projects
+    plain_rule: Deployed projects whose actual deployment date is more than 60 days after the planned date.
+    definition: Go-lives more than 60 days after plan.
+    expression: {agg: count, where: {of: *variance_days, op: ">", value: 60}}
+  - key: on_hold_over_90
+    label: On hold more than 90 days
+    entity: projects
+    plain_rule: "Open projects on hold whose hold started more than 90 days before the reporting date (candidates to restart or drop)."
+    definition: Projects on hold for more than 90 days.
+    expression: {agg: count, where: {all: [&on_hold_now {all: [*open_project, {field: current_state, op: "=", value: On Hold}]}, {field: on_hold_date, op: "<", value: {asof_offset_days: -90}}]}}
+  - key: longest_on_hold_days
+    label: Longest on hold (days)
+    entity: projects
+    plain_rule: Days from the hold date to the reporting date of the project on hold longest.
+    definition: Longest current hold, in days.
+    expression: {agg: max, value: &days_on_hold {days_from: on_hold_date, days_to: {asof_offset_days: 0}}, where: *on_hold_now}
+  - key: avg_on_hold_days
+    label: Average time on hold (days)
+    entity: projects
+    format: decimal
+    plain_rule: Average days from the hold date to the reporting date over projects on hold with a hold date.
+    blank_handling: Projects on hold without a hold date are not counted (shown as not recorded).
+    definition: Average length of current holds, in days.
+    expression: {agg: avg, value: *days_on_hold, where: *on_hold_now}
+
+  - key: baselining_in_scope
+    label: Past planning
+    entity: projects
+    plain_rule: Open projects whose lifecycle phase is past Planning (not Assign PM, TRB Review, Initiation or Planning, and set).
+    definition: Open projects that should have a baseline.
+    expression: &baseline_scope {agg: count, where: &past_planning {all: [*open_project, {field: lifecycle_phase, op: not_null}, {field: lifecycle_phase, op: not_in, values: [Assign PM, TRB Review, Initiation, Planning]}]}}
+  - key: baselined
+    label: Baselined
+    entity: projects
+    plain_rule: Projects past Planning that have a first baselined deployment date.
+    definition: Projects past Planning with a recorded baseline.
+    expression: &baselined {agg: count, where: {all: [*past_planning, {field: first_baselined_deployment_date, op: not_null}]}}
+  - key: baselining_compliance_pct
+    label: Baselining compliance (%)
+    entity: projects
+    format: percent
+    plain_rule: Baselined projects as a share of open projects past Planning.
+    definition: Share of projects past Planning that have a baseline.
+    expression: {op: div, scale: 100, left: *baselined, right: *baseline_scope}
+  - key: budget_code_set
+    label: With a budget code
+    entity: projects
+    plain_rule: Projects in any state that carry a budget code (blank text counts as missing).
+    definition: Projects with a budget code recorded.
+    expression: &with_code {agg: count, where: {all: [{field: budget_code, op: not_null}, {field: budget_code, op: "!=", value: ""}]}}
+  - key: budget_code_compliance_pct
+    label: Budget code compliance (%)
+    entity: projects
+    format: percent
+    plain_rule: Projects with a budget code as a share of all projects.
+    definition: Share of all projects that carry a budget code.
+    expression: {op: div, scale: 100, left: *with_code, right: {agg: count}}
+  - key: pm_assigned
+    label: PM assigned
+    entity: projects
+    plain_rule: Projects in delivery with a delivery manager.
+    definition: Projects in delivery that have a delivery manager.
+    expression: &pm_assigned {agg: count, where: {all: [{field: current_state, op: "=", value: Active}, {field: delivery_manager, op: not_null}]}}
+  - key: pm_assignment_compliance_pct
+    label: PM assignment compliance (%)
+    entity: projects
+    format: percent
+    plain_rule: Projects in delivery with a delivery manager as a share of projects in delivery.
+    definition: Share of projects in delivery with a delivery manager.
+    expression: {op: div, scale: 100, left: *pm_assigned, right: {agg: count, where: {field: current_state, op: "=", value: Active}}}
+
+  - key: forecast_over_budget_15
+    label: Forecast more than 15 % over budget
+    entity: projects
+    rule_ref: RULE-036
+    plain_rule: "Projects whose forecast cost (EAC) is more than 15 % above an approved budget above 0. EAC is a forecast, not actual spend."
+    definition: Projects forecast to finish more than 15 % over their approved budget.
+    expression: {agg: count, where: {all: [{field: approved_budget_value_usd, op: ">", value: 0}, {of: {calc: div, left: cost_total_usd, right: approved_budget_value_usd}, op: ">", value: 1.15}]}}
+  - key: net_forecast_variance
+    label: Net forecast vs budget (USD)
+    entity: projects
+    format: currency
+    plain_rule: "Sum of forecast cost (EAC) minus approved budget over projects in any state with a budget above 0 and a forecast. Positive means forecast above budget."
+    definition: Total forecast above (+) or below (−) approved budget; not spend.
+    expression: {agg: sum, value: {calc: sub, left: cost_total_usd, right: approved_budget_value_usd}, where: {all: [{field: approved_budget_value_usd, op: ">", value: 0}, {field: cost_total_usd, op: not_null}]}}
+  - key: cost_internal_total
+    label: "Forecast cost: internal (USD)"
+    entity: projects
+    format: currency
+    plain_rule: Sum of the internal component of forecast cost (EAC).
+    definition: Internal part of forecast cost; not spend.
+    expression: {agg: sum, field: cost_internal_usd}
+  - key: cost_external_total
+    label: "Forecast cost: external (USD)"
+    entity: projects
+    format: currency
+    plain_rule: Sum of the external component of forecast cost (EAC).
+    definition: External part of forecast cost; not spend.
+    expression: {agg: sum, field: cost_external_usd}
+  - key: cost_contingency_total
+    label: "Forecast cost: contingency (USD)"
+    entity: projects
+    format: currency
+    plain_rule: Sum of the contingency component of forecast cost (EAC).
+    definition: Contingency part of forecast cost; not spend.
+    expression: {agg: sum, field: cost_contingency_usd}
+  - key: cost_hw_total
+    label: "Forecast cost: hardware (USD)"
+    entity: projects
+    format: currency
+    plain_rule: Sum of the hardware component of forecast cost (EAC).
+    definition: Hardware part of forecast cost; not spend.
+    expression: {agg: sum, field: cost_hw_usd}
+  - key: cost_sw_total
+    label: "Forecast cost: software (USD)"
+    entity: projects
+    format: currency
+    plain_rule: Sum of the software component of forecast cost (EAC).
+    definition: Software part of forecast cost; not spend.
+    expression: {agg: sum, field: cost_sw_usd}
+
+  - key: north_star_on_time_tcv_pct
+    label: TCV delivered on time (%)
+    entity: projects
+    format: percent
+    plain_rule: "Estimated TCV of projects deployed in the 12 months to the reporting date within 30 days of their first baseline, as a share of the TCV of all projects deployed in those 12 months with a baseline."
+    definition: North Star — share of value delivered within 30 days of the first baseline over the last 12 months.
+    expression:
+      op: div
+      scale: 100
+      left: {agg: sum, field: estimated_tcv_usd, where: {all: [&deployed_12m {all: [{field: actual_deployment_date, op: ">", value: {asof_offset_days: -365}}, {field: actual_deployment_date, op: "<=", value: {asof_offset_days: 0}}, {field: first_baselined_deployment_date, op: not_null}]}, {of: {days_from: first_baselined_deployment_date, days_to: actual_deployment_date}, op: "<=", value: 30}]}}
+      right: {agg: sum, field: estimated_tcv_usd, where: *deployed_12m}
+  - key: lead_time_median
+    label: Lead time, median (days)
+    entity: projects
+    format: decimal
+    plain_rule: Median days from the originating request being raised to the project's actual deployment, over deployed projects with a request.
+    definition: Typical days from request to go-live.
+    expression: {agg: median, value: &lead_time {days_from: project_requests.created_on, days_to: actual_deployment_date}}
+  - key: lead_time_p85
+    label: Lead time, 85th percentile (days)
+    entity: projects
+    format: decimal
+    plain_rule: The lead time (request raised to deployment) that 85 % of deployed projects with a request stay within.
+    definition: 85 % of go-lives took no longer than this from request.
+    expression: {agg: percentile, p: 0.85, value: *lead_time}
+  - key: throughput_go_lives_month
+    label: Go-lives per month
+    entity: projects
+    format: decimal
+    plain_rule: Projects deployed in the 12 months to the reporting date, divided by 12.
+    definition: Average monthly go-lives over the last 12 months.
+    expression: {op: div, left: &go_lives_12m {agg: count, where: {all: [{field: actual_deployment_date, op: ">", value: {asof_offset_days: -365}}, {field: actual_deployment_date, op: "<=", value: {asof_offset_days: 0}}]}}, right: 12}
+  - key: project_starts_month
+    label: Project starts per month
+    entity: projects
+    format: decimal
+    plain_rule: Projects with an actual start date in the 12 months to the reporting date, divided by 12.
+    definition: Average monthly project starts over the last 12 months.
+    expression: {op: div, left: {agg: count, where: {all: [{field: actual_project_start_date, op: ">", value: {asof_offset_days: -365}}, {field: actual_project_start_date, op: "<=", value: {asof_offset_days: 0}}]}}, right: 12}
+  - key: months_to_clear_wip
+    label: Months to clear WIP
+    entity: projects
+    format: decimal
+    plain_rule: Open projects divided by the monthly go-lives of the last 12 months (blank when nothing went live).
+    definition: How long the open portfolio would take to finish at the current go-live rate.
+    expression: {op: div, scale: 12, left: {agg: count, where: *open_project}, right: *go_lives_12m}
+
+  - key: overdue_gates_total
+    label: Overdue governance actions
+    entity: project_requests
+    rule_ref: RULE-039
+    plain_rule: Overdue DOU, DARB and SOW gates on open requests, added up.
+    definition: Gates past their planned date without sign-off.
+    expression: {op: add, left: {op: add, left: &dou_overdue {agg: count, where: {all: [{field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}, {field: dou_required, op: "=", value: "Yes"}, {field: dou_planned_date, op: "<", value: {asof_offset_days: 0}}, {field: dou_issued_date, op: is_null}]}}, right: {agg: count, where: {all: [{field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}, {field: darb_exempted, op: "=", value: "No"}, {field: darb_review_date, op: "<", value: {asof_offset_days: 0}}, {field: darb_approval_date, op: is_null}]}}}, right: {agg: count, where: {all: [{field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}, {field: sow_planned_date, op: "<", value: {asof_offset_days: 0}}, {field: sow_issued_date, op: is_null}]}}}
+  - key: requests_on_hold_over_180
+    label: Requests on hold more than 180 days
+    entity: project_requests
+    plain_rule: Requests on hold whose hold started more than 180 days before the reporting date.
+    definition: Requests on hold for more than 180 days.
+    expression: {agg: count, where: {all: [{field: request_state, op: "=", value: On Hold}, {field: on_hold_date, op: "<", value: {asof_offset_days: -180}}]}}
+  - key: request_longest_on_hold_days
+    label: Longest request hold (days)
+    entity: project_requests
+    plain_rule: Days from the hold date to the reporting date of the request on hold longest.
+    definition: Longest current request hold, in days.
+    expression: {agg: max, value: {days_from: on_hold_date, days_to: {asof_offset_days: 0}}, where: {field: request_state, op: "=", value: On Hold}}
+  - key: oldest_open_request_days
+    label: Oldest open request (days)
+    entity: project_requests
+    plain_rule: Days from the oldest open request being raised to the reporting date.
+    definition: Age of the oldest open request.
+    expression: {agg: max, value: {days_from: created_on, days_to: {asof_offset_days: 0}}, where: {field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}}
+  - key: estimated_cost_total
+    label: Estimated cost (USD)
+    entity: project_requests
+    format: currency
+    plain_rule: Sum of the estimated cost recorded on requests. An estimate, not actual spend.
+    definition: Sum of request estimates; not spend.
+    expression: {agg: sum, field: cost_total_usd}
+  - key: request_budget_total
+    label: Request approved budget (USD)
+    entity: project_requests
+    format: currency
+    plain_rule: Sum of the approved budget recorded on requests.
+    definition: Budget approved on requests.
+    expression: {agg: sum, field: approved_budget_value_usd}
+  - key: requests_no_budget
+    label: Requests with no budget yet
+    entity: project_requests
+    plain_rule: Requests whose approved budget is blank or 0.
+    definition: Requests without an approved budget.
+    expression: {agg: count, where: {any: [{field: approved_budget_value_usd, op: is_null}, {field: approved_budget_value_usd, op: "<=", value: 0}]}}
+  - key: approved_for_delivery
+    label: Approved for delivery
+    entity: project_requests
+    plain_rule: Requests in state Approved.
+    definition: Requests approved to become projects.
+    expression: {agg: count, where: {field: request_state, op: "=", value: Approved}}
+  - key: rejected_or_dropped
+    label: Rejected or dropped
+    entity: project_requests
+    plain_rule: Requests in state Rejected or Dropped.
+    definition: Requests closed without approval.
+    expression: {agg: count, where: {field: request_state, op: in, values: [Rejected, Dropped]}}
+  - key: converted_requests
+    label: Converted requests
+    entity: project_requests
+    plain_rule: Requests that at least one project names as its originating request.
+    definition: Requests that became projects.
+    expression: &converted {agg: count_distinct, field: project_request_id, where: {field: projects.project_id, op: not_null}}
+  - key: conversion_rate
+    label: Conversion rate (%)
+    entity: project_requests
+    format: percent
+    plain_rule: Converted requests as a share of all requests.
+    definition: Share of requests that became projects.
+    expression: {op: div, scale: 100, left: *converted, right: {agg: count_distinct, field: project_request_id}}
+  - key: avg_days_to_convert
+    label: Average days to convert
+    entity: project_requests
+    format: decimal
+    plain_rule: Average days from a request being raised to its project being created, over converted requests (each project counts once).
+    definition: Average days from request to project creation.
+    expression: {agg: avg, value: {days_from: created_on, days_to: projects.created_on}, where: {field: projects.project_id, op: not_null}}
+  - key: discovery_completed
+    label: Discovery completed
+    entity: project_requests
+    plain_rule: Requests with a discovery actual end date and a planned end date.
+    definition: Requests whose discovery stage has finished.
+    expression: {agg: count, where: &discovery_done {all: [{field: stage1_discovery_actual_end_date, op: not_null}, {field: stage1_discovery_planned_end_date, op: not_null}]}}
+  - key: discovery_late
+    label: Discovery finished late
+    entity: project_requests
+    plain_rule: Completed discoveries whose actual end is after the planned end.
+    definition: Discoveries that finished after plan.
+    expression: {agg: count, where: {all: [*discovery_done, {field: stage1_discovery_actual_end_date, op: ">", other_field: stage1_discovery_planned_end_date}]}}
+  - key: discovery_early
+    label: Discovery finished early
+    entity: project_requests
+    plain_rule: Completed discoveries whose actual end is before the planned end.
+    definition: Discoveries that finished before plan.
+    expression: {agg: count, where: {all: [*discovery_done, {field: stage1_discovery_actual_end_date, op: "<", other_field: stage1_discovery_planned_end_date}]}}
+  - key: discovery_on_time
+    label: Discovery finished on time
+    entity: project_requests
+    plain_rule: Completed discoveries whose actual end equals the planned end.
+    definition: Discoveries that finished on the planned day.
+    expression: {agg: count, where: {all: [*discovery_done, {field: stage1_discovery_actual_end_date, op: "=", other_field: stage1_discovery_planned_end_date}]}}
+  - key: effort_internal_md
+    label: "Internal effort (man-days)"
+    entity: project_requests
+    plain_rule: Sum of the internal effort estimated on requests, in man-days.
+    blank_handling: Requests without an estimate are counted as no estimate, not as 0.
+    definition: Internal man-days estimated on requests.
+    expression: {agg: sum, field: efforts_internal_mandays}
+  - key: effort_external_md
+    label: "External effort (man-days)"
+    entity: project_requests
+    plain_rule: Sum of the external effort estimated on requests, in man-days.
+    definition: External man-days estimated on requests.
+    expression: {agg: sum, field: efforts_external_mandays}
+  - key: effort_saba_md
+    label: "SA/BA effort (man-days)"
+    entity: project_requests
+    plain_rule: Sum of the solution and business analysis effort planned on requests, in man-days.
+    definition: SA/BA man-days planned on requests.
+    expression: {agg: sum, field: efforts_saba_mandays}
+  - key: requests_no_effort_estimate
+    label: Requests with no effort estimate
+    entity: project_requests
+    plain_rule: Requests with neither an internal nor an external effort estimate.
+    definition: Requests missing an effort estimate.
+    expression: {agg: count, where: {all: [{field: efforts_internal_mandays, op: is_null}, {field: efforts_external_mandays, op: is_null}]}}
+
+  # ---------------------------------------------------------------- US-155: screens beyond projects and requests
+  # Rules marked DRAFT need STK-008 sign-off (thresholds and status words of the TPG source).
+  - key: tcv_open_total
+    label: Estimated TCV of open projects
+    entity: projects
+    format: currency
+    plain_rule: Sum of the estimated total contract value of open projects (blank values are not counted).
+    definition: Estimated total contract value of the open projects.
+    expression: {agg: sum, field: estimated_tcv_usd, where: *open_project}
+  # Stage plan (projects): the planned end of each stage against the reporting date.
+  - key: staged_open_projects
+    label: Open projects with a stage schedule
+    entity: projects
+    plain_rule: Open projects with at least one stage planned end date.
+    definition: Open projects that have planned stage end dates.
+    expression: &stage_plan {agg: count, where: {all: [*open_project, {any: [{field: planning_stage_end_date, op: not_null}, {field: design_stage_end_date, op: not_null}, {field: build_stage_end_date, op: not_null}, {field: test_stage_end_date, op: not_null}, {field: implementation_stage_end_date, op: not_null}, {field: warranty_stage_end_date, op: not_null}]}]}}
+  - key: planning_end_passed
+    label: Planning end passed
+    entity: projects
+    plain_rule: Open projects whose planning stage planned end is before the reporting date.
+    definition: Open projects past the planned end of Planning.
+    expression: {agg: count, where: {all: [*open_project, {field: planning_stage_end_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: design_end_passed
+    label: Design end passed
+    entity: projects
+    plain_rule: Open projects whose design stage planned end is before the reporting date.
+    definition: Open projects past the planned end of Design.
+    expression: {agg: count, where: {all: [*open_project, {field: design_stage_end_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: build_end_passed
+    label: Build end passed
+    entity: projects
+    plain_rule: Open projects whose build stage planned end is before the reporting date.
+    definition: Open projects past the planned end of Build.
+    expression: {agg: count, where: {all: [*open_project, {field: build_stage_end_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: test_end_passed
+    label: Test end passed
+    entity: projects
+    plain_rule: Open projects whose test stage planned end is before the reporting date.
+    definition: Open projects past the planned end of Test.
+    expression: {agg: count, where: {all: [*open_project, {field: test_stage_end_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: implementation_end_passed
+    label: Implementation end passed
+    entity: projects
+    plain_rule: Open projects whose implementation stage planned end is before the reporting date.
+    definition: Open projects past the planned end of Implementation.
+    expression: {agg: count, where: {all: [*open_project, {field: implementation_stage_end_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: warranty_end_passed
+    label: Warranty end passed
+    entity: projects
+    plain_rule: Open projects whose warranty and closure stage planned end is before the reporting date.
+    definition: Open projects past the planned end of Warranty and closure.
+    expression: {agg: count, where: {all: [*open_project, {field: warranty_stage_end_date, op: "<", value: {asof_offset_days: 0}}]}}
+  # Closure (projects).
+  - key: completed_projects
+    label: Completed projects
+    entity: projects
+    plain_rule: Projects whose current state is Completed.
+    definition: Projects delivered and completed.
+    expression: &completed {agg: count, where: {field: current_state, op: "=", value: Completed}}
+  - key: closure_approved
+    label: Closure approved
+    entity: projects
+    plain_rule: Completed projects whose closure approval is Approved.
+    definition: Completed projects with a formal closure approval.
+    expression: &closure_ok {agg: count, where: {all: [{field: current_state, op: "=", value: Completed}, {field: closure_approval_status, op: "=", value: Approved}]}}
+  - key: closure_compliance_pct
+    label: Closure compliance (%)
+    entity: projects
+    format: percent
+    plain_rule: Completed projects with closure approved as a share of completed projects.
+    definition: Share of completed projects with a formal closure approval.
+    expression: {op: div, scale: 100, left: *closure_ok, right: *completed}
+  - key: closure_in_approval
+    label: Closure approval in progress
+    entity: projects
+    plain_rule: Projects in any state whose closure approval is in progress.
+    definition: Projects waiting for closure approval.
+    expression: {agg: count, where: {field: closure_approval_status, op: "=", value: Approval In Progress}}
+  - key: closure_overdue
+    label: Closure overdue
+    entity: projects
+    plain_rule: "DRAFT: completed projects without closure approval whose warranty and closure stage planned end is before the reporting date."
+    definition: Completed projects past their planned closure without approval.
+    expression: {agg: count, where: {all: [{field: current_state, op: "=", value: Completed}, {any: [{field: closure_approval_status, op: is_null}, {field: closure_approval_status, op: "!=", value: Approved}]}, {field: warranty_stage_end_date, op: "<", value: {asof_offset_days: 0}}]}}
+  # Status reporting compliance (projects with their status reports).
+  - key: status_reporting_scope
+    label: Projects expected to report
+    entity: projects
+    plain_rule: Projects in delivery (current state Active), each counted once.
+    definition: Projects in delivery, which should send status reports.
+    expression: &report_scope {agg: count_distinct, field: project_id, where: {field: current_state, op: "=", value: Active}}
+  - key: reported_last_30d
+    label: Reported in the last 30 days
+    entity: projects
+    plain_rule: "DRAFT: projects in delivery with at least one status report dated from 30 days before the reporting date up to the reporting date."
+    definition: Projects in delivery with a status report in the last 30 days.
+    expression: &reported {agg: count_distinct, field: project_id, where: {all: [{field: current_state, op: "=", value: Active}, {field: status_reports.report_date, op: ">=", value: {asof_offset_days: -30}}, {field: status_reports.report_date, op: "<=", value: {asof_offset_days: 0}}]}}
+  - key: status_reporting_compliance_pct
+    label: Status reporting compliance (%)
+    entity: projects
+    format: percent
+    plain_rule: Projects in delivery that reported in the last 30 days as a share of projects in delivery.
+    definition: Share of projects in delivery with a status report in the last 30 days.
+    expression: {op: div, scale: 100, left: *reported, right: *report_scope}
+  - key: status_reports_30d
+    label: Status reports in the last 30 days
+    entity: status_reports
+    plain_rule: Status reports dated from 30 days before the reporting date up to the reporting date.
+    definition: Status reports sent in the last 30 days.
+    expression: {agg: count, where: {all: [{field: report_date, op: ">=", value: {asof_offset_days: -30}}, {field: report_date, op: "<=", value: {asof_offset_days: 0}}]}}
+  - key: status_reports_total
+    label: Status reports
+    entity: status_reports
+    plain_rule: Every status report record.
+    definition: Status reports on record.
+    expression: {agg: count}
+  - key: days_since_latest_report
+    label: Days since the latest report
+    entity: status_reports
+    plain_rule: Whole days from the most recent status report on or before the reporting date to the reporting date.
+    definition: Age in days of the most recent status report.
+    expression: {agg: min, value: {days_from: report_date, days_to: {asof_offset_days: 0}}, where: {field: report_date, op: "<=", value: {asof_offset_days: 0}}}
+  # PCRs (project change requests).
+  - key: total_pcrs
+    label: PCRs
+    entity: change_requests
+    synonyms: [project change requests, change requests on projects]
+    plain_rule: Every project change request (PCR), including initial-baseline PCRs.
+    definition: Project change requests on record, any approval stage.
+    expression: &pcrs {agg: count}
+  - key: pcrs_approved
+    label: PCRs fully approved
+    entity: change_requests
+    plain_rule: PCRs whose approval is Fully Approved.
+    definition: PCRs with every approval given.
+    expression: &pcrs_ok {agg: count, where: {field: approval_status, op: "=", value: Fully Approved}}
+  - key: pcrs_pending
+    label: PCRs awaiting approval
+    entity: change_requests
+    plain_rule: "PCRs not yet fully approved and not rejected: Not Yet Requested, Approval In Progress, Requested By (RM) Approved, Delivery Manager Approved."
+    definition: PCRs still in the approval flow.
+    expression: {agg: count, where: {field: approval_status, op: in, values: [Not Yet Requested, Approval In Progress, Requested By (RM) Approved, Delivery Manager Approved]}}
+  - key: pcrs_rejected
+    label: PCRs rejected
+    entity: change_requests
+    plain_rule: PCRs whose approval is Requested By (RM) Rejected.
+    definition: PCRs rejected in approval.
+    expression: {agg: count, where: {field: approval_status, op: "=", value: Requested By (RM) Rejected}}
+  - key: pcr_approval_pct
+    label: PCR approval (%)
+    entity: change_requests
+    format: percent
+    plain_rule: Fully approved PCRs as a share of all PCRs.
+    definition: Share of PCRs fully approved.
+    expression: {op: div, scale: 100, left: *pcrs_ok, right: *pcrs}
+  - key: pcrs_golive_change
+    label: PCRs changing the go-live
+    entity: change_requests
+    plain_rule: PCRs that change the planned go-live date.
+    definition: PCRs that move the planned go-live date.
+    expression: {agg: count, where: {field: golive_change, op: "=", value: "Yes"}}
+  - key: pcr_additional_cost
+    label: Additional cost from PCRs
+    entity: change_requests
+    format: currency
+    plain_rule: Sum of the additional cost recorded on PCRs (an estimate, not money spent).
+    definition: Cost PCRs add to the forecast; an estimate, not spend.
+    expression: {agg: sum, field: additional_cost_usd}
+  - key: projects_with_pcr
+    label: Projects with a PCR
+    entity: change_requests
+    plain_rule: Distinct projects with at least one PCR.
+    definition: Projects that have raised a PCR.
+    expression: {agg: count_distinct, field: project_id}
+  # RAID: risks, issues, action items, decisions. Open = not closed or completed; a blank state counts as open.
+  - key: open_risks
+    label: Open risks
+    entity: risks
+    plain_rule: Risks whose state is not Closed (a blank state counts as open).
+    definition: Risks not closed.
+    expression: {agg: count, where: &risk_open {any: [{field: state, op: is_null}, {field: state, op: not_in, values: [Closed]}]}}
+  - key: high_exposure_risks
+    label: High-exposure risks
+    entity: risks
+    plain_rule: "DRAFT: open risks with an exposure of 15 or more (likelihood × consequence)."
+    definition: Open risks with exposure 15 or more.
+    expression: {agg: count, where: {all: [*risk_open, {field: exposure, op: ">=", value: 15}]}}
+  - key: risk_cost_exposure
+    label: Cost exposure of open risks
+    entity: risks
+    format: currency
+    plain_rule: Sum of the cost exposure of open risks (an estimate of what a risk could cost).
+    definition: What the open risks could cost if they happen; not spend.
+    expression: {agg: sum, field: cost_exposure_usd, where: *risk_open}
+  - key: overdue_risks
+    label: Risks past their due date
+    entity: risks
+    plain_rule: Open risks whose due date is before the reporting date.
+    definition: Open risks past their due date.
+    expression: {agg: count, where: {all: [*risk_open, {field: due_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: open_issues
+    label: Open issues
+    entity: issues
+    plain_rule: Issues whose status is not Closed (a blank status counts as open).
+    definition: Issues not closed.
+    expression: {agg: count, where: &issue_open {any: [{field: status, op: is_null}, {field: status, op: not_in, values: [Closed]}]}}
+  - key: high_priority_issues
+    label: High-priority open issues
+    entity: issues
+    plain_rule: Open issues with priority High or Critical.
+    definition: Open issues of high or critical priority.
+    expression: {agg: count, where: {all: [*issue_open, {field: priority, op: in, values: [High, Critical]}]}}
+  - key: overdue_issues
+    label: Issues past their due date
+    entity: issues
+    plain_rule: Open issues whose due date is before the reporting date.
+    definition: Open issues past their due date.
+    expression: {agg: count, where: {all: [*issue_open, {field: due_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: open_actions
+    label: Open action items
+    entity: action_items
+    plain_rule: Action items whose state is not Completed (a blank state counts as open).
+    definition: Action items not completed.
+    expression: {agg: count, where: &action_open {any: [{field: state, op: is_null}, {field: state, op: not_in, values: [Completed]}]}}
+  - key: overdue_actions
+    label: Overdue action items
+    entity: action_items
+    plain_rule: Open action items whose due date is before the reporting date; due on the reporting date is not overdue.
+    definition: Open action items past their due date.
+    expression: {agg: count, where: {all: [*action_open, {field: due_date, op: "<", value: {asof_offset_days: 0}}]}}
+  - key: open_decisions
+    label: Open decisions
+    entity: decisions
+    plain_rule: Decisions whose status is not Completed (a blank status counts as open).
+    definition: Decisions not yet completed.
+    expression: {agg: count, where: {any: [{field: status, op: is_null}, {field: status, op: not_in, values: [Completed]}]}}
+  # Logged time (timesheets). Capacity is not recorded, so there is no utilisation %.
+  - key: hours_logged
+    label: Hours logged
+    entity: timesheets
+    format: decimal
+    plain_rule: Hours on timesheets that are Approved or Submitted (drafts and rejected lines are not counted).
+    definition: Hours logged and sent for approval or approved.
+    expression: {agg: sum, field: total_hours, where: &logged {field: status, op: in, values: [Approved, Submitted]}}
+  - key: hours_approved
+    label: Hours approved
+    entity: timesheets
+    format: decimal
+    plain_rule: Hours on Approved timesheets.
+    definition: Hours on approved timesheets.
+    expression: {agg: sum, field: total_hours, where: {field: status, op: "=", value: Approved}}
+  - key: hours_awaiting_approval
+    label: Hours awaiting approval
+    entity: timesheets
+    format: decimal
+    plain_rule: Hours on Submitted timesheets.
+    definition: Hours sent for approval and not yet approved.
+    expression: {agg: sum, field: total_hours, where: {field: status, op: "=", value: Submitted}}
+  - key: hours_all
+    label: Hours on timesheets
+    entity: timesheets
+    format: decimal
+    plain_rule: Hours on every timesheet line, in any status.
+    definition: All hours entered, in any timesheet status.
+    expression: {agg: sum, field: total_hours}
+  - key: people_logging
+    label: People logging time
+    entity: timesheets
+    plain_rule: Distinct people with Approved or Submitted hours.
+    definition: People who logged time.
+    expression: {agg: count_distinct, field: submitter, where: *logged}
+  - key: projects_with_time
+    label: Projects with time logged
+    entity: timesheets
+    plain_rule: Distinct projects with Approved or Submitted hours.
+    definition: Projects that have time logged.
+    expression: {agg: count_distinct, field: project_id, where: *logged}
+  # Critical tasks (project plans).
+  - key: projects_with_tasks
+    label: Projects with a task plan
+    entity: project_tasks
+    plain_rule: Distinct projects with at least one task.
+    definition: Projects that have a task plan.
+    expression: {agg: count_distinct, field: project_id}
+  - key: plan_tasks
+    label: Plan tasks
+    entity: project_tasks
+    plain_rule: Tasks that are not summary rows.
+    definition: Tasks in project plans (summary rows left out).
+    expression: {agg: count, where: &not_summary {any: [{field: is_summary, op: is_null}, {field: is_summary, op: "!=", value: "Yes"}]}}
+  - key: critical_open_tasks
+    label: Open critical tasks
+    entity: project_tasks
+    plain_rule: Tasks on the critical path, not summary rows, with progress below 100 % (blank progress counts as open).
+    definition: Unfinished tasks on the critical path.
+    expression: {agg: count, where: &crit_open {all: [{field: is_critical, op: "=", value: "Yes"}, *not_summary, {any: [{field: progress, op: is_null}, {field: progress, op: "<", value: 100}]}]}}
+  - key: critical_tasks_late
+    label: Late critical tasks
+    entity: project_tasks
+    plain_rule: Open critical tasks whose finish date is before the reporting date; finishing on the reporting date is not late.
+    definition: Unfinished critical tasks past their finish date.
+    expression: {agg: count, where: {all: [*crit_open, {field: finish_date, op: "<", value: {asof_offset_days: 0}}]}}
+  # Requests: budget code, PM assignment and change requests.
+  - key: open_requests_with_code
+    label: Open requests with a budget code
+    entity: project_requests
+    plain_rule: Open requests (New, Active, On Hold, Return to Requester) that carry a budget code (blank text counts as missing).
+    definition: Open requests with a budget code recorded.
+    expression: &req_code {agg: count, where: {all: [&req_open {field: request_state, op: in, values: [New, Active, On Hold, Return to Requester]}, {field: budget_code, op: not_null}, {field: budget_code, op: "!=", value: ""}]}}
+  - key: request_budget_code_pct
+    label: Request budget code compliance (%)
+    entity: project_requests
+    format: percent
+    plain_rule: Open requests with a budget code as a share of open requests.
+    definition: Share of open requests that carry a budget code.
+    expression: {op: div, scale: 100, left: *req_code, right: &req_open_count {agg: count, where: *req_open}}
+  - key: open_requests_with_dm
+    label: Open requests with a delivery manager
+    entity: project_requests
+    plain_rule: Open requests with a delivery manager.
+    definition: Open requests that have a delivery manager.
+    expression: &req_dm {agg: count, where: {all: [*req_open, {field: delivery_manager, op: not_null}]}}
+  - key: request_pm_assignment_pct
+    label: Request PM assignment (%)
+    entity: project_requests
+    format: percent
+    plain_rule: Open requests with a delivery manager as a share of open requests.
+    definition: Share of open requests with a delivery manager.
+    expression: {op: div, scale: 100, left: *req_dm, right: *req_open_count}
+  - key: change_request_count
+    label: Change requests
+    entity: project_requests
+    plain_rule: Requests marked as a change request (CR) to an existing project.
+    definition: Requests raised as a change to an existing project.
+    expression: &crs {agg: count, where: {field: is_change_request, op: "=", value: "Yes"}}
+  - key: crs_with_master_project
+    label: CRs naming their project
+    entity: project_requests
+    plain_rule: Change requests that name the master project they change.
+    definition: Change requests with a master project recorded.
+    expression: {agg: count, where: {all: [{field: is_change_request, op: "=", value: "Yes"}, {field: master_project_id, op: not_null}]}}
+  - key: cr_share_pct
+    label: Change request share (%)
+    entity: project_requests
+    format: percent
+    plain_rule: Change requests as a share of all requests.
+    definition: Share of requests that are changes to existing projects.
+    expression: {op: div, scale: 100, left: *crs, right: {agg: count}}
+
+dimensions:
+  - {key: region, label: Region, entity: projects, field: region}
+  - {key: portfolio, label: Portfolio, entity: projects, field: portfolio}
+  - {key: programme, label: Programme, entity: projects, field: program}
+  - {key: cio, label: CIO, entity: projects, field: cio}
+  - {key: delivery_manager, label: Delivery manager, entity: projects, field: delivery_manager}
+  - {key: priority, label: Priority, entity: projects, field: priority, sort_order: [Critical, High, Moderate, Low]}
+  - {key: platform, label: Platform, entity: projects, field: platform}
+  - {key: lifecycle_phase, label: Lifecycle phase, entity: projects, field: lifecycle_phase, sort_order: [Assign PM, Initiation, Planning, Execution, UAT, Deployment, Closure]}
+  - {key: current_state, label: Current state, entity: projects, field: current_state, is_status: true}
+  - {key: status, label: Status, entity: projects, field: status, is_status: true}
+  - {key: reported_status, label: Reported status, entity: projects, field: overall_kpi, is_status: true, value_labels: {Yellow: Amber}, sort_order: [Green, Amber, Red, Not set], not_set: Not set}
+  - {key: schedule_status, label: Schedule KPI, entity: projects, field: schedule_kpi, is_status: true, value_labels: {Yellow: Amber}, not_set: Not set}
+  - {key: key_priority_project, label: Key priority project, entity: projects, field: key_priority_project}
+  - {key: planned_deployment_date, label: Planned deployment date, entity: projects, field: planned_deployment_date, is_temporal: true}
+  - {key: request_state, label: Request state, entity: project_requests, field: request_state, is_status: true}
+  - {key: request_region, label: Request region, entity: project_requests, field: region}
+  - {key: request_priority, label: Request priority, entity: project_requests, field: priority}
+  # US-156: computed dimensions. Bands hold values above "above" and up to "upto" (days or %), first match wins.
+  - {key: calculated_health, label: Calculated health, entity: projects, field: planned_deployment_date, is_status: true, of: {calculator: pmo_health_v1, output: status}, sort_order: [Green, Amber, Red, Insufficient data]}
+  - key: lateness_bucket
+    label: Days past planned go-live
+    answers: [how_late]
+    entity: projects
+    field: planned_deployment_date
+    of: {days_from: planned_deployment_date, days_to: {asof_offset_days: 0}}
+    bands: [{label: Not past due, upto: 0}, {label: 1–30 days, above: 0, upto: 30}, {label: 31–60 days, above: 30, upto: 60}, {label: 61–90 days, above: 60, upto: 90}, {label: More than 90 days, above: 90}]
+    not_set: No planned date
+  - key: go_live_horizon
+    label: Go-live horizon
+    answers: [when]
+    entity: projects
+    field: planned_deployment_date
+    of: {days_from: {asof_offset_days: 0}, days_to: planned_deployment_date}
+    bands: [{label: Past due, upto: -1}, {label: Next 30 days, above: -1, upto: 30}, {label: 31–60 days, above: 30, upto: 60}, {label: 61–90 days, above: 60, upto: 90}, {label: Later, above: 90}]
+    not_set: No planned date
+  - key: on_hold_aging
+    label: Time on hold
+    answers: [how_long]
+    entity: projects
+    field: on_hold_date
+    of: {days_from: on_hold_date, days_to: {asof_offset_days: 0}}
+    bands: [{label: 0–30 days, upto: 30}, {label: 31–60 days, above: 30, upto: 60}, {label: 61–90 days, above: 60, upto: 90}, {label: More than 90 days, above: 90}]
+    not_set: Not recorded
+  - key: variance_spread
+    label: Forecast vs budget spread
+    entity: projects
+    field: cost_total_usd
+    of: {calc: mul, left: {calc: div, left: {calc: sub, left: cost_total_usd, right: approved_budget_value_usd}, right: approved_budget_value_usd}, right: 100}
+    bands: [{label: Under by 15 %+, upto: -15}, {label: Under by 0–15 %, above: -15, upto: 0}, {label: Over by 0–15 %, above: 0, upto: 15}, {label: Over by 15 %+, above: 15}]
+    not_set: No budget or forecast
+  - key: schedule_variance_bucket
+    label: Schedule variance
+    answers: [how_late]
+    entity: projects
+    field: actual_deployment_date
+    of: {days_from: planned_deployment_date, days_to: actual_deployment_date}
+    bands: [{label: Early, upto: -1}, {label: On time, above: -1, upto: 0}, {label: 1–30 days late, above: 0, upto: 30}, {label: 31–60 days late, above: 30, upto: 60}, {label: More than 60 days late, above: 60}]
+    not_set: Not deployed
+  - {key: project_manager, label: Project manager, entity: projects, field: project_manager}
+  - {key: hold_reason, label: Hold reason, entity: projects, field: on_hold_reason, not_set: Not recorded, answers: [why]}
+  - {key: budget_type, label: Budget type, entity: projects, field: budget_type, not_set: Not set}
+  - key: request_aging
+    label: Request age
+    answers: [how_long]
+    entity: project_requests
+    field: created_on
+    of: {days_from: created_on, days_to: {asof_offset_days: 0}}
+    bands: [{label: 0–30 days, upto: 30}, {label: 31–60 days, above: 30, upto: 60}, {label: 61–90 days, above: 60, upto: 90}, {label: 91–180 days, above: 90, upto: 180}, {label: More than 180 days, above: 180}]
+    not_set: Not recorded
+  - key: request_on_hold_aging
+    label: Request time on hold
+    answers: [how_long]
+    entity: project_requests
+    field: on_hold_date
+    of: {days_from: on_hold_date, days_to: {asof_offset_days: 0}}
+    bands: [{label: 0–30 days, upto: 30}, {label: 31–60 days, above: 30, upto: 60}, {label: 61–90 days, above: 60, upto: 90}, {label: 91–180 days, above: 90, upto: 180}, {label: More than 180 days, above: 180}]
+    not_set: Not recorded
+  - {key: quarter_raised, label: Quarter raised, entity: project_requests, field: created_on, is_temporal: true}
+  - {key: intake_gate, label: Intake gate, entity: project_requests, field: intake_gate, sort_order: [New, HLE, BRD, DOU, DARB, SOW, Approval], not_set: Not set}
+  - {key: request_hold_reason, label: Request hold reason, entity: project_requests, field: on_hold_reason, not_set: Not recorded, answers: [why]}
+  - {key: request_budget_type, label: Request budget type, entity: project_requests, field: budget_type, not_set: Not set}
+  - {key: request_cio, label: Request CIO, entity: project_requests, field: cio}
+  - {key: request_platform, label: Request platform, entity: project_requests, field: platform}
+  - {key: request_delivery_manager, label: Request delivery manager, entity: project_requests, field: delivery_manager}
+
+  # US-155: the activity screens' breakdowns.
+  - {key: closure_approval, label: Closure approval, entity: projects, field: closure_approval_status, is_status: true, not_set: Not recorded}
+  - {key: status_report_date, label: Report date, entity: status_reports, field: report_date, is_temporal: true}
+  - {key: pcr_reason, label: PCR reason, entity: change_requests, field: reason, not_set: Not recorded, answers: [why]}
+  - {key: pcr_approval, label: PCR approval, entity: change_requests, field: approval_status, is_status: true, sort_order: [Not Yet Requested, Approval In Progress, Requested By (RM) Approved, Delivery Manager Approved, Fully Approved, Requested By (RM) Rejected], not_set: Not recorded}
+  - {key: pcr_project, label: PCR project, entity: change_requests, field: project_name}
+  - {key: risk_category, label: Risk category, entity: risks, field: category, not_set: Not set}
+  - {key: risk_project, label: Risk project, entity: risks, field: project_name}
+  - {key: issue_priority, label: Issue priority, entity: issues, field: priority, sort_order: [Critical, High, Medium, Low], not_set: Not set}
+  - {key: action_project, label: Action item project, entity: action_items, field: project_name}
+  - {key: timesheet_status, label: Timesheet status, entity: timesheets, field: status, is_status: true, sort_order: [Draft, Submitted, Approved, Rejected]}
+  - {key: timesheet_project, label: Timesheet project, entity: timesheets, field: project_name}
+  - {key: timesheet_person, label: Person, entity: timesheets, field: submitter}
+  - {key: timesheet_entered, label: Entered on, entity: timesheets, field: created_on, is_temporal: true}
+  - {key: task_project, label: Task project, entity: project_tasks, field: project_name}
+  - {key: request_kind, label: Request kind, entity: project_requests, field: is_change_request, value_labels: {"Yes": Change request, "No": New demand}, not_set: Not set}
+  - {key: cr_reason, label: Change request reason, entity: project_requests, field: cr_reason, not_set: Not recorded, answers: [why]}
+
+# Calculated health (RULE-033 – RULE-035) is a record-level calculator in the pack, not a SQL measure.
+calculators:
+  - {key: calculated_health, label: Calculated health, rule_ref: "RULE-033, RULE-034, RULE-035", implementation: pmo_health_v1}
+
+# Starter reports (US-155): every report blueprint is a starter report — headline figures, visuals, detail table,
+# callout and footnote — and every data-gap blueprint an unavailable report with its named gaps (REQ-024).
+reports_from: report_blueprints.yaml
+
+# Starter dashboards (FEAT-046): the catalogue's screens as tabs, in this order, published to every role on model
+# approval. A tab shows the widgets the model can run (the others are named in its footnote); a tab with none left
+# stays out. Shared filters apply to every widget they can reach (RULE-005): requests have no portfolio.
+dashboards:
+  projects:
+    title: PMO — Projects
+    reports: [projects_overview, cio_portfolio, portfolio_status, lifecycle, strategic_initiatives, exco_priorities,
+              delivery_heatmap, regional_portfolio, portfolio_health, baselining, budget_code, pm_assignment,
+              pcr_compliance, on_hold_aging, closure_compliance, status_reporting_compliance, upcoming_go_lives,
+              delayed_projects, stage_completion, schedule_variance, update_compliance, critical_tasks, raid_summary,
+              resource_utilisation, capex_budget, flow_metrics]
+    filters: [cio, region, portfolio, project_manager, priority, platform]
+  requests:
+    title: PMO — Requests
+    reports: [requests_overview, request_lifecycle, cio_regional_demand, discovery_schedule, request_on_hold_aging,
+              demand_budget_cost, demand_effort, governance_actions, request_budget_code, request_pm_assignment,
+              request_change_requests, demand_conversion]
+    filters: [request_cio, request_region, request_delivery_manager, request_priority, request_platform]

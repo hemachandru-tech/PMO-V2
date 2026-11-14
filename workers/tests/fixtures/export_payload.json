@@ -1,0 +1,647 @@
+{
+ "job": {
+  "id": "01a15eec-0000-7000-8000-000000000001",
+  "format": "pdf",
+  "requested_by": "Nomsa Osei"
+ },
+ "dashboard": {
+  "id": "d1",
+  "title": "PMO — Projects",
+  "kind": "starter",
+  "layout": "tabs",
+  "version": 3
+ },
+ "scope": "projects: Own CIO",
+ "as_of": "2026-10-21 06:00",
+ "time_zone": "Asia/Riyadh",
+ "filters": [
+  {
+   "label": "Region",
+   "op": "=",
+   "values": [
+    "KSA"
+   ]
+  }
+ ],
+ "filters_text": "Region = KSA",
+ "exported_at": "2026-10-21 14:05 +03",
+ "footer": "Region = KSA · Scope: projects: Own CIO · Data as of 2026-10-21 06:00 · v3 · Exported 2026-10-21 14:05 +03",
+ "excluded_widgets": 1,
+ "row_count": 66,
+ "file_name": "PMO-Projects-2026-10-21.pdf",
+ "tabs": [
+  {
+   "title": "Overview",
+   "sections": [
+    {
+     "title": null,
+     "kind": "body",
+     "items": [
+      {
+       "kind": "widget",
+       "badges": [
+        "certified"
+       ],
+       "filters_applied": [
+        "Region"
+       ],
+       "filters_not_applied": [],
+       "truncated": false,
+       "notes": [],
+       "kpi": {
+        "value": 42,
+        "format": "integer",
+        "change": {
+         "previous": 39,
+         "change": 3,
+         "change_pct": 7.7,
+         "previous_range": "Q2 2026"
+        },
+        "sparkline": null
+       },
+       "id": "w1",
+       "title": "Open projects",
+       "visual": "figure",
+       "placement": {
+        "x": 0,
+        "y": 0,
+        "w": 3,
+        "h": 2
+       },
+       "columns": [
+        {
+         "name": "open_projects",
+         "kind": "measure",
+         "label": "Open projects",
+         "ref": "measure:open_projects",
+         "data_type": "integer",
+         "format": "integer"
+        }
+       ],
+       "rows": [
+        [
+         42
+        ]
+       ],
+       "row_count": 1,
+       "viz": {
+        "visual": "figure",
+        "chart_spec": {
+         "type": "figure",
+         "series": [
+          "open_projects"
+         ]
+        }
+       },
+       "definition": {
+        "measure": "measure:x",
+        "label": "Open projects",
+        "rule_text": "Projects whose state is not Closed or Cancelled.",
+        "rule_ref": "R-1",
+        "blank_handling": "Blank values are not counted."
+       }
+      },
+      {
+       "kind": "widget",
+       "badges": [
+        "certified"
+       ],
+       "filters_applied": [
+        "Region"
+       ],
+       "filters_not_applied": [],
+       "truncated": false,
+       "notes": [],
+       "kpi": null,
+       "id": "w2",
+       "title": "Approved budget",
+       "visual": "figure",
+       "placement": {
+        "x": 3,
+        "y": 0,
+        "w": 3,
+        "h": 2
+       },
+       "columns": [
+        {
+         "name": "approved_budget",
+         "kind": "measure",
+         "label": "Approved budget",
+         "ref": "measure:approved_budget_total",
+         "data_type": "decimal",
+         "format": "currency"
+        }
+       ],
+       "rows": [
+        [
+         12500000.5
+        ]
+       ],
+       "row_count": 1,
+       "viz": {
+        "visual": "figure",
+        "chart_spec": {
+         "type": "figure",
+         "series": [
+          "approved_budget"
+         ]
+        }
+       },
+       "definition": {
+        "measure": "measure:x",
+        "label": "Approved budget",
+        "rule_text": "Sum of approved budgets in USD.",
+        "rule_ref": "R-1",
+        "blank_handling": "Blank values are not counted."
+       }
+      },
+      {
+       "kind": "text_note",
+       "text": "Figures follow the PMO definitions approved in v3.",
+       "placement": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 2
+       }
+      },
+      {
+       "kind": "widget",
+       "badges": [
+        "certified"
+       ],
+       "filters_applied": [
+        "Region"
+       ],
+       "filters_not_applied": [],
+       "truncated": false,
+       "notes": [],
+       "kpi": null,
+       "id": "w3",
+       "title": "Open projects by region",
+       "visual": "ranked_bar",
+       "placement": {
+        "x": 0,
+        "y": 2,
+        "w": 12,
+        "h": 4
+       },
+       "columns": [
+        {
+         "name": "region",
+         "kind": "dimension",
+         "label": "Region",
+         "ref": "dimension:region",
+         "data_type": "text",
+         "format": null
+        },
+        {
+         "name": "open_projects",
+         "kind": "measure",
+         "label": "Open projects",
+         "ref": "measure:open_projects",
+         "data_type": "integer",
+         "format": "integer"
+        }
+       ],
+       "rows": [
+        [
+         "KSA",
+         18
+        ],
+        [
+         "GCC - UAE",
+         12
+        ],
+        [
+         "Egypt",
+         7
+        ],
+        [
+         null,
+         5
+        ]
+       ],
+       "row_count": 4,
+       "viz": {
+        "visual": "ranked_bar",
+        "chart_spec": {
+         "type": "ranked_bar",
+         "x": "region",
+         "series": [
+          "open_projects"
+         ]
+        }
+       },
+       "definition": {
+        "measure": "measure:x",
+        "label": "Open projects",
+        "rule_text": "Projects not closed.",
+        "rule_ref": "R-1",
+        "blank_handling": "Blank values are not counted."
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Delivery",
+   "sections": [
+    {
+     "title": "Late go-lives",
+     "kind": "body",
+     "items": [
+      {
+       "kind": "widget",
+       "badges": [
+        "certified"
+       ],
+       "filters_applied": [
+        "Region"
+       ],
+       "filters_not_applied": [],
+       "truncated": false,
+       "notes": [],
+       "kpi": null,
+       "id": "w4",
+       "title": "Late projects",
+       "visual": "table",
+       "placement": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 5
+       },
+       "columns": [
+        {
+         "name": "project",
+         "kind": "dimension",
+         "label": "Project",
+         "ref": "",
+         "data_type": "text",
+         "format": null
+        },
+        {
+         "name": "region",
+         "kind": "dimension",
+         "label": "Region",
+         "ref": "dimension:region",
+         "data_type": "text",
+         "format": null
+        },
+        {
+         "name": "open_projects",
+         "kind": "measure",
+         "label": "Open projects",
+         "ref": "measure:open_projects",
+         "data_type": "integer",
+         "format": "integer"
+        }
+       ],
+       "rows": [
+        [
+         "PRJ-000",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-001",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-002",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-003",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-004",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-005",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-006",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-007",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-008",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-009",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-010",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-011",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-012",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-013",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-014",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-015",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-016",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-017",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-018",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-019",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-020",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-021",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-022",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-023",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-024",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-025",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-026",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-027",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-028",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-029",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-030",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-031",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-032",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-033",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-034",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-035",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-036",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-037",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-038",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-039",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-040",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-041",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-042",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-043",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-044",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-045",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-046",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-047",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-048",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-049",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-050",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-051",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-052",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-053",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-054",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-055",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-056",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-057",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-058",
+         "KSA",
+         1
+        ],
+        [
+         "PRJ-059",
+         "KSA",
+         1
+        ]
+       ],
+       "row_count": 60,
+       "viz": {
+        "visual": "table",
+        "chart_spec": {
+         "type": "table"
+        }
+       },
+       "definition": {
+        "measure": "measure:x",
+        "label": "Open projects",
+        "rule_text": "Projects not closed.",
+        "rule_ref": "R-1",
+        "blank_handling": "Blank values are not counted."
+       }
+      },
+      {
+       "kind": "widget",
+       "badges": [
+        "certified"
+       ],
+       "filters_applied": [
+        "Region"
+       ],
+       "filters_not_applied": [],
+       "truncated": false,
+       "notes": [],
+       "kpi": null,
+       "id": "w5",
+       "title": "Broken widget",
+       "visual": "columns",
+       "placement": {
+        "x": 0,
+        "y": 5,
+        "w": 6,
+        "h": 4
+       },
+       "error": "The data source took too long to answer."
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,121 @@
+# PMO analysis recipes — DRAFT for STK-008 review (ENH-012, US-179, FEAT-063 / FEAT-014).
+# Named, parameterised Query Spec templates for the analyses PMO people ask for by name. Indexed as
+# `analysis_recipe` knowledge with each approved model version (one chunk per recipe, cut to what the model has) and
+# reviewed with it, like the report blueprints. Ask reads only approved recipes: the rules pick one by its triggers
+# and fill its slots from the question; AG-03 may pick one by id and fill the slots from the listed options.
+#
+#   triggers   phrases that point at the recipe; each word also matches longer forms (as report_blueprints.yaml)
+#   slots      the template's parameters: kind measure | dimension | grain, the allowed options (pack keys, or grains),
+#              the default. A slot filled with something not listed, or not reachable from the measure, falls back to
+#              the first listed option that is.
+#   spec       a Query Spec in the planner's shape; "{slot}" stands for a slot's reference (measure:…, dimension:…)
+#              or value (a grain)
+#   operations what the spec uses beyond a measure and breakdowns (share of total, sort, window operations)
+#   chart      the visual (US-187 catalogue); the answer card falls back when the data doesn't suit it
+#   insights   the insight checks that matter for the analysis (US-185 fact types), listed first on the card
+
+version: "0.1.0"
+status: draft
+recipes:
+  - id: variance_bridge
+    title: Variance bridge
+    triggers: [variance bridge, budget bridge, forecast bridge, bridge of the variance, what makes up the variance,
+               variance walk]
+    question: Which {dimension} make up the forecast variance against budget?
+    slots:
+      measure: {kind: measure, options: [net_forecast_variance, budget_variance], default: net_forecast_variance}
+      dimension: {kind: dimension, options: [portfolio, programme, region, cio, platform, budget_type],
+                  default: portfolio}
+    spec:
+      measure: "{measure}"
+      breakdowns: ["{dimension}"]
+      sort: [{by: measure, dir: desc}]
+      limit: 12
+    operations: [sort, limit]
+    chart: waterfall
+    insights: [driver, concentration, outlier]
+
+  - id: pareto_80_20
+    title: Pareto 80/20
+    triggers: [pareto, 80/20, 80 20, eighty twenty, vital few]
+    question: Which few {dimension} account for most of {measure}?
+    slots:
+      measure: {kind: measure, options: [forecast_cost_total, approved_budget_total, overdue_go_lives, open_projects,
+                                         tcv_open_total, open_risks, high_exposure_risks, open_demand],
+                default: forecast_cost_total}
+      dimension: {kind: dimension, options: [portfolio, programme, region, cio, platform, delivery_manager,
+                                             risk_category, request_cio], default: portfolio}
+    spec:
+      measure: "{measure}"
+      breakdowns: ["{dimension}"]
+      share_of_total: ["{measure}"]
+      sort: [{by: measure, dir: desc}]
+      limit: 25
+    operations: [share_of_total, sort, limit]
+    chart: pareto
+    insights: [concentration, outlier]
+
+  - id: aging_buckets
+    title: Aging buckets
+    triggers: [aging buckets, ageing buckets, aging, ageing, age bands, how long overdue]
+    question: How long have {measure} been waiting, in age bands?
+    slots:
+      measure: {kind: measure, options: [overdue_go_lives, on_hold, open_projects, open_demand],
+                default: overdue_go_lives}
+      dimension: {kind: dimension, options: [lateness_bucket, on_hold_aging, request_aging, request_on_hold_aging],
+                  default: lateness_bucket}
+    spec:
+      measure: "{measure}"
+      breakdowns: ["{dimension}"]
+    operations: []
+    chart: columns
+    insights: [concentration, data_note]
+
+  - id: funnel_by_gate
+    title: Funnel by gate
+    triggers: [funnel by gate, gate funnel, intake funnel, demand funnel, funnel]
+    question: How many {measure} reach each {dimension}?
+    slots:
+      measure: {kind: measure, options: [total_requests, open_demand], default: total_requests}
+      dimension: {kind: dimension, options: [intake_gate, request_state], default: intake_gate}
+    spec:
+      measure: "{measure}"
+      breakdowns: ["{dimension}"]
+    operations: []
+    chart: funnel
+    insights: [concentration, data_note]
+
+  - id: overdue_trend
+    title: Overdue trend
+    triggers: [overdue trend, trend of overdue, overdue over time, lateness trend]
+    question: How has {measure} moved by {grain} of the planned go-live?
+    slots:
+      measure: {kind: measure, options: [overdue_go_lives, overdue_over_90, schedule_risk], default: overdue_go_lives}
+      date: {kind: dimension, options: [planned_deployment_date], default: planned_deployment_date}
+      grain: {kind: grain, options: [month, quarter, week], default: month}
+    spec:
+      measure: "{measure}"
+      time: {ref: "{date}", grain: "{grain}"}
+      moving_avg: {window: 3}
+    operations: [moving_avg]
+    chart: trend
+    insights: [trend, break]
+
+  - id: compliance_rate
+    title: Compliance rate
+    triggers: [compliance rate, compliance rates, governance compliance, compliance league]
+    question: How does {measure} compare across {dimension}, against its target?
+    slots:
+      measure: {kind: measure, options: [status_reporting_compliance_pct, baselining_compliance_pct,
+                                         budget_code_compliance_pct, pm_assignment_compliance_pct,
+                                         closure_compliance_pct, request_budget_code_pct, request_pm_assignment_pct],
+                default: status_reporting_compliance_pct}
+      dimension: {kind: dimension, options: [portfolio, programme, region, cio, delivery_manager, request_cio],
+                  default: portfolio}
+    spec:
+      measure: "{measure}"
+      breakdowns: ["{dimension}"]
+      sort: [{by: measure, dir: asc}]
+    operations: [sort]
+    chart: bullet
+    insights: [gap, outlier]

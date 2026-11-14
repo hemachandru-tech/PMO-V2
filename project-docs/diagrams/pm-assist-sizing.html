@@ -1,0 +1,217 @@
+<title>PM-Assist Sizing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column; each diagram is a wide figure that scrolls inside itself on phones. */
+:root {
+  --bg: #f3f6f7; --surface: #ffffff; --zone: #e8eef0; --fg: #14212b; --muted: #566876;
+  --line: #c3ced5; --accent: #0d6e66; --accent-soft: #d5ece9; --amber: #a85a06; --amber-soft: #f6e6d2;
+  --t1: #e4eefb; --k1: #2f63b5; --t2: #e3f3e8; --k2: #2f7d4a; --t3: #fbf0d6; --k3: #9a6a0c;
+  --t4: #ece8fa; --k4: #5b47b3; --t5: #fbe5e4; --k5: #b0413b; --t6: #e0f2e7; --k6: #2a7a52;
+  --t7: #e1ecfa; --k7: #2b5fa8; --t8: #fbeed8; --k8: #9a640f; --t9: #ebe8f8; --k9: #5d4fae;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1317; --surface: #141d22; --zone: #18232a; --fg: #e1e9ed; --muted: #92a3ae;
+  --line: #2f3e48; --accent: #3cc9b8; --accent-soft: #143633; --amber: #f0a43a; --amber-soft: #3a2a14;
+  --t1: #15233a; --k1: #7fa9ec; --t2: #142a1d; --k2: #74c08f; --t3: #2c2410; --k3: #e2b65a;
+  --t4: #211c38; --k4: #a596ec; --t5: #331a1a; --k5: #ec8f88; --t6: #13291d; --k6: #6fc495;
+  --t7: #14223a; --k7: #82aaeb; --t8: #2d2311; --k8: #e3b25e; --t9: #201c36; --k9: #a89aea;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1317; --surface: #141d22; --zone: #18232a; --fg: #e1e9ed; --muted: #92a3ae;
+  --line: #2f3e48; --accent: #3cc9b8; --accent-soft: #143633; --amber: #f0a43a; --amber-soft: #3a2a14;
+  --t1: #15233a; --k1: #7fa9ec; --t2: #142a1d; --k2: #74c08f; --t3: #2c2410; --k3: #e2b65a;
+  --t4: #211c38; --k4: #a596ec; --t5: #331a1a; --k5: #ec8f88; --t6: #13291d; --k6: #6fc495;
+  --t7: #14223a; --k7: #82aaeb; --t8: #2d2311; --k8: #e3b25e; --t9: #201c36; --k9: #a89aea;
+  color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+header { display: grid; gap: 12px; max-width: 760px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 600 clamp(32px, 5vw, 46px)/1.08 var(--display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font: 600 26px/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--body); margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 17px; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 12px/1.4 var(--mono); color: var(--muted); }
+section { display: grid; gap: 18px; }
+section > header { gap: 8px; }
+figure { margin: 0; display: grid; gap: 12px; }
+.canvas { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+.canvas svg { display: block; width: 100%; min-width: 980px; height: auto; color: var(--fg); }
+.canvas.small svg { min-width: 760px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 90ch; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 32px; }
+.grid2 > * { min-width: 0; }
+ol.keys { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 8px 28px; font-size: 14px; }
+ol.keys li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: baseline; }
+ol.keys b { font: 500 12px/22px var(--mono); width: 22px; height: 22px; text-align: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+ol.keys li.sec b { background: var(--amber-soft); color: var(--amber); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+code, .mono { font: 13px/1.4 var(--mono); }
+.pill { display: inline-block; font: 500 11px/1 var(--mono); padding: 4px 7px; border-radius: 3px; background: var(--zone); color: var(--muted); white-space: nowrap; }
+.pill.ok { background: var(--accent-soft); color: var(--accent); }
+.pill.gap { background: var(--amber-soft); color: var(--amber); }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px 28px; }
+.rules > div { display: grid; gap: 6px; padding-top: 12px; border-top: 2px solid var(--fg); min-width: 0; }
+.rules p { font-size: 14px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+/* SVG */
+.z { fill: var(--zone); stroke: var(--line); stroke-dasharray: 5 4; }
+.zl { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; fill: var(--muted); }
+.n { fill: var(--surface); stroke: var(--muted); stroke-width: 1; }
+.n.key { stroke: var(--accent); stroke-width: 1.6; }
+.n.ext { fill: var(--zone); stroke-dasharray: 3 3; }
+.n.llm { fill: var(--accent-soft); stroke: var(--accent); }
+.m { fill: var(--zone); stroke: none; }
+.t { font: 600 13px var(--body); fill: currentColor; }
+.tc { font: 600 13px var(--display); fill: currentColor; }
+.s { font: 11px var(--body); fill: var(--muted); }
+.sm { font: 11px var(--mono); fill: var(--muted); }
+.e { stroke: currentColor; stroke-width: 1.3; fill: none; }
+.e.sec { stroke: var(--amber); stroke-dasharray: 5 3; }
+.e.thin { stroke: var(--muted); stroke-dasharray: 2 3; }
+.ah { fill: currentColor; } .ah.sec { fill: var(--amber); } .ah.thin { fill: var(--muted); }
+.b { fill: var(--accent); } .b.sec { fill: var(--amber); }
+.bt { font: 600 10.5px var(--mono); fill: var(--surface); }
+.exit { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1; }
+.exitt { font: 11px var(--body); fill: var(--amber); }
+.tag { font: 600 9.5px var(--mono); fill: var(--accent); letter-spacing: .05em; }
+.num { font: 500 11px var(--mono); fill: var(--muted); }
+
+/* layered view */
+.canvas.layers svg { min-width: 1120px; }
+.lb, .lm { stroke-width: 1; }
+.t1 { fill: var(--t1); stroke: var(--k1); stroke-opacity: .35; } .b1 { stroke: var(--k1); } .s1 { stroke: var(--k1); } .k1 { fill: var(--k1); }
+.t2 { fill: var(--t2); stroke: var(--k2); stroke-opacity: .35; } .b2 { stroke: var(--k2); } .s2 { stroke: var(--k2); } .k2 { fill: var(--k2); }
+.t3 { fill: var(--t3); stroke: var(--k3); stroke-opacity: .35; } .b3 { stroke: var(--k3); } .s3 { stroke: var(--k3); } .k3 { fill: var(--k3); }
+.t4 { fill: var(--t4); stroke: var(--k4); stroke-opacity: .35; } .b4 { stroke: var(--k4); } .s4 { stroke: var(--k4); } .k4 { fill: var(--k4); }
+.t5 { fill: var(--t5); stroke: var(--k5); stroke-opacity: .35; } .b5 { stroke: var(--k5); } .s5 { stroke: var(--k5); } .k5 { fill: var(--k5); }
+.t6 { fill: var(--t6); stroke: var(--k6); stroke-opacity: .35; } .b6 { stroke: var(--k6); } .s6 { stroke: var(--k6); } .k6 { fill: var(--k6); }
+.t7 { fill: var(--t7); stroke: var(--k7); stroke-opacity: .35; } .b7 { stroke: var(--k7); } .s7 { stroke: var(--k7); } .k7 { fill: var(--k7); }
+.t8 { fill: var(--t8); stroke: var(--k8); stroke-opacity: .35; } .b8 { stroke: var(--k8); } .s8 { stroke: var(--k8); } .k8 { fill: var(--k8); }
+.t9 { fill: var(--t9); stroke: var(--k9); stroke-opacity: .35; } .b9 { stroke: var(--k9); } .s9 { stroke: var(--k9); } .k9 { fill: var(--k9); }
+.s0 { stroke: currentColor; }
+.c { fill: var(--surface); stroke-opacity: .45; stroke-width: 1; }
+.c.hot { stroke-opacity: 1; stroke-width: 1.8; }
+.c.ec { stroke-opacity: .7; }
+.ic { fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.grp { fill: none; stroke-dasharray: 5 4; stroke-opacity: .7; }
+.ct { font: 600 13px var(--body); fill: currentColor; }
+.cs { font: 11px var(--body); fill: var(--muted); }
+.gt { font: 600 12px var(--body); fill: currentColor; }
+.ln { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.lt { font: 600 16px var(--display); fill: currentColor; }
+.lsub { font: 10.5px var(--mono); fill: var(--muted); }
+.ext { fill: var(--zone); stroke: var(--line); }
+.exh { fill: var(--muted); }
+.eht { font: 600 16px var(--display); fill: var(--surface); }
+.ehs { font: 11px var(--body); fill: var(--surface); }
+.ez { fill: none; stroke: var(--muted); stroke-dasharray: 4 4; }
+.ezl { font: 500 10.5px var(--mono); letter-spacing: .06em; fill: var(--muted); }
+.ar { stroke: var(--muted); stroke-width: 1.3; }
+.ar.sm { stroke-width: 1.1; }
+.xc { fill: var(--zone); stroke: var(--line); }
+.xct { font: 13px var(--body); fill: currentColor; }
+.xb { font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { .canvas { scroll-behavior: smooth; } }
+
+.c.cl { stroke: var(--amber); stroke-opacity: 1; stroke-width: 1.6; }
+.cpill { fill: var(--amber-soft); stroke: var(--amber); stroke-width: .8; }
+.cpt { font: 600 9px var(--mono); letter-spacing: .06em; fill: var(--amber); }
+.c.rq { stroke: var(--amber); stroke-opacity: .6; }
+.rqt { font: 600 12.5px var(--body); fill: var(--amber); }
+.rqc { font: 500 10.5px var(--mono); fill: var(--amber); }
+.chip { font-weight: 500; fill: currentColor; }
+.c.inst { fill: var(--surface); stroke: var(--k6); stroke-dasharray: 4 3; stroke-opacity: 1; }
+.rowl { font: 600 11px var(--mono); letter-spacing: .04em; fill: var(--k3); }
+.th { font: 500 10.5px var(--mono); letter-spacing: .06em; fill: var(--muted); }
+.td { font: 11.5px var(--body); fill: currentColor; }
+.td.b { font-weight: 600; }
+.td.m { font: 11px var(--mono); }
+.rule { stroke: var(--k6); stroke-opacity: .35; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 13px; color: var(--muted); align-items: center; }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; border: 1.6px solid var(--amber); background: var(--surface); }
+.sw.p { border-color: var(--muted); }
+.big { font: 600 40px var(--display); }
+.bigu { font: 11px var(--mono); fill: var(--muted); letter-spacing: .04em; }
+.canvas.vm svg { min-width: 760px; }
+.cost { fill: var(--zone); }
+.costv { font: 600 24px var(--display); }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">PM-Assist · Azure sizing</span>
+    <h1>PM-Assist Sizing</h1>
+    <p class="lede">One Azure VM per environment. Production has twice the compute of non-production and the same disk.</p>
+    <div class="meta"><span>Draft for client review</span><span>2026-11-04</span><span>UAE North</span></div>
+  </header>
+  <section>
+    <figure>
+      <div class="canvas vm">
+<svg viewBox="0 0 1100 420" role="img" aria-label="PM-Assist sizing: the recommended non-production box runs on one Azure VM D8s_v5 with 8 vCPU, 32 GiB memory and a 500 GB data disk; the recommended production box runs on one Azure VM D16s_v4 with 16 vCPU, 64 GiB memory and a 500 GB data disk, in UAE North. Both run Ubuntu 24.04 LTS with Docker Compose and all PM-Assist services, single instance, no HA.">
+<rect class="lm t1" x="20" y="16" width="520" height="388" rx="8"/>
+<text class="lt" x="40" y="58">Non-Production (Recommendation)</text>
+<rect class="c b1" x="40" y="86" width="480" height="300" rx="6"/>
+<g class="ic s1" transform="translate(58,104) scale(1.250)"><rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01"/></g>
+<text class="ct" x="100" y="118">Azure VM · D8s_v5</text>
+<text class="cs" x="100" y="134">Linux virtual machine</text>
+<text class="big k1" x="58" y="194">8</text>
+<text class="bigu" x="58" y="214">vCPU</text>
+<text class="big k1" x="212" y="194">32</text>
+<text class="bigu" x="212" y="214">GiB memory</text>
+<text class="big k1" x="366" y="194">500</text>
+<text class="bigu" x="366" y="214">GB data disk</text>
+<line class="rule" x1="58" y1="236" x2="502" y2="236"/>
+<text class="th" x="58" y="262">OS</text>
+<text class="td" x="150" y="262">Ubuntu 24.04 LTS</text>
+<text class="th" x="58" y="287">RUNTIME</text>
+<text class="td" x="150" y="287">Docker Engine + Compose v2</text>
+<text class="th" x="58" y="312">DISKS</text>
+<text class="td" x="150" y="312">Premium SSD, OS disk + 500 GB data disk</text>
+<text class="th" x="58" y="337">REGION</text>
+<text class="td" x="150" y="337">UAE North</text>
+<text class="th" x="58" y="362">INSTANCES</text>
+<text class="td" x="150" y="362">1 VM, single instance, no HA</text>
+<rect class="lm t3" x="560" y="16" width="520" height="388" rx="8"/>
+<text class="lt" x="580" y="58">Production (Recommendation)</text>
+<rect class="c b3" x="580" y="86" width="480" height="300" rx="6"/>
+<g class="ic s3" transform="translate(598,104) scale(1.250)"><rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01"/></g>
+<text class="ct" x="640" y="118">Azure VM · D16s_v4</text>
+<text class="cs" x="640" y="134">Linux virtual machine</text>
+<text class="big k3" x="598" y="194">16</text>
+<text class="bigu" x="598" y="214">vCPU</text>
+<text class="big k3" x="752" y="194">64</text>
+<text class="bigu" x="752" y="214">GiB memory</text>
+<text class="big k3" x="906" y="194">500</text>
+<text class="bigu" x="906" y="214">GB data disk</text>
+<line class="rule" x1="598" y1="236" x2="1042" y2="236"/>
+<text class="th" x="598" y="262">OS</text>
+<text class="td" x="690" y="262">Ubuntu 24.04 LTS</text>
+<text class="th" x="598" y="287">RUNTIME</text>
+<text class="td" x="690" y="287">Docker Engine + Compose v2</text>
+<text class="th" x="598" y="312">DISKS</text>
+<text class="td" x="690" y="312">Premium SSD, OS disk + 500 GB data disk</text>
+<text class="th" x="598" y="337">REGION</text>
+<text class="td" x="690" y="337">UAE North</text>
+<text class="th" x="598" y="362">INSTANCES</text>
+<text class="td" x="690" y="362">1 VM, single instance, no HA</text>
+</svg>
+      </div>
+      <figcaption>Non-production runs on D8s_v5 and production on D16s_v4, each a single Ubuntu VM with a 500 GB Premium SSD data disk and the full PM-Assist Docker Compose stack.</figcaption>
+    </figure>
+  </section>
+</div>

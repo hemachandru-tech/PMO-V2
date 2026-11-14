@@ -1,0 +1,32 @@
+[project]
+name = "tela-common"
+version = "0.1.0"
+description = "Shared utilities for Tela services: ids, error codes, structured logging with redaction"
+requires-python = ">=3.12"
+dependencies = [
+    "structlog>=24.4",
+]
+
+[project.optional-dependencies]
+secrets = ["hvac>=2.3"]
+storage = ["boto3>=1.35"]
+crypto = ["cryptography>=43.0"]
+ssh = ["cryptography>=43.0", "bcrypt>=4.2"]  # private key files for SSH tunnels (ENH-003)
+sql = ["sqlglot>=26.0"]
+sheet = ["openpyxl>=3.1"]  # business-context spreadsheets (US-251)
+otel = [
+    "opentelemetry-api>=1.28",
+    "opentelemetry-sdk>=1.28",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.28",
+    "opentelemetry-instrumentation-fastapi>=0.49b0",
+    "opentelemetry-instrumentation-httpx>=0.49b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.49b0",
+    "opentelemetry-instrumentation-celery>=0.49b0",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tela_common"]

@@ -1,0 +1,37 @@
+[project]
+name = "tela-api"
+version = "0.1.0"
+description = "Tela API service (COMP-002): FastAPI modular monolith"
+requires-python = ">=3.12"
+dependencies = [
+    "tela-common[secrets,storage,crypto,sql,otel,ssh,sheet]",
+    "tela-query-spec",
+    "tela-chart-spec",
+    "sqlglot>=26.0",
+    "pymongo>=4.10",  # bson Extended JSON for MongoDB pipelines (US-112); the API never connects to MongoDB
+    "pyyaml>=6.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.14",  # the migrate image runs from the api venv
+    "fastapi>=0.115",
+    "python-multipart>=0.0.20",  # knowledge document uploads (API-049)
+    "uvicorn[standard]>=0.32",
+    "gunicorn>=23.0",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "pyjwt[crypto]>=2.10",
+    "httpx>=0.28",
+    "redis>=5.2",
+    "prometheus-client>=0.21",
+]
+
+[project.scripts]
+tela-admin = "tela_api.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tela_api"]

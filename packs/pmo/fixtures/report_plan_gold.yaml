@@ -1,0 +1,105 @@
+# Report requests with the plan a Creator should get on the synthetic TPG fixture (US-243, for the US-246 final gate).
+#
+# Written from the request, not from what the rules plan today: some ask for a layout by its catalogue name, some in
+# other words. A plan is right when, under the Creator's scope:
+#   measures     every group has at least one of its measure keys in some widget (measure or extra measure)
+#   breakdowns   each dimension key breaks some widget down
+#   sections     each section key is in the plan (report catalogue layouts, US-159)
+#   page_filters each dimension key is a page filter
+#   gaps         each word appears in a "Not included" entry (the model has no data for it)
+#   title_without no word of these is in the title (the wording check: no actual spend)
+# Scored by tela_api.content.plan_gold.score.
+version: 1
+cases:
+  - id: rp01
+    request: Delayed projects report
+    expect:
+      sections: [bp_delayed_projects]
+      measures: [[overdue_go_lives]]
+  - id: rp02
+    request: What goes live over the next three months?
+    expect:
+      measures: [[go_lives_0_30], [go_lives_31_60], [go_lives_61_90]]
+  - id: rp03
+    request: CAPEX spend report
+    expect:
+      sections: [bp_capex_budget]
+      measures: [[approved_budget_total], [forecast_cost_total]]
+      title_without: [spend]
+  - id: rp04
+    request: Portfolio health by region
+    expect:
+      measures: [[avg_health_score, health_red, health_amber, health_green]]
+      breakdowns: [region]
+  - id: rp05
+    request: Projects on hold and how long they have been waiting
+    expect:
+      measures: [[on_hold], [longest_on_hold_days, avg_on_hold_days, on_hold_over_90]]
+  - id: rp06
+    request: "Governance hygiene: baselining, budget codes and PM assignment"
+    expect:
+      measures: [[baselining_compliance_pct, baselined], [budget_code_compliance_pct, budget_code_set],
+                 [pm_assignment_compliance_pct, pm_assigned]]
+  - id: rp07
+    request: Demand pipeline with open requests by CIO
+    expect:
+      measures: [[open_demand, total_requests]]
+      breakdowns: [request_cio]
+  - id: rp08
+    request: "RAID report: open risks, issues and overdue actions"
+    expect:
+      measures: [[open_risks, high_exposure_risks], [open_issues, high_priority_issues], [overdue_actions]]
+  - id: rp09
+    request: Change request report with PCR approvals and the extra cost they add
+    expect:
+      measures: [[total_pcrs, pcrs_approved, pcr_approval_pct], [pcr_additional_cost]]
+  - id: rp10
+    request: Status reporting compliance by delivery manager
+    expect:
+      measures: [[status_reporting_compliance_pct, reported_last_30d]]
+      breakdowns: [delivery_manager]
+  - id: rp11
+    request: Executive summary of the portfolio for the board
+    expect:
+      measures: [[open_projects, total_projects], [overdue_go_lives, schedule_risk]]
+  - id: rp12
+    request: Where are projects slipping against their first baseline?
+    expect:
+      measures: [[slip_vs_baseline_median, slip_vs_baseline_avg, slip_vs_baseline_p85]]
+  - id: rp13
+    request: Timesheet hours and who is logging time
+    expect:
+      measures: [[hours_logged, hours_all], [people_logging]]
+  - id: rp14
+    request: Closure report for finished projects
+    expect:
+      measures: [[completed_projects, closure_compliance_pct, closure_overdue, closure_approved]]
+  - id: rp15
+    request: "Delivery flow: throughput and lead time"
+    expect:
+      measures: [[throughput_go_lives_month], [lead_time_median, lead_time_p85]]
+  - id: rp16
+    request: Budget overruns by portfolio
+    expect:
+      measures: [[over_budget, budget_variance, forecast_over_budget_15]]
+      breakdowns: [portfolio]
+  - id: rp17
+    request: Delivery report with team workload and milestone slippage
+    expect:
+      measures: [[overdue_go_lives, in_delivery, schedule_risk]]
+      gaps: [workload, milestone]
+  - id: rp18
+    request: Critical path tasks running late
+    expect:
+      measures: [[critical_tasks_late, critical_open_tasks]]
+  - id: rp19
+    request: "Project RAG: reported status against calculated health"
+    expect:
+      measures: [[reported_red_pct, reported_green_pct, reported_amber_pct, rag_contradictions],
+                 [health_red, health_green, avg_health_score]]
+  - id: rp20
+    request: Overdue go-lives and schedule risk by platform, with a priority filter
+    expect:
+      measures: [[overdue_go_lives], [schedule_risk]]
+      breakdowns: [platform]
+      page_filters: [priority]

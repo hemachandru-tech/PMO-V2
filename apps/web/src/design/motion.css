@@ -1,0 +1,31 @@
+/*
+ * Motion presets (US-147). Dialogs, sheets, popovers, menus, selects and tooltips animate with tw-animate-css, which
+ * reads --tw-duration and --tw-ease; the `motion-*` utilities (index.css) set them from these variables. Nothing
+ * runs longer than 200 ms, and nothing moves at all under prefers-reduced-motion.
+ */
+:root {
+  --tl-motion-fast: 120ms;
+  --tl-motion-base: 180ms;
+  --tl-motion-panel: 200ms;
+  --tl-ease-out: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Toasts: sonner's own transitions run for 400 ms; bring them into the presets. */
+[data-sonner-toast] {
+  transition-duration: var(--tl-motion-base);
+  transition-timing-function: var(--tl-ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* Not zero, so Radix still receives animationend and unmounts closed content. */
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

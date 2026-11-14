@@ -1,0 +1,15 @@
+{
+  "route": "/dashboards/:id (PMO — Projects)",
+  "commit": "253d7c8",
+  "runs": [
+    235,
+    218,
+    203,
+    256,
+    337,
+    162,
+    190
+  ],
+  "median_ms": 218,
+  "recorded": "2026-10-22"
+}

@@ -1,0 +1,308 @@
+<title>PM-Assist Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column; each diagram is a wide figure that scrolls inside itself on phones. */
+:root {
+  --bg: #f3f6f7; --surface: #ffffff; --zone: #e8eef0; --fg: #14212b; --muted: #566876;
+  --line: #c3ced5; --accent: #0d6e66; --accent-soft: #d5ece9; --amber: #a85a06; --amber-soft: #f6e6d2;
+  --t1: #e4eefb; --k1: #2f63b5; --t2: #e3f3e8; --k2: #2f7d4a; --t3: #fbf0d6; --k3: #9a6a0c;
+  --t4: #ece8fa; --k4: #5b47b3; --t5: #fbe5e4; --k5: #b0413b; --t6: #e0f2e7; --k6: #2a7a52;
+  --t7: #e1ecfa; --k7: #2b5fa8; --t8: #fbeed8; --k8: #9a640f; --t9: #ebe8f8; --k9: #5d4fae;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1317; --surface: #141d22; --zone: #18232a; --fg: #e1e9ed; --muted: #92a3ae;
+  --line: #2f3e48; --accent: #3cc9b8; --accent-soft: #143633; --amber: #f0a43a; --amber-soft: #3a2a14;
+  --t1: #15233a; --k1: #7fa9ec; --t2: #142a1d; --k2: #74c08f; --t3: #2c2410; --k3: #e2b65a;
+  --t4: #211c38; --k4: #a596ec; --t5: #331a1a; --k5: #ec8f88; --t6: #13291d; --k6: #6fc495;
+  --t7: #14223a; --k7: #82aaeb; --t8: #2d2311; --k8: #e3b25e; --t9: #201c36; --k9: #a89aea;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1317; --surface: #141d22; --zone: #18232a; --fg: #e1e9ed; --muted: #92a3ae;
+  --line: #2f3e48; --accent: #3cc9b8; --accent-soft: #143633; --amber: #f0a43a; --amber-soft: #3a2a14;
+  --t1: #15233a; --k1: #7fa9ec; --t2: #142a1d; --k2: #74c08f; --t3: #2c2410; --k3: #e2b65a;
+  --t4: #211c38; --k4: #a596ec; --t5: #331a1a; --k5: #ec8f88; --t6: #13291d; --k6: #6fc495;
+  --t7: #14223a; --k7: #82aaeb; --t8: #2d2311; --k8: #e3b25e; --t9: #201c36; --k9: #a89aea;
+  color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+header { display: grid; gap: 12px; max-width: 760px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 600 clamp(32px, 5vw, 46px)/1.08 var(--display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font: 600 26px/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--body); margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 17px; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 12px/1.4 var(--mono); color: var(--muted); }
+section { display: grid; gap: 18px; }
+section > header { gap: 8px; }
+figure { margin: 0; display: grid; gap: 12px; }
+.canvas { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+.canvas svg { display: block; width: 100%; min-width: 980px; height: auto; color: var(--fg); }
+.canvas.small svg { min-width: 760px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 90ch; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 32px; }
+.grid2 > * { min-width: 0; }
+ol.keys { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 8px 28px; font-size: 14px; }
+ol.keys li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: baseline; }
+ol.keys b { font: 500 12px/22px var(--mono); width: 22px; height: 22px; text-align: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+ol.keys li.sec b { background: var(--amber-soft); color: var(--amber); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+code, .mono { font: 13px/1.4 var(--mono); }
+.pill { display: inline-block; font: 500 11px/1 var(--mono); padding: 4px 7px; border-radius: 3px; background: var(--zone); color: var(--muted); white-space: nowrap; }
+.pill.ok { background: var(--accent-soft); color: var(--accent); }
+.pill.gap { background: var(--amber-soft); color: var(--amber); }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px 28px; }
+.rules > div { display: grid; gap: 6px; padding-top: 12px; border-top: 2px solid var(--fg); min-width: 0; }
+.rules p { font-size: 14px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+/* SVG */
+.z { fill: var(--zone); stroke: var(--line); stroke-dasharray: 5 4; }
+.zl { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; fill: var(--muted); }
+.n { fill: var(--surface); stroke: var(--muted); stroke-width: 1; }
+.n.key { stroke: var(--accent); stroke-width: 1.6; }
+.n.ext { fill: var(--zone); stroke-dasharray: 3 3; }
+.n.llm { fill: var(--accent-soft); stroke: var(--accent); }
+.m { fill: var(--zone); stroke: none; }
+.t { font: 600 13px var(--body); fill: currentColor; }
+.tc { font: 600 13px var(--display); fill: currentColor; }
+.s { font: 11px var(--body); fill: var(--muted); }
+.sm { font: 11px var(--mono); fill: var(--muted); }
+.e { stroke: currentColor; stroke-width: 1.3; fill: none; }
+.e.sec { stroke: var(--amber); stroke-dasharray: 5 3; }
+.e.thin { stroke: var(--muted); stroke-dasharray: 2 3; }
+.ah { fill: currentColor; } .ah.sec { fill: var(--amber); } .ah.thin { fill: var(--muted); }
+.b { fill: var(--accent); } .b.sec { fill: var(--amber); }
+.bt { font: 600 10.5px var(--mono); fill: var(--surface); }
+.exit { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1; }
+.exitt { font: 11px var(--body); fill: var(--amber); }
+.tag { font: 600 9.5px var(--mono); fill: var(--accent); letter-spacing: .05em; }
+.num { font: 500 11px var(--mono); fill: var(--muted); }
+
+/* layered view */
+.canvas.layers svg { min-width: 1120px; }
+.lb, .lm { stroke-width: 1; }
+.t1 { fill: var(--t1); stroke: var(--k1); stroke-opacity: .35; } .b1 { stroke: var(--k1); } .s1 { stroke: var(--k1); } .k1 { fill: var(--k1); }
+.t2 { fill: var(--t2); stroke: var(--k2); stroke-opacity: .35; } .b2 { stroke: var(--k2); } .s2 { stroke: var(--k2); } .k2 { fill: var(--k2); }
+.t3 { fill: var(--t3); stroke: var(--k3); stroke-opacity: .35; } .b3 { stroke: var(--k3); } .s3 { stroke: var(--k3); } .k3 { fill: var(--k3); }
+.t4 { fill: var(--t4); stroke: var(--k4); stroke-opacity: .35; } .b4 { stroke: var(--k4); } .s4 { stroke: var(--k4); } .k4 { fill: var(--k4); }
+.t5 { fill: var(--t5); stroke: var(--k5); stroke-opacity: .35; } .b5 { stroke: var(--k5); } .s5 { stroke: var(--k5); } .k5 { fill: var(--k5); }
+.t6 { fill: var(--t6); stroke: var(--k6); stroke-opacity: .35; } .b6 { stroke: var(--k6); } .s6 { stroke: var(--k6); } .k6 { fill: var(--k6); }
+.t7 { fill: var(--t7); stroke: var(--k7); stroke-opacity: .35; } .b7 { stroke: var(--k7); } .s7 { stroke: var(--k7); } .k7 { fill: var(--k7); }
+.t8 { fill: var(--t8); stroke: var(--k8); stroke-opacity: .35; } .b8 { stroke: var(--k8); } .s8 { stroke: var(--k8); } .k8 { fill: var(--k8); }
+.t9 { fill: var(--t9); stroke: var(--k9); stroke-opacity: .35; } .b9 { stroke: var(--k9); } .s9 { stroke: var(--k9); } .k9 { fill: var(--k9); }
+.s0 { stroke: currentColor; }
+.c { fill: var(--surface); stroke-opacity: .45; stroke-width: 1; }
+.c.hot { stroke-opacity: 1; stroke-width: 1.8; }
+.c.ec { stroke-opacity: .7; }
+.ic { fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.grp { fill: none; stroke-dasharray: 5 4; stroke-opacity: .7; }
+.ct { font: 600 13px var(--body); fill: currentColor; }
+.cs { font: 11px var(--body); fill: var(--muted); }
+.gt { font: 600 12px var(--body); fill: currentColor; }
+.ln { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.lt { font: 600 16px var(--display); fill: currentColor; }
+.lsub { font: 10.5px var(--mono); fill: var(--muted); }
+.ext { fill: var(--zone); stroke: var(--line); }
+.exh { fill: var(--muted); }
+.eht { font: 600 16px var(--display); fill: var(--surface); }
+.ehs { font: 11px var(--body); fill: var(--surface); }
+.ez { fill: none; stroke: var(--muted); stroke-dasharray: 4 4; }
+.ezl { font: 500 10.5px var(--mono); letter-spacing: .06em; fill: var(--muted); }
+.ar { stroke: var(--muted); stroke-width: 1.3; }
+.ar.sm { stroke-width: 1.1; }
+.xc { fill: var(--zone); stroke: var(--line); }
+.xct { font: 13px var(--body); fill: currentColor; }
+.xb { font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { .canvas { scroll-behavior: smooth; } }
+
+.c.cl { stroke: var(--amber); stroke-opacity: 1; stroke-width: 1.6; }
+.cpill { fill: var(--amber-soft); stroke: var(--amber); stroke-width: .8; }
+.cpt { font: 600 9px var(--mono); letter-spacing: .06em; fill: var(--amber); }
+.c.rq { stroke: var(--amber); stroke-opacity: .6; }
+.rqt { font: 600 12.5px var(--body); fill: var(--amber); }
+.rqc { font: 500 10.5px var(--mono); fill: var(--amber); }
+.chip { font-weight: 500; fill: currentColor; }
+.c.inst { fill: var(--surface); stroke: var(--k6); stroke-dasharray: 4 3; stroke-opacity: 1; }
+.rowl { font: 600 11px var(--mono); letter-spacing: .04em; fill: var(--k3); }
+.th { font: 500 10.5px var(--mono); letter-spacing: .06em; fill: var(--muted); }
+.td { font: 11.5px var(--body); fill: currentColor; }
+.td.b { font-weight: 600; }
+.td.m { font: 11px var(--mono); }
+.rule { stroke: var(--k6); stroke-opacity: .35; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 13px; color: var(--muted); align-items: center; }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; border: 1.6px solid var(--amber); background: var(--surface); }
+.sw.p { border-color: var(--muted); }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">PM-Assist · client architecture</span>
+    <h1>PM-Assist Architecture</h1>
+    <p class="lede">Six layers from sign-in to the models. The NI Layer on the right holds what sits on the client's side: Entra ID, Dataverse and the client's own models.</p>
+    <div class="meta"><span>Draft for client review</span><span>2026-11-04</span><span>Layers 1–6 run by Prodian · Entra, Dataverse and client models by the client</span></div>
+  </header>
+  <section>
+    <figure>
+      <div class="legend"><span><i class="sw"></i>Client provides</span><span><i class="sw p"></i>PM-Assist, run by Prodian</span></div>
+      <div class="canvas layers">
+<svg viewBox="0 0 1400 760" role="img" aria-label="PM-Assist architecture in six layers: users sign in to PM-Assist, Nginx and Keycloak handle traffic and sign-in, the services layer runs the API, Ask engine, connector runner and workers, the data layer holds PostgreSQL 16, Key Vault, the object store and Redis, the llm-gateway sends every model call, and the models layer holds Ollama chat models and the Ollama embedding model mxbai-embed-large. A client-side column holds Entra ID with RBAC beside layer 1 and the client's Foundry, on-premises or own models beside layer 5.">
+<defs><marker id="la" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<rect class="exh" x="1130" y="8" width="260" height="30" rx="6"/>
+<text class="eht" x="1260" y="28" text-anchor="middle">NI Layer</text>
+<g transform="translate(0,36)">
+<rect class="lb t1" x="10" y="20" width="180" height="96" rx="6"/>
+<rect class="lm t1" x="200" y="20" width="910" height="96" rx="6"/>
+<text class="ln k1" x="24" y="63.0">Layer 1</text>
+<text class="lt" x="24" y="82.0">User / Auth</text>
+<rect class="lb t2" x="10" y="128" width="180" height="86" rx="6"/>
+<rect class="lm t2" x="200" y="128" width="910" height="86" rx="6"/>
+<text class="ln k2" x="24" y="157.0">Layer 2</text>
+<text class="lt" x="24" y="176.0">Proxy and</text>
+<text class="lt" x="24" y="194.0">sign-in</text>
+<rect class="lb t3" x="10" y="226" width="180" height="96" rx="6"/>
+<rect class="lm t3" x="200" y="226" width="910" height="96" rx="6"/>
+<text class="ln k3" x="24" y="269.0">Layer 3</text>
+<text class="lt" x="24" y="288.0">Services</text>
+<rect class="lb t4" x="10" y="334" width="180" height="96" rx="6"/>
+<rect class="lm t4" x="200" y="334" width="910" height="96" rx="6"/>
+<text class="ln k4" x="24" y="377.0">Layer 4</text>
+<text class="lt" x="24" y="396.0">Data</text>
+<rect class="lb t5" x="10" y="442" width="180" height="96" rx="6"/>
+<rect class="lm t5" x="200" y="442" width="910" height="96" rx="6"/>
+<text class="ln k5" x="24" y="476.0">Layer 5</text>
+<text class="lt" x="24" y="495.0">Model</text>
+<text class="lt" x="24" y="513.0">gateway</text>
+<rect class="lb t6" x="10" y="550" width="180" height="96" rx="6"/>
+<rect class="lm t6" x="200" y="550" width="910" height="96" rx="6"/>
+<text class="ln k6" x="24" y="593.0">Layer 6</text>
+<text class="lt" x="24" y="612.0">Models</text>
+<rect class="ext" x="1130" y="20" width="260" height="626" rx="6"/>
+<text class="ezl" x="1260.0" y="382" text-anchor="middle">CLIENT SIDE · LAYERS 1, 3, 5</text>
+<rect class="c b1" x="214" y="32" width="435" height="72" rx="6"/>
+<g class="ic s1" transform="translate(226,54.0) scale(1.167)"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6"/><circle cx="17" cy="7" r="2.5"/><path d="M17 12c3 0 5 2 5 5"/></g>
+<text class="ct" x="262" y="58.5">Users</text>
+<text class="cs" x="262" y="75.5">PMO, project managers, leads</text>
+<text class="cs" x="262" y="89.5">browser, HTTPS 443</text>
+<rect class="c b1" x="661" y="32" width="435" height="72" rx="6"/>
+<g class="ic s1" transform="translate(673,54.0) scale(1.167)"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="5"/><rect x="13" y="10" width="8" height="11"/><rect x="3" y="13" width="8" height="8"/></g>
+<text class="ct" x="709" y="58.5">PM-Assist</text>
+<text class="cs" x="709" y="75.5">web app: dashboards, Ask,</text>
+<text class="cs" x="709" y="89.5">governed answers with sources</text>
+<rect class="c cl b1" x="1142" y="32" width="236" height="72" rx="6"/>
+<g class="ic s1" transform="translate(1154,54.0) scale(1.167)"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h6M13 14h4"/></g>
+<text class="ct" x="1190" y="58.5">Entra ID · RBAC</text>
+<text class="cs" x="1190" y="75.5">SSO, MFA, Conditional Access</text>
+<text class="cs" x="1190" y="89.5">groups map to PM-Assist roles</text>
+<rect class="cpill" x="1324" y="25" width="46" height="15" rx="7.5"/>
+<text class="cpt" x="1347" y="36" text-anchor="middle">CLIENT</text>
+<line class="ar sm" x1="1098" y1="68" x2="1140" y2="68" marker-end="url(#la)" marker-start="url(#la)"/>
+<rect class="c b2" x="214" y="140" width="435" height="62" rx="6"/>
+<g class="ic s2" transform="translate(226,158.0) scale(1.083)"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.5 12H13M13 12l4-6M13 12l4 6"/></g>
+<text class="ct" x="260" y="168.5">Nginx</text>
+<text class="cs" x="260" y="185.5">reverse proxy · TLS on 443 · routes UI, API and sign-in</text>
+<rect class="c b2" x="661" y="140" width="435" height="62" rx="6"/>
+<g class="ic s2" transform="translate(673,158.0) scale(1.083)"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></g>
+<text class="ct" x="707" y="168.5">Keycloak</text>
+<text class="cs" x="707" y="185.5">OIDC sign-in, brokers Entra · tokens carry the user&#x27;s roles</text>
+<path class="ar sm" d="M1096 171 H1260 V106" style="fill:none" stroke-dasharray="4 3" marker-end="url(#la)"/>
+<text class="ezl" x="1178" y="165" text-anchor="middle">federates</text>
+<rect class="c b3" x="214" y="238" width="211" height="72" rx="6"/>
+<g class="ic s3" transform="translate(226,262.0) scale(1.000)"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></g>
+<text class="ct" x="258" y="264.5">API service</text>
+<text class="cs" x="258" y="281.5">FastAPI · REST</text>
+<text class="cs" x="258" y="295.5">RBAC scope on every call</text>
+<rect class="c b3" x="437" y="238" width="211" height="72" rx="6"/>
+<g class="ic s3" transform="translate(449,262.0) scale(1.000)"><circle cx="12" cy="4" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 6.5v3M10 13.5l-3.5 4M14 13.5l3.5 4"/></g>
+<text class="ct" x="481" y="264.5">Ask engine</text>
+<text class="cs" x="481" y="281.5">plan, check, run read-only</text>
+<text class="cs" x="481" y="295.5">answers and charts</text>
+<rect class="c b3" x="660" y="238" width="211" height="72" rx="6"/>
+<g class="ic s3" transform="translate(672,262.0) scale(1.000)"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2L19 19M5 19l2.8-2.8M16.2 7.8L19 5"/></g>
+<text class="ct" x="704" y="264.5">Worker + Beat</text>
+<text class="cs" x="704" y="281.5">background jobs, schedules</text>
+<text class="cs" x="704" y="295.5">indexing, refreshes, exports</text>
+<rect class="c b3" x="883" y="238" width="211" height="72" rx="6"/>
+<g class="ic s3" transform="translate(895,262.0) scale(1.000)"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></g>
+<text class="ct" x="927" y="264.5">Connector runner</text>
+<text class="cs" x="927" y="281.5">read-only source queries</text>
+<text class="cs" x="927" y="295.5">Dataverse and other sources</text>
+<rect class="c cl b3" x="1142" y="238" width="236" height="72" rx="6"/>
+<g class="ic s3" transform="translate(1154,260.0) scale(1.167)"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text class="ct" x="1190" y="264.5">Dataverse</text>
+<text class="cs" x="1190" y="281.5">TDS endpoint 1433, read-only</text>
+<text class="cs" x="1190" y="295.5">app user with a read-only role</text>
+<rect class="cpill" x="1324" y="231" width="46" height="15" rx="7.5"/>
+<text class="cpt" x="1347" y="242" text-anchor="middle">CLIENT</text>
+<line class="ar sm" x1="1098" y1="274" x2="1140" y2="274" marker-end="url(#la)"/>
+<rect class="c b4" x="214" y="346" width="211" height="72" rx="6"/>
+<g class="ic s4" transform="translate(226,370.0) scale(1.000)"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text class="ct" x="258" y="372.5">PostgreSQL 16</text>
+<text class="cs" x="258" y="389.5">pgvector, row-level security</text>
+<text class="cs" x="258" y="403.5">models, answers, audit</text>
+<rect class="c b4" x="437" y="346" width="211" height="72" rx="6"/>
+<g class="ic s4" transform="translate(449,370.0) scale(1.000)"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></g>
+<text class="ct" x="481" y="372.5">Key Vault</text>
+<text class="cs" x="481" y="389.5">secrets and keys</text>
+<text class="cs" x="481" y="403.5">source and model credentials</text>
+<rect class="c b4" x="660" y="346" width="211" height="72" rx="6"/>
+<g class="ic s4" transform="translate(672,370.0) scale(1.000)"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></g>
+<text class="ct" x="704" y="372.5">Object store</text>
+<text class="cs" x="704" y="389.5">documents and exports</text>
+<text class="cs" x="704" y="403.5">S3-compatible</text>
+<rect class="c b4" x="883" y="346" width="211" height="72" rx="6"/>
+<g class="ic s4" transform="translate(895,370.0) scale(1.000)"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></g>
+<text class="ct" x="927" y="372.5">Redis</text>
+<text class="cs" x="927" y="389.5">cache</text>
+<text class="cs" x="927" y="403.5">job queue for workers</text>
+<rect class="c b5" x="214" y="454" width="882" height="72" rx="6"/>
+<g class="ic s5" transform="translate(226,475.0) scale(1.250)"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 13l2 2 4-4"/></g>
+<text class="ct" x="264" y="480.5">llm-gateway</text>
+<text class="cs" x="264" y="497.5">the only path to any model · picks the model per task (plan, narrate, embed)</text>
+<text class="cs" x="264" y="511.5">masks data, enforces token budgets, logs every call</text>
+<rect class="c cl b5" x="1142" y="454" width="236" height="72" rx="6"/>
+<g class="ic s5" transform="translate(1154,476.0) scale(1.167)"><path d="M7 19a5 5 0 0 1-.6-10A6 6 0 0 1 18 8.5 4.5 4.5 0 0 1 17.5 19z"/></g>
+<text class="ct" x="1190" y="480.5">Client models</text>
+<text class="cs" x="1190" y="497.5">Azure AI Foundry, on-premises,</text>
+<text class="cs" x="1190" y="511.5">or the client&#x27;s own models</text>
+<rect class="cpill" x="1324" y="447" width="46" height="15" rx="7.5"/>
+<text class="cpt" x="1347" y="458" text-anchor="middle">CLIENT</text>
+<line class="ar sm" x1="1098" y1="490" x2="1140" y2="490" marker-end="url(#la)"/>
+<rect class="c b6" x="214" y="562" width="435" height="72" rx="6"/>
+<g class="ic s6" transform="translate(226,585.0) scale(1.083)"><rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></g>
+<text class="ct" x="260" y="588.5">Ollama · chat models</text>
+<text class="cs" x="260" y="605.5">self-hosted: qwen3:8b (planner), llama3.2</text>
+<text class="cs" x="260" y="619.5">plan, narrate, suggest · on the VM or a GPU host</text>
+<rect class="c b6" x="661" y="562" width="435" height="72" rx="6"/>
+<g class="ic s6" transform="translate(673,585.0) scale(1.083)"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></g>
+<text class="ct" x="707" y="588.5">Ollama · embedding model</text>
+<text class="cs" x="707" y="605.5">mxbai-embed-large · 1024 dimensions</text>
+<text class="cs" x="707" y="619.5">embeds documents, examples and values for search</text>
+<line class="ar sm" x1="650" y1="116" x2="650" y2="138" marker-end="url(#la)"/>
+<line class="ar sm" x1="650" y1="214" x2="650" y2="236" marker-end="url(#la)"/>
+<line class="ar sm" x1="650" y1="322" x2="650" y2="344" marker-end="url(#la)"/>
+<path class="ar sm" d="M1096 300 H1120 V476 H1098" style="fill:none" marker-end="url(#la)"/>
+<text class="ezl" x="1126" y="388" text-anchor="middle" transform="rotate(90 1126 388)">model calls</text>
+<line class="ar sm" x1="431" y1="526" x2="431" y2="560" marker-end="url(#la)"/>
+<line class="ar sm" x1="878" y1="526" x2="878" y2="560" marker-end="url(#la)"/>
+<rect class="xc" x="10" y="660" width="1380" height="46" rx="6"/>
+<g class="ic s0" transform="translate(36,671) scale(1.000)"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></g>
+<text class="xct" x="72" y="688"><tspan class="xb">Rules:</tspan> every user signs in through Entra  |  roles (RBAC) apply in the API and the database  |  sources are read only  |  every model call goes through llm-gateway  |  no source rows sent to the models</text>
+</g></svg>
+      </div>
+      <figcaption>Users reach PM-Assist through Nginx and sign in with Keycloak, which brokers the client's Entra ID; Entra groups become PM-Assist roles. The connector runner reads Dataverse over its TDS endpoint with a read-only app user. The services read and write the data layer, and send every model call through the llm-gateway, which routes it to Ollama (qwen3:8b and llama3.2 for chat, mxbai-embed-large for embeddings) or to the client's own Foundry, on-premises or other models.</figcaption>
+    </figure>
+  </section>
+</div>

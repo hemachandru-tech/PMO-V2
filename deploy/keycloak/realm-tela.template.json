@@ -1,0 +1,103 @@
+{
+  "realm": "tela",
+  "displayName": "Tela (local development)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 28800,
+  "ssoSessionMaxLifespan": 86400,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "groups": [
+    { "name": "TELA-Admins" },
+    { "name": "TELA-Creators" },
+    { "name": "TELA-Viewers" },
+    { "name": "TELA-CIO" }
+  ],
+  "clients": [
+    {
+      "clientId": "tela-web",
+      "name": "Tela web app",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["${TELA_WEB_ORIGIN}/auth/callback", "http://localhost:5173/auth/callback"],
+      "webOrigins": ["${TELA_WEB_ORIGIN}", "http://localhost:5173"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${TELA_WEB_ORIGIN}/##http://localhost:5173/"
+      },
+      "protocolMappers": [
+        {
+          "name": "tela-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "tela-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "full.path": "false",
+            "claim.name": "groups",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@tela.localhost",
+      "firstName": "Ada",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${TELA_DEV_ADMIN_PASSWORD}", "temporary": false }],
+      "groups": ["/TELA-Admins"]
+    },
+    {
+      "username": "admin2",
+      "email": "admin2@tela.localhost",
+      "firstName": "Admin",
+      "lastName": "Two",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${TELA_DEV_ADMIN2_PASSWORD}", "temporary": false }],
+      "groups": ["/TELA-Admins"]
+    },
+    {
+      "username": "nomsa",
+      "email": "nomsa@tela.localhost",
+      "firstName": "Nomsa",
+      "lastName": "Osei",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${TELA_DEV_CREATOR_PASSWORD}", "temporary": false }],
+      "groups": ["/TELA-Creators", "/TELA-CIO"]
+    },
+    {
+      "username": "viewer",
+      "email": "viewer@tela.localhost",
+      "firstName": "Vera",
+      "lastName": "Viewer",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${TELA_DEV_VIEWER_PASSWORD}", "temporary": false }],
+      "groups": ["/TELA-Viewers"]
+    }
+  ]
+}

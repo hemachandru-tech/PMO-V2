@@ -1,0 +1,246 @@
+version: 0.2.0
+status: draft
+rules:
+- id: no_actual_spend
+  title: Forecast cost, never spend
+  rule: 'The data has approved budgets and forecasts only: no invoices, actuals or monthly cost. On projects the cost figure
+    is Forecast cost (EAC), the estimated cost at completion; on requests it is Estimated cost. Forecast minus budget is a
+    forecast comparison, not money already spent. Never label anything spend, spent, burn rate, actual cost or overspent.'
+  measures:
+  - forecast_cost_total
+- id: reporting_date
+  title: The reporting date, not the clock
+  rule: Ages, days overdue, days slipped, days on hold, days since a report and go-live horizons are counted from the model's
+    reporting date ("Data as of …" on every report; 25 Oct 2026 for this TPG extract), never from today's date on the server
+    or in the browser, so numbers do not move while they are discussed.
+- id: status_vs_health
+  title: Reported status is not calculated health
+  rule: 'Reported status (overall KPI) is the project manager''s own Green, Amber, Red or Not set. Calculated health is Tela''s
+    score from schedule, cost, progress and the issue KPI: Green 75–100, Amber 50–74, Red 0–49, or Insufficient data. Name
+    which one a figure shows ("Reported status" or "Calculated health") and never mix the words, e.g. "reported health". The
+    audience dashboards use reported status only; calculated health is shown on the Portfolio status report.'
+  measures:
+  - avg_health_score
+- id: unknown_is_not_green
+  title: Not set and Insufficient data are never Green
+  rule: A project with no reported status (blank or missing) is Not set, shown in grey and left out of Green/Amber/Red percentages
+    (it is counted separately as Reported status not set); it is never assumed Green. Calculated health with too little evidence
+    is Insufficient data, never Green or on track.
+  measures:
+  - status_not_set
+- id: populations
+  title: The three populations
+  rule: Open projects are those whose current state is Project Created, Active or On Hold (the Dataverse statecode is not
+    used). In delivery is Active only. Open requests are New, Active, On Hold and Return to Requester. Open risks and issues
+    are those in state Active. Every figure says which population it counts, in its footnote or definition.
+  measures:
+  - open_projects
+  - in_delivery
+  - open_demand
+- id: overdue_rule
+  title: What overdue means
+  rule: 'A go-live is overdue when the project is in delivery (Active), its planned deployment date is before the reporting
+    date and it has no actual deployment date. Due on the reporting date is not overdue. On Hold and Project Created are never
+    overdue. Overdue is not the same as schedule risk, which is the project manager''s Red or Amber schedule KPI. Overdue
+    is also not the same as slipped: slipped compares the finish date with the first-baselined go-live (the promise), overdue
+    compares today with the planned go-live.'
+  measures:
+  - overdue_go_lives
+- id: double_signal
+  title: Colour is never the only signal
+  rule: Every status colour comes with its word (Green, Amber, Red, Not set) and every bar or cell with its number. Status
+    breakdowns keep the order Green, Amber, Red, Not set and their status colours; other categories never use red or green.
+    Stored Yellow is always shown as Amber.
+- id: global_filters
+  title: The six shared filters
+  rule: 'Dashboards share the filters CIO, Region, Portfolio, Project manager, Priority and Platform. Requests have no portfolio
+    until they become a project, so a portfolio filter does not reach request figures: a request report says so in a callout
+    when a portfolio filter is set.'
+- id: five_layers
+  title: Measure, widget, report, dashboard, publication
+  rule: A certified measure is the rule; a widget is a measure with breakdowns and a visual; a report is a page of widgets
+    on the 12-column grid; a dashboard is reports as tabs with shared filters; a publication is a dashboard version shared
+    with roles. Build reports from certified measures only.
+- id: report_layout
+  title: The standard report layout
+  rule: A report opens with a strip of 4–5 headline figures (each with its definition and, where it helps, a tone), then visuals
+    side by side (6 + 6 columns) or full width (12), then a detail table (sortable, searchable, exportable, rows open the
+    record), and ends with a footnote that states the population and the data's limits. A caveat that changes how a figure
+    reads goes in a callout above the figures.
+- id: open_by_current_state
+  title: Open is read from the current state
+  rule: A project is open when tpg_project current state is Project Created, Active or On Hold. Completed and Dropped are
+    closed. The statecode (Active/Inactive) disagrees with the current state on 8 of 111 projects and is never used to decide
+    open.
+  measures:
+  - open_projects
+  - inactive_projects
+- id: the_promise
+  title: The promise is the first-baselined go-live
+  rule: The commitment of record is the project's first-baselined deployment date, ahead of the Initial Baseline PCR and the
+    task baselines (baseline number is 0 on every task baseline). A project without it is shown as "no first-baselined go-live",
+    never as on time.
+  measures:
+  - no_first_baseline
+  - no_first_baseline_with_ib_pcr
+- id: slip_rule
+  title: What slipped means
+  rule: Slip days = finish date − first-baselined go-live. The finish date is the actual go-live when the project is live;
+    otherwise the planned go-live; and the reporting date when the planned go-live has already passed with no actual go-live
+    (the project is still slipping). Slipped = slip days above 0. A project with no first baseline has no slip value.
+  measures:
+  - slipped_projects
+  - slip_days_total
+- id: agreed_vs_silent
+  title: Agreed slip and silent slip
+  rule: For a slipped project, PCRs that carry a planned go-live are read in requested-date order from the first baseline;
+    agreed days are the net move they make, kept between 0 and the slip, and split by the PCR's responsible entity (Client,
+    NI, Vendor). Silent days = slip − agreed. Every PCR other than the Initial Baseline counts, whatever its approval status.
+    Splitting slip into agreed and silent days needs a calculator this pack does not have; until then, show slipped projects
+    with and without a PCR beyond the baseline.
+  measures:
+  - slipped_no_pcr
+  - slipped_with_pcr
+- id: hard_warning
+  title: A Green with a hard warning is challenged
+  rule: 'A hard warning is a fact in the project''s own records that contradicts Green: overdue; slipped with no PCR beyond
+    the baseline; a named blocker on the latest status report; an overdue action; a late task flagged critical. Show the warnings
+    next to the colour; never recolour the project.'
+  measures:
+  - green_hard_warning
+- id: severity
+  title: Severity ranks who to call first
+  rule: Severity = overdue 3 + slipped with no PCR beyond baseline 2 + Red 2 + named blocker 1 + overdue actions 1 + late
+    tasks flagged critical 1 + no status report in 60 days 1 (0 to 11). The attention list is severity 5 or more; ties are
+    broken by project number, A to Z. The weights are a proposal awaiting NI's confirmation. The score needs a calculator
+    this pack does not have; until then rank the projects in trouble.
+  measures:
+  - trouble_projects
+- id: trouble
+  title: Trouble is Red or overdue
+  rule: An open project is in trouble when it is reported Red or is overdue. Share of trouble is read next to share of the
+    book (open projects) per delivery manager or CIO, so a large book is not mistaken for a troubled one.
+  measures:
+  - trouble_projects
+- id: blocker_latest_report
+  title: Blockers come from the latest report only
+  rule: 'A named blocker is key blockers filled on the project''s single latest status report. Older reports do not count:
+    a resolved blocker is not carried forward.'
+  measures:
+  - named_blocker_projects
+- id: two_kinds_of_quiet
+  title: Not reporting is not the same as not edited
+  rule: '"No status report in 60 days" counts open projects whose latest status report is more than 60 days old, or that never
+    reported. "Stale projects" counts projects in delivery not edited at all for 30 days. Name which one a figure shows.'
+  measures:
+  - no_report_60d
+  - stale_projects
+- id: open_raid
+  title: Open risks, issues and actions
+  rule: A risk or an issue is open only in state Active (values carry a trailing space, so trim them). An action is closed
+    only when Completed or Deferred; a blank state is open. The chain risk → issue → action → change is not recorded, so RAID
+    is read as separate lists per project.
+  measures:
+  - open_risks
+  - open_issues
+  - open_actions
+  - overdue_actions
+- id: stage_from_plan
+  title: Stage comes from planned dates
+  rule: Stage is the first of S2 Plan, S3 Design, S4 Build, S5 Test, S6 Implementation, S7 Warranty & Closure whose planned
+    end date is on or after the reporting date; "Past S7" when all set dates have passed; "No stage dates" when none is set.
+    TPG holds no actual stage dates, so a project late inside a stage still shows the planned stage. Say so in the footnote.
+  measures:
+  - staged_open_projects
+- id: coming_up
+  title: Coming up means planned go-lives
+  rule: Go-lives coming up in 30, 31–60 and 61–90 days are open projects with no actual go-live whose planned go-live falls
+    in that window. Stage end dates are never listed as go-lives.
+  measures:
+  - go_lives_0_30
+  - go_lives_31_60
+  - go_lives_61_90
+  - go_lives_next_90
+- id: cio_rollup
+  title: Roll up by CIO and department
+  rule: Portfolio is set on 2 of 111 projects and programme on 1, so the book rolls up by CIO (107 of 111) and business-unit
+    department (111 of 111). A breakdown by portfolio or programme carries a callout that most projects have none.
+- id: delivery_manager
+  title: Delivery manager, not project manager
+  rule: The delivery manager is the employee-role lookup on the project. TPG has no project manager field in use, so a question
+    about "the PM" is answered with the delivery manager and the answer says so.
+- id: request_word
+  title: Say request, not demand
+  rule: NI calls pre-project work a request. Titles and sections say Request (Request-to-project conversion, Request budget
+    & cost, Request effort, Intake), even where a data field still says demand.
+- id: request_lead_times
+  title: Request lead times
+  rule: Request → DARB approval runs from the client request date to the DARB approval date; DARB → project from the DARB
+    approval date to the project's created date; project → commitment from the created date to the first-baselined go-live.
+    Only requests a project names are measured (24 of 111 projects name theirs); show how many requests each median is based
+    on.
+  measures:
+  - request_to_darb_median
+  - darb_to_project_median
+  - project_to_baseline_median
+- id: approved_is_not_converted
+  title: Approved is not converted
+  rule: An approved request has become a project only when a project names it. Approved requests that no project names are
+    shown apart, with a note that the request's Project Link may still connect them.
+  measures:
+  - approved_named_by_project
+  - approved_no_project
+- id: evidence_checks
+  title: The nine evidence checks
+  rule: 'Each open project is checked for: the request it came from; the approved commitment; named owners (delivery manager
+    and CIO); a coherent plan (tasks and baselines); resources linked to assignments; effort traceable to planned work; changes
+    and obstacles explained; recent reporting and owned actions; the outcome against the commitment. Each verdict is Verified,
+    Partial, Missing, Link broken or Not due yet; percentages leave Not due yet out. The checks needs a calculator this pack
+    does not have.'
+- id: synthetic_and_exemplars
+  title: Synthetic records and exemplars
+  rule: 'The TPG extract is fully synthetic: read every number as an illustration of the method. The four exemplar projects
+    (EX-1001 to EX-1004) are never part of the extract and are counted only when the viewer switches them on.'
+- id: audience_filters
+  title: The audience filters
+  rule: The audience dashboards (CIO, PMO, Delivery manager, Request) share the filters CIO, Department, Region, Client, Delivery
+    manager and Priority, plus key priority projects only and a go-live date range. Requests have no department or delivery
+    manager on the request side, so those filters do not reach request figures.
+- id: every_number_opens
+  title: Every number opens its records
+  rule: Every headline and every bar opens the records behind it, and every tile carries the Tela prompt that reproduces it,
+    so a reader can check any figure against the extract.
+wording:
+  forbidden:
+  - words:
+    - spend
+    - spending
+    - spends
+    use: forecast cost
+  - words:
+    - spent
+    use: forecast
+  - words:
+    - burn rate
+    use: forecast cost
+  - words:
+    - actual cost
+    - actual costs
+    - actuals
+    - actual spend
+    use: forecast cost
+  - words:
+    - overspent
+    - overspend
+    - overspending
+    use: over budget
+  status:
+    mixed:
+    - reported health
+    - calculated status
+    - calculated rag
+    reported: Reported status
+    calculated: Calculated health
+    unknown_as_good:
+    - not set (?:is |are )?(?:counted |shown |treated |reported )?(?:as )?(?:green|on track|healthy)
+    - insufficient data (?:is |are )?(?:counted |shown |treated |reported )?(?:as )?(?:green|on track|healthy)

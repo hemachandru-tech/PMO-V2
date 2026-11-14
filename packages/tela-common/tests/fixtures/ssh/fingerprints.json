@@ -1,0 +1,9 @@
+{
+  "ed25519-v3.ppk": "SHA256:WifV2bQtBeiS27cuTpw7ciDlc8ToC7wkL/Fjm1rZv5s",
+  "ed25519-v3-passphrase.ppk": "SHA256:76POaNITJW/vJxRWbT1BQ4PVQcyze7rlC49XRQ/K1QA",
+  "rsa2048-v2-passphrase.ppk": "SHA256:Qw/9p3Dcm2njPFJpz3jBNZy/I8vMzNCHHbV8o3886dI",
+  "rsa2048-v3.ppk": "SHA256:KmvWprjk8R67RWl8qzfVuXOI2mNwAaqlBXQERRqVFlY",
+  "ecdsa256-v2.ppk": "SHA256:yxP7h1V6PrfP4PbbUQ3QBskLypO46LDs4GwOomYD5B8",
+  "ecdsa384-v3-passphrase.ppk": "SHA256:IWcH0pQazuh69En1Bwr6vyh1xhwQmEuwCUqKw4g3gbE",
+  "ecdsa521-v3.ppk": "SHA256:Ri3MrKVZjOZn+6VGNMDGuYoo5dD/JoNn0n1BYpfH9kc"
+}

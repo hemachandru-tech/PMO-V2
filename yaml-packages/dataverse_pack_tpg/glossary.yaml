@@ -1,0 +1,225 @@
+version: 0.3.0
+status: draft
+terms:
+- term: S2
+  means: planning stage
+  explain: The second delivery stage, Plan. Its end date is the Planning stage planned end.
+  fields:
+  - tpg_project.tpgmea_planningstagedate
+- term: EAC
+  means: forecast cost
+  explain: Estimate at completion, the forecast cost of the whole project (Forecast cost (EAC, USD)), made up of the internal,
+    external, contingency, hardware and software cost fields.
+  fields:
+  - tpg_project.tpgmea_costinternalusd
+  - tpg_project.tpgmea_costexternalusd
+  - tpg_project.tpgmea_costcontingencyusd
+  - tpg_project.tpgmea_costhwusd
+  - tpg_project.tpgmea_costswusd
+- term: TCV
+  means: estimated tcv
+  explain: Total contract value, as estimated on the project (Estimated TCV (USD)).
+  fields:
+  - tpg_project.tpgmea_estimatedtcvusd
+- term: PCR
+  means: change request
+  explain: A project change request; approved ones are counted in Approved change requests.
+  fields:
+  - tpg_project.tpgmea_approvedpcrcounter
+- term: PM
+  means: project manager
+  explain: The project manager. TPG has no project manager field in use, so the delivery manager named on the project answers
+    for the PM.
+  fields:
+  - tpg_project.tpgmea_pdeliverymanager
+- term: DM
+  means: delivery manager
+  explain: The delivery manager named on the project.
+  fields:
+  - tpg_project.tpgmea_pdeliverymanager
+- term: late projects
+  means: overdue go-lives
+  explain: '"Late" has no agreed definition yet (open with STK-008); it is read as projects past their planned go-live and
+    not yet deployed (overdue), not as every project, nor as those deployed more than 60 days late, nor as slipped against
+    the first baseline.'
+  reading: overdue_go_lives
+  instead_of:
+  - deployed_over_60_late
+  - overdue_over_90
+  - total_projects
+  - slipped_projects
+- term: cost
+  means: forecast cost
+  explain: On its own, "cost" is the forecast cost at completion (EAC), not the approved budget nor a request's estimated
+    cost; there is no actual-spend figure in this data.
+  reading: forecast_cost_total
+  instead_of:
+  - approved_budget_total
+  - estimated_cost_total
+- term: active projects
+  means: open projects
+  explain: Active projects are the open portfolio (in progress or on hold), not every project ever recorded.
+  reading: open_projects
+  instead_of:
+  - total_projects
+- term: active requests
+  means: open demand requests
+  explain: Active requests are the open demand requests, not every request ever raised.
+  reading: open_demand
+  instead_of:
+  - total_requests
+- term: pending change requests
+  means: PCRs awaiting approval
+  explain: A pending change request is a project change request (PCR) still awaiting approval, not a demand request of the
+    change-request kind (Change requests).
+  reading: pcrs_pending
+  instead_of:
+  - change_request_count
+  - total_pcrs
+- term: S3
+  means: design stage
+  explain: The third delivery stage, Design; its end date is the S3 Design planned end.
+  fields:
+  - tpg_project.tpgmea_designedstagedate
+- term: S4
+  means: build stage
+  explain: The fourth delivery stage, Build; its end date is the S4 Build planned end.
+  fields:
+  - tpg_project.tpgmea_buildenddate
+- term: S5
+  means: test stage
+  explain: The fifth delivery stage, Test; its end date is the S5 Test planned end.
+  fields:
+  - tpg_project.tpgmea_testenddate
+- term: S6
+  means: implementation stage
+  explain: The sixth delivery stage, Implementation; its end date is the S6 Implementation planned end.
+  fields:
+  - tpg_project.tpgmea_implementationenddate
+- term: S7
+  means: warranty and closure stage
+  explain: The last delivery stage, Warranty & Closure; "Past S7" means every set stage date has passed.
+  fields:
+  - tpg_project.tpgmea_warrantyandclosurestagedate
+- term: the promise
+  means: first-baselined go-live
+  explain: The go-live date the project first committed to (first-baselined deployment date), the commitment of record.
+  fields:
+  - tpg_project.tpgmea_firstbaselinedpdd
+  reading: no_first_baseline
+- term: slipped
+  means: later than the first baseline
+  explain: An open project whose finish date (actual go-live, else planned go-live, else today once the planned date has passed)
+    is after its first-baselined go-live. Not the same as overdue.
+  reading: slipped_projects
+  instead_of:
+  - overdue_go_lives
+  - schedule_risk
+- term: silent slip
+  means: slip with no change request
+  explain: Slip that no PCR beyond the Initial Baseline explains. Counting the days needs a calculator this pack does not
+    have, so it is read as the slipped projects with no PCR beyond the baseline.
+  reading: slipped_no_pcr
+  instead_of:
+  - slipped_with_pcr
+- term: agreed slip
+  means: slip agreed through PCRs
+  explain: Slip agreed through change requests (PCRs). Counting the days needs a calculator this pack does not have, so it
+    is read as the slipped projects with a PCR beyond the baseline.
+  reading: slipped_with_pcr
+  instead_of:
+  - slipped_no_pcr
+- term: hard warning
+  means: a record that contradicts Green
+  explain: Overdue; slipped with no PCR beyond baseline; a named blocker; an overdue action; or a late critical task.
+  reading: green_hard_warning
+- term: watermelon
+  means: Green with a hard warning
+  explain: 'Green on the outside, red inside: a project reported Green whose own records carry a hard warning.'
+  reading: green_hard_warning
+  instead_of:
+  - reported_green
+- term: severity
+  means: attention score
+  explain: Overdue 3, slipped with no PCR 2, Red 2, named blocker 1, overdue actions 1, late critical tasks 1, no report in
+    60 days 1; 0 to 11. The attention list is 5 or more. The score needs a calculator this pack does not have; until then
+    projects in trouble are ranked instead.
+- term: trouble
+  means: Red or overdue
+  explain: An open project reported Red or past its planned go-live while in delivery.
+  reading: trouble_projects
+  instead_of:
+  - overdue_go_lives
+  - reported_red_pct
+- term: blocker
+  means: named blocker
+  explain: Key blockers filled on the project's latest status report; older reports do not count.
+  fields:
+  - tpg_statusreport.tpgmea_keyblockers
+  reading: named_blocker_projects
+- term: silent projects
+  means: no status report in 60 days
+  explain: Open projects whose latest status report is more than 60 days old, or that never reported; not projects no one
+    has edited (stale).
+  reading: no_report_60d
+  instead_of:
+  - stale_projects
+- term: the book
+  means: open projects
+  explain: A CIO's or delivery manager's book is the open projects they own.
+  reading: open_projects
+  instead_of:
+  - total_projects
+- term: RAID
+  means: risks, actions, issues and decisions
+  explain: The project's risk, action, issue and decision logs; open means Active (risks, issues) or not Completed or Deferred
+    (actions).
+  reading: open_risks
+- term: DARB
+  means: request approval board
+  explain: The review board that approves a request for delivery (DARB review, then DARB approval); its approval date ends
+    the request → approval lead time.
+  fields:
+  - tpg_projectrequests.tpgmea_darbapprovaltimestamp
+  - tpg_projectrequests.tpgmea_darbreviewdate
+- term: DOU
+  means: document of understanding
+  explain: A request gate; a DOU past its planned issuance date is an overdue governance action.
+  fields:
+  - tpg_projectrequests.tpgmea_planneddouissuancedate
+  - tpg_projectrequests.tpgmea_dousubmissiondate
+  reading: overdue_dou
+- term: SOW
+  means: statement of work
+  explain: A request gate; a SOW past its tentative issuance date is an overdue governance action.
+  fields:
+  - tpg_projectrequests.tpgmea_tentativedateofsowissuance
+  - tpg_projectrequests.tpgmea_sowissueddate
+  reading: overdue_sow
+- term: ExCo
+  means: key priority projects
+  explain: 'The executive committee''s list: projects flagged as key priority.'
+  fields:
+  - tpg_project.tpgmea_keypriorityproject
+- term: department
+  means: business-unit department
+  explain: The business-unit department on the project; with CIO it is how the book rolls up.
+  fields:
+  - tpg_project.tpgmea_businessunitdepartment
+- term: NI
+  means: Network International
+  explain: The organisation whose TPG data this is; as a responsible entity or KPI cause, "NI" means an internal cause.
+- term: coming up
+  means: planned go-lives in the next 90 days
+  explain: Open, not yet live projects planned to go live within 30, 31–60 or 61–90 days.
+  reading: go_lives_next_90
+- term: shaping cost
+  means: hours on requests
+  explain: Hours logged on request timesheets before a request becomes a project.
+  fields:
+  - tpgmea_projectrequesttimesheet.tpg_total
+  reading: request_hours
+- term: evidence coverage
+  means: the nine evidence checks
+  explain: Whether TPG holds the records to prove each part of a project’s story. The nine checks needs a calculator this
+    pack does not have.

@@ -1,0 +1,38 @@
+# Production override for a single host behind a TLS-terminating nginx (telainsight / telaauth.prodiantela.ai).
+#   ./deploy/compose/dev-setup.sh
+#   ENTRA_TENANT_ID=… ENTRA_CLIENT_ID=… ENTRA_CLIENT_SECRET=… ./deploy/compose/prod-setup.sh
+#   docker compose -f deploy/compose/compose.yaml -f deploy/compose/compose.prod.yaml \
+#     --env-file deploy/compose/secrets/.env --profile core up -d --build
+# Never add --profile dev here. OpenBao is still dev mode (data lost on restart) until US-121's sealed setup.
+services:
+  proxy:
+    volumes: ["./proxy.prod.nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "--header", "Host: telainsight.prodiantela.ai", "http://127.0.0.1:8088/"]
+  web:
+    volumes: ["./web-config.prod.json:/usr/share/nginx/html/config.json:ro"]
+  keycloak:
+    command: ["start", "--import-realm"]
+    environment:
+      KC_HOSTNAME: https://telaauth.prodiantela.ai
+    volumes: ["./secrets/realm-tela-prod.json:/opt/keycloak/data/import/realm-tela.json:ro"]
+  api:
+    environment:
+      TELA_OIDC_ISSUER: https://telaauth.prodiantela.ai/realms/tela
+      TELA_CORS_ORIGINS: '["https://telainsight.prodiantela.ai"]'
+  bootstrap:
+    # Set ADMIN/CREATOR/VIEWER/CIO_GROUP to the Entra group object ids (these are what the token carries).
+    command:
+      - sh
+      - -c
+      - >
+        tela-admin bootstrap-tenant --slug prodian --name "Prodian"
+        --issuer https://telaauth.prodiantela.ai/realms/tela
+        --admin-group $${ADMIN_GROUP} --admin-group-name TELA-Admins
+        --group creator=$${CREATOR_GROUP}:TELA-Creators --group viewer=$${VIEWER_GROUP}:TELA-Viewers
+        --group cio=$${CIO_GROUP}:TELA-CIO && tela-admin load-packs
+    environment:
+      ADMIN_GROUP: ${ADMIN_GROUP:?Entra object id of the admin group}
+      CREATOR_GROUP: ${CREATOR_GROUP:?}
+      VIEWER_GROUP: ${VIEWER_GROUP:?}
+      CIO_GROUP: ${CIO_GROUP:?}

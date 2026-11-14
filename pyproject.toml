@@ -1,0 +1,117 @@
+[project]
+name = "tela-workspace"
+version = "0.1.0"
+description = "Tela — Conversational PMO Analytics & Dashboard Platform (monorepo workspace root)"
+requires-python = ">=3.12,<3.14"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+    "packages/tela-common",
+    "packages/query-spec",
+    "packages/chart-spec",
+    "services/api",
+    "services/llm-gateway",
+    "services/connector-runner",
+    "workers",
+]
+
+[tool.uv.sources]
+tela-common = { workspace = true }
+tela-query-spec = { workspace = true }
+tela-chart-spec = { workspace = true }
+tela-api = { workspace = true }
+tela-gateway = { workspace = true }
+tela-runner = { workspace = true }
+tela-worker = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "hypothesis>=6.120",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
+    "tela-common",
+    "tela-query-spec",
+    "tela-chart-spec",
+    "tela-api",
+    "tela-gateway",
+    "tela-runner",
+    "tela-worker",
+    "pytest-xdist>=3.6",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["apps/web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "A", "C4", "RUF"]
+ignore = ["S101"]  # asserts are fine in tests
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header", "tela_api.identity.deps.require"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tela_common", "tela_query_spec", "tela_chart_spec", "tela_api", "tela_gateway", "tela_runner", "tela_worker", "migrations"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S105", "S106", "S108", "E501", "S608"]
+"tests/**" = ["S105", "S106", "S108", "E501"]
+# Synthetic fixture generators: seeded pseudo-random data and DDL from constant identifiers.
+"packs/*/fixtures/**" = ["S311", "S608"]
+# Migrations build DDL from constant identifiers, never from user input.
+"migrations/**" = ["E501", "S608"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tela_common.*", "tela_query_spec.*", "tela_chart_spec.*"]
+strict = true
+
+[[tool.mypy.overrides]]
+# sqlglot's expression classes are built dynamically; treat the library as untyped.
+module = ["sqlglot", "sqlglot.*"]
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["tela_worker.*"]
+disallow_untyped_decorators = false  # Celery's task decorator is untyped
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = [
+    "packages/tela-common/tests",
+    "packages/query-spec/tests",
+    "packages/chart-spec/tests",
+    "services/api/tests",
+    "services/llm-gateway/tests",
+    "services/connector-runner/tests",
+    "workers/tests",
+    "tests",
+]
+markers = [
+    "integration: needs a live PostgreSQL (TELA_TEST_DATABASE_URL)",
+]
+
+[tool.coverage.run]
+# SQLAlchemy's asyncio layer runs through greenlets; trace them so async handlers are measured.
+concurrency = ["greenlet", "thread"]
+source = ["packages/tela-common/src", "packages/query-spec/src", "packages/chart-spec/src", "services/api/src", "services/llm-gateway/src",
+          "services/connector-runner/src", "workers/src"]
+
+[tool.coverage.report]
+skip_empty = true

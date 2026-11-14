@@ -1,0 +1,71 @@
+# Alert rules (US-010; NFR-017). Thresholds are starting points for the pilot; tune with real traffic.
+groups:
+  - name: tela-platform
+    rules:
+      - alert: TelaOutboxLagHigh
+        expr: tela_outbox_lag_seconds > 60
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: Outbox events wait more than a minute
+          description: The oldest unpublished event is {{ $value | humanizeDuration }} old. Check the worker and beat.
+      - alert: TelaOutboxRelayDown
+        expr: tela_outbox_relay_up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: The outbox relay stopped reporting
+          description: No lag sample from the worker for two minutes (worker or beat down, or Redis unreachable).
+      - alert: TelaTargetDown
+        expr: up{job=~"tela-.*"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.job }} is not scrapeable"
+      - alert: TelaApiErrorRate
+        expr: |
+          sum(rate(tela_http_request_duration_seconds_count{status=~"5.."}[5m]))
+            / sum(rate(tela_http_request_duration_seconds_count[5m])) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: More than 5% of API requests fail with 5xx
+      - alert: TelaApiSlow
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(tela_http_request_duration_seconds_bucket[5m]))) > 2
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: API p95 latency above 2 s
+      - alert: TelaAuthFailuresSpike
+        expr: sum(rate(tela_auth_failures_total[5m])) > 1
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Sustained rejected access tokens (more than 1 per second)
+      - alert: TelaScopeDenials
+        expr: sum(increase(tela_scope_denials_total[15m])) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: A request was refused because data scope could not be applied
+          description: Scope failures are closed by design; investigate why scope resolution failed.
+      - alert: TelaExportFailures
+        expr: sum(increase(tela_export_jobs_total{status="failed"}[30m])) > 3
+        labels: { severity: warning }
+        annotations:
+          summary: Several exports failed in the last 30 minutes
+  - name: tela-llm
+    rules:
+      - alert: TelaGatewayLeakBlocks
+        expr: sum(increase(tela_gateway_calls_total{status="blocked"}[15m])) > 5
+        labels: { severity: warning }
+        annotations:
+          summary: The gateway blocked several calls for secrets or PII
+      - alert: TelaGatewayProviderErrors
+        expr: |
+          sum(rate(tela_gateway_calls_total{status=~"error|timeout"}[10m]))
+            / sum(rate(tela_gateway_calls_total[10m])) > 0.2
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: More than 20% of model calls fail or time out

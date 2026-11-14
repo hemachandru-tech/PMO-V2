@@ -1,0 +1,105 @@
+diff --git a/dist/es2015/singleton.js b/dist/es2015/singleton.js
+index 1518d9fa2685379c9cb134756eb41ad9b4b722f6..8e9b3f41ccf0c18a1ad0b8e98b888df3b80a80cf 100644
+--- a/dist/es2015/singleton.js
++++ b/dist/es2015/singleton.js
+@@ -27,10 +27,17 @@ function insertStyleTag(tag) {
+ export var stylesheetSingleton = function () {
+     var counter = 0;
+     var stylesheet = null;
++    var adopted = null;
+     return {
+         add: function (style) {
+             if (counter == 0) {
+-                if ((stylesheet = makeStyleTag())) {
++                // Tela patch (US-134): a constructable stylesheet is allowed by a strict style-src CSP; a <style> tag is not.
++                if (typeof CSSStyleSheet !== 'undefined' && document.adoptedStyleSheets && 'replaceSync' in CSSStyleSheet.prototype) {
++                    adopted = new CSSStyleSheet();
++                    adopted.replaceSync(style);
++                    document.adoptedStyleSheets = document.adoptedStyleSheets.concat([adopted]);
++                }
++                else if ((stylesheet = makeStyleTag())) {
+                     injectStyles(stylesheet, style);
+                     insertStyleTag(stylesheet);
+                 }
+@@ -39,6 +46,11 @@ export var stylesheetSingleton = function () {
+         },
+         remove: function () {
+             counter--;
++            if (!counter && adopted) {
++                var done = adopted;
++                document.adoptedStyleSheets = document.adoptedStyleSheets.filter(function (x) { return x !== done; });
++                adopted = null;
++            }
+             if (!counter && stylesheet) {
+                 stylesheet.parentNode && stylesheet.parentNode.removeChild(stylesheet);
+                 stylesheet = null;
+diff --git a/dist/es2019/singleton.js b/dist/es2019/singleton.js
+index 3e58591db117172645b817d3507d892390cb1446..2425715fb8a8a1f3d0a3b6afbf6818db0a7fb8ca 100644
+--- a/dist/es2019/singleton.js
++++ b/dist/es2019/singleton.js
+@@ -27,10 +27,17 @@ function insertStyleTag(tag) {
+ export const stylesheetSingleton = () => {
+     let counter = 0;
+     let stylesheet = null;
++    var adopted = null;
+     return {
+         add: (style) => {
+             if (counter == 0) {
+-                if ((stylesheet = makeStyleTag())) {
++                // Tela patch (US-134): a constructable stylesheet is allowed by a strict style-src CSP; a <style> tag is not.
++                if (typeof CSSStyleSheet !== 'undefined' && document.adoptedStyleSheets && 'replaceSync' in CSSStyleSheet.prototype) {
++                    adopted = new CSSStyleSheet();
++                    adopted.replaceSync(style);
++                    document.adoptedStyleSheets = document.adoptedStyleSheets.concat([adopted]);
++                }
++                else if ((stylesheet = makeStyleTag())) {
+                     injectStyles(stylesheet, style);
+                     insertStyleTag(stylesheet);
+                 }
+@@ -39,6 +46,11 @@ export const stylesheetSingleton = () => {
+         },
+         remove: () => {
+             counter--;
++            if (!counter && adopted) {
++                var done = adopted;
++                document.adoptedStyleSheets = document.adoptedStyleSheets.filter(function (x) { return x !== done; });
++                adopted = null;
++            }
+             if (!counter && stylesheet) {
+                 stylesheet.parentNode && stylesheet.parentNode.removeChild(stylesheet);
+                 stylesheet = null;
+diff --git a/dist/es5/singleton.js b/dist/es5/singleton.js
+index e90d76fc85449dfd3ed6bc1bfe110e0dc3056a11..beda663e9a731a32b1d8eaec9f27564b6676f92f 100644
+--- a/dist/es5/singleton.js
++++ b/dist/es5/singleton.js
+@@ -30,10 +30,17 @@ function insertStyleTag(tag) {
+ var stylesheetSingleton = function () {
+     var counter = 0;
+     var stylesheet = null;
++    var adopted = null;
+     return {
+         add: function (style) {
+             if (counter == 0) {
+-                if ((stylesheet = makeStyleTag())) {
++                // Tela patch (US-134): a constructable stylesheet is allowed by a strict style-src CSP; a <style> tag is not.
++                if (typeof CSSStyleSheet !== 'undefined' && document.adoptedStyleSheets && 'replaceSync' in CSSStyleSheet.prototype) {
++                    adopted = new CSSStyleSheet();
++                    adopted.replaceSync(style);
++                    document.adoptedStyleSheets = document.adoptedStyleSheets.concat([adopted]);
++                }
++                else if ((stylesheet = makeStyleTag())) {
+                     injectStyles(stylesheet, style);
+                     insertStyleTag(stylesheet);
+                 }
+@@ -42,6 +49,11 @@ var stylesheetSingleton = function () {
+         },
+         remove: function () {
+             counter--;
++            if (!counter && adopted) {
++                var done = adopted;
++                document.adoptedStyleSheets = document.adoptedStyleSheets.filter(function (x) { return x !== done; });
++                adopted = null;
++            }
+             if (!counter && stylesheet) {
+                 stylesheet.parentNode && stylesheet.parentNode.removeChild(stylesheet);
+                 stylesheet = null;

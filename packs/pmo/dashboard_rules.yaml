@@ -1,0 +1,107 @@
+# PMO dashboard rules — DRAFT for STK-008 review (US-159, FEAT-059 / FEAT-016).
+# The reference skill's ten rules (reference/pmo_dashboard/DASHBOARD_AND_WIDGET_BUILDER_SKILL.md §1, §5), written
+# for Tela. Indexed as `dashboard_rule` knowledge with each approved model version of a connection built from this
+# pack, so Ask, the planner (AG-05), chat edit (AG-06) and the chart advisor (AG-07) retrieve them. A rule may name
+# pack measures (`measures`); it is then shown only to people who can see every one of them. Rules name measures
+# and dimensions only, never values.
+#
+# `wording` is the check every generated title, summary and suggestion passes (tela_api/content/wording.py):
+#   forbidden — words that claim money already paid out (the pack has forecasts and budgets only); `use` is the
+#               wording a title takes instead. A word is allowed when the model itself has a certified measure
+#               whose label uses it.
+#   status    — the two status vocabularies, which must not be mixed.
+version: 0.1.0
+status: draft
+rules:
+  - id: no_actual_spend
+    title: Forecast cost, never spend
+    rule: >-
+      The data has approved budgets and forecasts only: no invoices, actuals or monthly cost. On projects the cost
+      figure is Forecast cost (EAC), the estimated cost at completion; on requests it is Estimated cost. Forecast
+      minus budget is a forecast comparison, not money already spent. Never label anything spend, spent, burn rate,
+      actual cost or overspent.
+    measures: [forecast_cost_total]
+
+  - id: reporting_date
+    title: The reporting date, not the clock
+    rule: >-
+      Ages, days overdue, days on hold, days since update and go-live horizons are counted from the model's
+      reporting date ("Data as of …" on every report), never from today's date on the server or in the browser.
+
+  - id: status_vs_health
+    title: Reported status is not calculated health
+    rule: >-
+      Reported status (overall KPI) is the project manager's own Green, Amber, Red or Not set. Calculated health is
+      Tela's score from schedule, cost, progress and the issue KPI: Green 75–100, Amber 50–74, Red 0–49, or
+      Insufficient data. Name which one a figure shows ("Reported status" or "Calculated health") and never mix the
+      words, e.g. "reported health".
+    measures: [avg_health_score]
+
+  - id: unknown_is_not_green
+    title: Not set and Insufficient data are never Green
+    rule: >-
+      A project with no reported status (blank or missing) is Not set, shown in grey and left out of Green/Amber/Red
+      percentages (it is counted separately as Reported status not set); it is never assumed Green. Calculated health with too little evidence is Insufficient data,
+      never Green or on track.
+    measures: [status_not_set]
+
+  - id: populations
+    title: The three populations
+    rule: >-
+      Open projects are Project Created, Active and On Hold. In delivery is Active only. Open requests are New,
+      Active, On Hold and Return to Requester. Every figure says which population it counts, in its footnote or
+      definition.
+    measures: [open_projects, in_delivery, open_demand]
+
+  - id: overdue_rule
+    title: What overdue means
+    rule: >-
+      A go-live is overdue when the project is in delivery (Active), its planned deployment date is before the
+      reporting date and it has no actual deployment date. Due on the reporting date is not overdue. On Hold and
+      Project Created are never overdue. Overdue is not the same as schedule risk, which is the project manager's
+      Red or Amber schedule KPI.
+    measures: [overdue_go_lives]
+
+  - id: double_signal
+    title: Colour is never the only signal
+    rule: >-
+      Every status colour comes with its word (Green, Amber, Red, Not set) and every bar or cell with its number.
+      Status breakdowns keep the order Green, Amber, Red, Not set and their status colours; other categories never
+      use red or green.
+
+  - id: global_filters
+    title: The six shared filters
+    rule: >-
+      Dashboards share the filters CIO, Region, Portfolio, Project manager, Priority and Platform. Requests have no
+      portfolio until they become a project, so a portfolio filter does not reach request figures: a request report
+      says so in a callout when a portfolio filter is set.
+
+  - id: five_layers
+    title: Measure, widget, report, dashboard, publication
+    rule: >-
+      A certified measure is the rule; a widget is a measure with breakdowns and a visual; a report is a page of
+      widgets on the 12-column grid; a dashboard is reports as tabs with shared filters; a publication is a
+      dashboard version shared with roles. Build reports from certified measures only.
+
+  - id: report_layout
+    title: The standard report layout
+    rule: >-
+      A report opens with a strip of 4–5 headline figures (each with its definition and, where it helps, a tone),
+      then visuals side by side (6 + 6 columns) or full width (12), then a detail table (sortable, searchable,
+      exportable, rows open the record), and ends with a footnote that states the population and the data's limits.
+      A caveat that changes how a figure reads goes in a callout above the figures.
+
+wording:
+  forbidden:
+    - {words: [spend, spending, spends], use: forecast cost}
+    - {words: [spent], use: forecast}
+    - {words: [burn rate], use: forecast cost}
+    - {words: [actual cost, actual costs, actuals, actual spend], use: forecast cost}
+    - {words: [overspent, overspend, overspending], use: over budget}
+  status:
+    mixed: [reported health, calculated status, calculated rag]
+    reported: Reported status
+    calculated: Calculated health
+    unknown_as_good:
+      - "not set (?:is |are )?(?:counted |shown |treated |reported )?(?:as )?(?:green|on track|healthy)"
+      - "insufficient data (?:is |are )?(?:counted |shown |treated |reported )?(?:as )?(?:green|on track|healthy)"

@@ -1,0 +1,13 @@
+[project]
+name = "tela-chart-spec"
+version = "1.0.0"
+description = "Tela chart spec and visual suitability rules (RULE-008), shared with the web app"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.9"]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tela_chart_spec"]

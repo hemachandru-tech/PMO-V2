@@ -1,0 +1,3526 @@
+# PMO gold set — DRAFT for STK-008 review (US-057). Imported as suggestions; an Admin approves each one.
+# Each example is a question and the Query Spec a correct answer uses (references to the pack model only).
+# Tags group the pass rate: baseline, breakdown, filter, enum, look_alike, synonym, date_field, finance, demand,
+# fan_out, top_n, trend. Multi-turn cases wait for conversation fixtures (see task.md, US-057).
+# 0.2.0 (US-159): +24 examples from the report catalogue (tag `catalogue`), on the pack 1.3.0 measures and
+# dimensions (health, compliance, aging and variance bands, conversion, effort, flow).
+# Gold set 2.0 (US-184) fields, all optional: `turns` — the earlier messages of a multi-turn example, in order
+# (the first a question, the rest refinements such as "top 3" or "only KSA"); `question` is then the follow-up.
+# `held_out: true` — never used as an AG-03 few-shot, so it measures questions the planner hasn't seen. Tags
+# `alias` (value-linking set) and `multi_turn` group those cases. Check new examples offline first:
+# `uv run pytest tests/test_gold_scoring_unit.py` (oracle agreement and execution accuracy on DuckDB).
+# 0.3.0 (US-173): +50 `alias` examples (value linking). The offline harnesses link them with every pack synonym
+# approved; on a live connection, approve the pack's value synonyms (Admin → Knowledge) before reading `by_tag.alias`.
+# 0.4.0 (US-176): +9 `derived` and `share` examples: two measures side by side, a ratio, difference or percentage of
+# them, and a measure's share of the total. A derived figure is compared by op, of and to (its key is the planner's).
+# 0.7.0 (US-190): +125 held-out `paraphrase` examples (`paraphrase_of` names the original; 38 tagged `exec102`). Runs
+# score them beside the original set, per planner path (`by_set`, `by_path`).
+# 0.8.0 (US-220): +278 held-out `noise` examples generated from the originals without filter values (filler,
+# grammar, future tense, singular, typo; `noise_of` names the original) plus EXEC-139's own question (`exec139`).
+# Never edit them by hand: `uv run python -m tela_api.knowledge.noise` rewrites the block after the marker.
+# 0.9.0 (US-202, DEC-24): EXEC-115's question (`exec115`): the states it lists are the open-project rule, so it is
+# Open projects with no filter (103 on TPG Dataverse; 431 on TPG MySQL); its 6 noise examples regenerated.
+# 0.10.0 (US-250, ENH-028): `shape` on every example — the kind of answer it expects (number, list_of_records,
+# breakdown, ranking, trend, comparison, share, distribution, record_detail, definition). It must equal
+# `scoring.answer_shape(spec)` (checked offline); runs compare it as well as the rows and report a shape × tag grid.
+# +88 held-out `exec186` examples: 44 list questions ("list of …", "which …", "names of …", "show all …"; tag `list`,
+# one row per record by the entity's name) and their 44 count twins (tag `count`), so "How many …" stays a number.
+version: 0.10.0
+status: draft
+examples:
+  - question: How many open projects are there?
+    tags: [baseline]
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}}
+  - question: How many requests are there?
+    tags: [baseline, demand]
+    shape: number
+    spec: {measure: {ref: "measure:total_requests"}}
+  - question: Open projects by region
+    tags: [breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:region"}]}
+  - question: How many projects are in delivery?
+    tags: [look_alike]
+    note: In delivery is current state Active only; open also counts Project Created and On Hold.
+    shape: number
+    spec: {measure: {ref: "measure:in_delivery"}}
+  - question: How many active projects do we have?
+    tags: [look_alike, synonym]
+    note: '"Active projects" is a synonym of open projects (current state Project Created, Active or On Hold), not projects in delivery.'
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}}
+  - question: How many open projects (current state Project Created, Active or On Hold) are there?
+    tags: [baseline, exec115]
+    note: The listed states are RULE-026 itself (DEC-24), so the certified measure answers it with no filter.
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}}
+  - question: How many projects are not yet started?
+    tags: [look_alike]
+    shape: number
+    spec: {measure: {ref: "measure:project_created"}}
+  - question: Projects on hold by region
+    tags: [breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:on_hold"}, breakdowns: [{ref: "dimension:region"}]}
+  - question: How many projects are overdue?
+    tags: [look_alike, synonym, date_field]
+    note: Overdue means past the planned deployment date and not deployed, not a Red schedule KPI.
+    shape: number
+    spec: {measure: {ref: "measure:overdue_go_lives"}}
+  - question: How many projects are at schedule risk?
+    tags: [look_alike]
+    note: Schedule risk is the PM's Red/Amber schedule KPI, distinct from overdue.
+    shape: number
+    spec: {measure: {ref: "measure:schedule_risk"}}
+  - question: Overdue go-lives by region
+    tags: [date_field, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:overdue_go_lives"}, breakdowns: [{ref: "dimension:region"}]}
+  - question: Go-lives in the next 30 days
+    tags: [date_field]
+    shape: number
+    spec: {measure: {ref: "measure:go_lives_0_30"}}
+  - question: Go-lives in 31-60 days by portfolio
+    tags: [date_field, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:go_lives_31_60"}, breakdowns: [{ref: "dimension:portfolio"}]}
+  - question: How many stale projects are there?
+    tags: [date_field, look_alike]
+    note: Stale is "not modified for 30 days", not status-report compliance (which the source can't measure).
+    shape: number
+    spec: {measure: {ref: "measure:stale_projects"}}
+  - question: Trend of projects by planned deployment month
+    tags: [trend, date_field]
+    shape: trend
+    spec: {measure: {ref: "measure:total_projects"}, time: {ref: "dimension:planned_deployment_date", grain: month}}
+  - question: What is the approved budget for open projects?
+    tags: [finance]
+    shape: number
+    spec: {measure: {ref: "measure:approved_budget_total"}}
+  - question: Forecast cost by portfolio
+    tags: [finance, look_alike, breakdown]
+    note: Forecast cost is EAC, not actual spend.
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_cost_total"}, breakdowns: [{ref: "dimension:portfolio"}]}
+  - question: Forecast variance by region
+    tags: [finance, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:budget_variance"}, breakdowns: [{ref: "dimension:region"}]}
+  - question: How many projects are over budget?
+    tags: [finance, look_alike]
+    shape: number
+    spec: {measure: {ref: "measure:over_budget"}}
+  - question: Open projects in KSA
+    tags: [filter, enum]
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: [KSA]}]}
+  - question: Open projects in KSA and Jordan
+    tags: [filter, enum]
+    shape: number
+    spec:
+      measure: {ref: "measure:open_projects"}
+      filters: [{ref: "dimension:region", op: in, values: [KSA, Jordan]}]
+  - question: Critical priority open projects
+    tags: [filter, enum]
+    shape: number
+    spec:
+      measure: {ref: "measure:open_projects"}
+      filters: [{ref: "dimension:priority", op: "=", values: [Critical]}]
+  - question: Open projects by priority
+    tags: [breakdown, enum]
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:priority"}]}
+  - question: Projects by reported status
+    tags: [breakdown, enum]
+    shape: breakdown
+    spec: {measure: {ref: "measure:total_projects"}, breakdowns: [{ref: "dimension:reported_status"}]}
+  - question: How many projects are reported Amber?
+    tags: [filter, enum]
+    note: Amber is the display label of the stored value Yellow.
+    shape: number
+    spec:
+      measure: {ref: "measure:total_projects"}
+      filters: [{ref: "dimension:reported_status", op: "=", values: [Yellow]}]
+  - question: Top 5 regions by open projects
+    tags: [top_n, breakdown]
+    shape: ranking
+    spec:
+      measure: {ref: "measure:open_projects"}
+      breakdowns: [{ref: "dimension:region"}]
+      sort: [{by: measure, dir: desc}]
+      limit: 5
+  - question: Open demand requests by request state
+    tags: [demand, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_demand"}, breakdowns: [{ref: "dimension:request_state"}]}
+  - question: Open demand by request region
+    tags: [demand, fan_out]
+    note: Use the request's own region; the project region would fan out through the projects link.
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_demand"}, breakdowns: [{ref: "dimension:request_region"}]}
+  - question: How many DOU gates are overdue?
+    tags: [demand, date_field]
+    shape: number
+    spec: {measure: {ref: "measure:overdue_dou"}}
+  - question: Overdue DARB gates by request priority
+    tags: [demand, date_field, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:overdue_darb"}, breakdowns: [{ref: "dimension:request_priority"}]}
+  - question: RAG contradictions by portfolio
+    tags: [breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:rag_contradictions"}, breakdowns: [{ref: "dimension:portfolio"}]}
+  # ------------------------------------------------------------------ 0.2.0: report catalogue (US-159)
+  - question: How many projects have been on hold for more than 90 days?
+    tags: [catalogue, date_field]
+    note: Time on hold counts from the on-hold date to the reporting date; 90 days exactly is not over 90.
+    shape: number
+    spec: {measure: {ref: "measure:on_hold_over_90"}}
+  - question: What is the average calculated health of open projects?
+    tags: [catalogue, look_alike]
+    note: Calculated health is Tela's score, not the project manager's reported status.
+    shape: number
+    spec: {measure: {ref: "measure:avg_health_score"}}
+  - question: How many projects have insufficient data for calculated health?
+    tags: [catalogue]
+    shape: number
+    spec: {measure: {ref: "measure:health_insufficient"}}
+  - question: Baselining compliance by CIO
+    tags: [catalogue, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:baselining_compliance_pct"}, breakdowns: [{ref: "dimension:cio"}]}
+  - question: What is our budget code compliance?
+    tags: [catalogue]
+    shape: number
+    spec: {measure: {ref: "measure:budget_code_compliance_pct"}}
+  - question: PM assignment compliance by lifecycle phase
+    tags: [catalogue, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:pm_assignment_compliance_pct"}, breakdowns: [{ref: "dimension:lifecycle_phase"}]}
+  - question: Overdue go-lives by days past planned go-live
+    tags: [catalogue, date_field, breakdown]
+    note: The lateness bands count from the reporting date.
+    shape: breakdown
+    spec: {measure: {ref: "measure:overdue_go_lives"}, breakdowns: [{ref: "dimension:lateness_bucket"}]}
+  - question: Open projects by go-live horizon
+    tags: [catalogue, date_field, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:go_live_horizon"}]}
+  - question: Projects on hold by time on hold
+    tags: [catalogue, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:on_hold"}, breakdowns: [{ref: "dimension:on_hold_aging"}]}
+  - question: Projects on hold by hold reason
+    tags: [catalogue, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:on_hold"}, breakdowns: [{ref: "dimension:hold_reason"}]}
+  - question: Median slip vs first baseline by portfolio
+    tags: [catalogue, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:slip_vs_baseline_median"}, breakdowns: [{ref: "dimension:portfolio"}]}
+  - question: How many projects were deployed on time?
+    tags: [catalogue, date_field]
+    shape: number
+    spec: {measure: {ref: "measure:deployed_on_time"}}
+  - question: Projects with forecast more than 15% over budget by portfolio
+    tags: [catalogue, finance, breakdown]
+    note: A forecast comparison, not money spent.
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_over_budget_15"}, breakdowns: [{ref: "dimension:portfolio"}]}
+  - question: Net forecast vs budget by region
+    tags: [catalogue, finance, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:net_forecast_variance"}, breakdowns: [{ref: "dimension:region"}]}
+  - question: How many requests have been on hold for more than 180 days?
+    tags: [catalogue, demand, date_field]
+    shape: number
+    spec: {measure: {ref: "measure:requests_on_hold_over_180"}}
+  - question: Estimated cost of requests by request CIO
+    tags: [catalogue, demand, finance, fan_out]
+    note: Estimated cost is the request's estimate; use the request's own CIO.
+    shape: breakdown
+    spec: {measure: {ref: "measure:estimated_cost_total"}, breakdowns: [{ref: "dimension:request_cio"}]}
+  - question: Conversion rate of requests by quarter raised
+    tags: [catalogue, demand, trend]
+    shape: trend
+    spec: {measure: {ref: "measure:conversion_rate"}, time: {ref: "dimension:quarter_raised", grain: quarter}}
+  - question: Overdue governance actions by request CIO
+    tags: [catalogue, demand, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:overdue_gates_total"}, breakdowns: [{ref: "dimension:request_cio"}]}
+  - question: Internal effort in man-days by request region
+    tags: [catalogue, demand, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:effort_internal_md"}, breakdowns: [{ref: "dimension:request_region"}]}
+  - question: Open projects by region and reported status
+    tags: [catalogue, breakdown]
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:region"}, {ref: "dimension:reported_status"}]}
+  - question: What share of TCV was delivered on time?
+    tags: [catalogue, synonym]
+    note: The North Star measure (deployed within 30 days of the first baseline, last 12 months).
+    shape: number
+    spec: {measure: {ref: "measure:north_star_on_time_tcv_pct"}}
+  - question: Calculated Red projects by portfolio
+    tags: [catalogue, look_alike, breakdown]
+    note: Calculated health Red, not reported status Red.
+    shape: breakdown
+    spec: {measure: {ref: "measure:health_red"}, breakdowns: [{ref: "dimension:portfolio"}]}
+  - question: Key priorities needing attention
+    tags: [catalogue]
+    shape: number
+    spec: {measure: {ref: "measure:key_priorities_attention"}}
+  - question: Reported status not set by delivery manager
+    tags: [catalogue, breakdown]
+    note: Not set is a missing status, never Green.
+    shape: breakdown
+    spec: {measure: {ref: "measure:status_not_set"}, breakdowns: [{ref: "dimension:delivery_manager"}]}
+  # Value-linking set (US-173): people's words for stored values: synonyms from value_synonyms.yaml (once approved),
+  # spelling slips and unique parts of a name. Held out of the AG-03 few-shots, so they measure linking only.
+  # Their pass rate is `by_tag.alias`; `value_linking` counts them with every other example that filters.
+  - question: Open projects in Saudi Arabia
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["KSA"]}]}
+  - question: Open projects in Saudi
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["KSA"]}]}
+  - question: How many open projects are in the Kingdom of Saudi Arabia?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["KSA"]}]}
+  - question: In delivery projects in Saudi Arabia by platform
+    tags: [alias]
+    held_out: true
+    shape: breakdown
+    spec: {measure: {ref: "measure:in_delivery"}, breakdowns: [{ref: "dimension:platform"}], filters: [{ref: "dimension:region", op: "=", values: ["KSA"]}]}
+  - question: Open projects by portfolio in Saudi Arabia
+    tags: [alias]
+    held_out: true
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:portfolio"}], filters: [{ref: "dimension:region", op: "=", values: ["KSA"]}]}
+  - question: How many requests from Saudi Arabia?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:total_requests"}, filters: [{ref: "dimension:request_region", op: "=", values: ["KSA"]}]}
+  - question: Open projects in the UAE
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["GCC - UAE"]}]}
+  - question: Open projects in the United Arab Emirates
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["GCC - UAE"]}]}
+  - question: How many open projects in Dubai?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["GCC - UAE"]}]}
+  - question: Open projects in Abu Dhabi
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["GCC - UAE"]}]}
+  - question: Requests from the Emirates
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:total_requests"}, filters: [{ref: "dimension:request_region", op: "=", values: ["GCC - UAE"]}]}
+  - question: Open projects in Amman
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["Jordan"]}]}
+  - question: Open projects in the Hashemite Kingdom of Jordan
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["Jordan"]}]}
+  - question: Open projects in Jordon
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["Jordan"]}]}
+  - question: Open projects in Francophone Africa
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["Francophone"]}]}
+  - question: Open projects in French speaking Africa
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["Francophone"]}]}
+  - question: Open projects in Eastern Africa
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["East Africa"]}]}
+  - question: Open projects in Saudi and the UAE
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: in, values: ["KSA", "GCC - UAE"]}]}
+  - question: Total approved budget of capex projects
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:approved_budget_total"}, filters: [{ref: "dimension:budget_type", op: "=", values: ["CAPEX"]}]}
+  - question: Approved budget for capital expenditure projects
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:approved_budget_total"}, filters: [{ref: "dimension:budget_type", op: "=", values: ["CAPEX"]}]}
+  - question: How many open capex projects?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:budget_type", op: "=", values: ["CAPEX"]}]}
+  - question: Open opex projects
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:budget_type", op: "=", values: ["OPEX"]}]}
+  - question: Open projects funded from operating expenditure
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:budget_type", op: "=", values: ["OPEX"]}]}
+  - question: Open P1 projects
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:priority", op: "=", values: ["Critical"]}]}
+  - question: How many open projects are top priority?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:priority", op: "=", values: ["Critical"]}]}
+  - question: Open P2 projects by region
+    tags: [alias]
+    held_out: true
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:region"}], filters: [{ref: "dimension:priority", op: "=", values: ["High"]}]}
+  - question: Open projects with medium priority
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:priority", op: "=", values: ["Moderate"]}]}
+  - question: Open P4 projects
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:priority", op: "=", values: ["Low"]}]}
+  - question: Requests that are P1
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:total_requests"}, filters: [{ref: "dimension:request_priority", op: "=", values: ["Critical"]}]}
+  - question: Open projects on N1
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:platform", op: "=", values: ["Network One"]}]}
+  - question: Open projects on NFlex
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:platform", op: "=", values: ["Network Flex"]}]}
+  - question: Open projects on legacy platforms
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:platform", op: "=", values: ["Legacy / Other"]}]}
+  - question: Open projects on Magnatti
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:platform", op: "=", values: ["Magnati"]}]}
+  - question: Open projects on the NetworkOne platform
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:platform", op: "=", values: ["Network One"]}]}
+  - question: Open projects in user acceptance testing
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:lifecycle_phase", op: "=", values: ["UAT"]}]}
+  - question: Open projects in acceptance testing
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:lifecycle_phase", op: "=", values: ["UAT"]}]}
+  - question: How many open projects are awaiting a PM?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:lifecycle_phase", op: "=", values: ["Assign PM"]}]}
+  - question: Open projects in close out
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:lifecycle_phase", op: "=", values: ["Closure"]}]}
+  - question: Requests returned to requester
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:total_requests"}, filters: [{ref: "dimension:request_state", op: "=", values: ["Return to Requester"]}]}
+  - question: How many requests were sent back?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:total_requests"}, filters: [{ref: "dimension:request_state", op: "=", values: ["Return to Requester"]}]}
+  - question: Open projects on hold for no funding
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:on_hold"}, filters: [{ref: "dimension:hold_reason", op: "=", values: ["Awaiting funding"]}]}
+  - question: Open projects where Yusuf is the project manager
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:project_manager", op: "=", values: ["Yusuf Ali"]}]}
+  - question: Open projects where Omar is the project manager
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:project_manager", op: "=", values: ["Omar Saleh"]}]}
+  - question: Open projects where Grace is the delivery manager
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:delivery_manager", op: "=", values: ["Grace Achieng"]}]}
+  - question: Open projects for Nomsa
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:cio", op: "=", values: ["Nomsa Osei"]}]}
+  - question: How many open projects does Karim have?
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:cio", op: "=", values: ["Karim Haddad"]}]}
+  - question: Open projects in the Acquring portfolio
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:portfolio", op: "=", values: ["Acquiring"]}]}
+  - question: Open projects in the Digitl portfolio
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:portfolio", op: "=", values: ["Digital"]}]}
+  - question: Open projects in Francophon
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, filters: [{ref: "dimension:region", op: "=", values: ["Francophone"]}]}
+  - question: Overdue go-lives in Saudi Arabia
+    tags: [alias]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:overdue_go_lives"}, filters: [{ref: "dimension:region", op: "=", values: ["KSA"]}]}
+  # Several measures, derived figures and shares of the total (US-176).
+  - question: Forecast cost as % of approved budget by CIO
+    tags: [derived]
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_cost_total"}, extra_measures: [{ref: "measure:approved_budget_total"}], breakdowns: [{ref: "dimension:cio"}], derived: [{key: percent_of, op: percent_of, of: "measure:forecast_cost_total", to: "measure:approved_budget_total"}]}
+  - question: Forecast cost over approved budget % by region
+    tags: [derived]
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_cost_total"}, extra_measures: [{ref: "measure:approved_budget_total"}], breakdowns: [{ref: "dimension:region"}], derived: [{key: percent_change, op: percent_change, of: "measure:forecast_cost_total", to: "measure:approved_budget_total"}]}
+  - question: Ratio of projects on hold to open projects by region
+    tags: [derived]
+    shape: breakdown
+    spec: {measure: {ref: "measure:on_hold"}, extra_measures: [{ref: "measure:open_projects"}], breakdowns: [{ref: "dimension:region"}], derived: [{key: ratio, op: ratio, of: "measure:on_hold", to: "measure:open_projects"}]}
+  - question: Difference between forecast cost and approved budget by programme
+    tags: [derived]
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_cost_total"}, extra_measures: [{ref: "measure:approved_budget_total"}], breakdowns: [{ref: "dimension:programme"}], derived: [{key: difference, op: difference, of: "measure:forecast_cost_total", to: "measure:approved_budget_total"}]}
+  - question: Forecast cost minus approved budget by platform
+    tags: [derived]
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_cost_total"}, extra_measures: [{ref: "measure:approved_budget_total"}], breakdowns: [{ref: "dimension:platform"}], derived: [{key: difference, op: difference, of: "measure:forecast_cost_total", to: "measure:approved_budget_total"}]}
+  - question: Overdue go-lives as % of in delivery by region
+    tags: [derived]
+    shape: breakdown
+    spec: {measure: {ref: "measure:overdue_go_lives"}, extra_measures: [{ref: "measure:in_delivery"}], breakdowns: [{ref: "dimension:region"}], derived: [{key: percent_of, op: percent_of, of: "measure:overdue_go_lives", to: "measure:in_delivery"}]}
+  - question: Forecast cost vs approved budget by portfolio
+    tags: [derived]
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_cost_total"}, extra_measures: [{ref: "measure:approved_budget_total"}], breakdowns: [{ref: "dimension:portfolio"}]}
+  - question: Open projects by region as a share of total
+    tags: [share]
+    shape: share
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:region"}], share_of_total: ["measure:open_projects"]}
+  - question: Share of total open projects by CIO
+    tags: [share]
+    shape: share
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:cio"}], share_of_total: ["measure:open_projects"]}
+  # 0.5.0 (US-178): period compare, semi-join, cohort — ENH-012.
+  # Held out: the planner does not yet produce these operations (US-178 shapes are new).
+  - question: Open projects by month this year vs last year
+    tags: [compare]
+    held_out: true
+    shape: comparison
+    spec: {measure: {ref: "measure:open_projects"}, time: {ref: "dimension:planned_deployment_date", grain: month, range: {relative: this_year}}, compare: {kind: same_period_last_year}}
+  - question: Open projects by quarter vs previous period
+    tags: [compare]
+    held_out: true
+    shape: comparison
+    spec: {measure: {ref: "measure:open_projects"}, time: {ref: "dimension:planned_deployment_date", grain: quarter, range: {relative: this_year}}, compare: {kind: previous_period}}
+  - question: Open projects with a technical risk
+    tags: [semi_join]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: "measure:open_projects"}, exists_in: [{entity: risks, filters: [{ref: "dimension:risk_category", op: "=", values: [Technical]}]}]}
+  - question: Open projects with a technical risk by region
+    tags: [semi_join]
+    held_out: true
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:region"}], exists_in: [{entity: risks, filters: [{ref: "dimension:risk_category", op: "=", values: [Technical]}]}]}
+  # 0.6.0 (US-177): window operations — ENH-012.
+  # Held out: the rules planner recognises some window phrases; these test the full pipeline.
+  - question: Top 3 projects per programme by forecast cost
+    tags: [window, top_n_per_group]
+    held_out: true
+    shape: ranking
+    spec: {measure: {ref: "measure:forecast_cost_total"}, breakdowns: [{ref: "dimension:programme"}, {ref: "field:projects.name"}], top_n_per_group: {by: "dimension:programme", n: 3, order: desc}}
+  - question: Running total of open projects by month this year
+    tags: [window, running_total]
+    held_out: true
+    shape: trend
+    spec: {measure: {ref: "measure:open_projects"}, time: {ref: "dimension:planned_deployment_date", grain: month, range: {relative: this_year}}, running_total: {}}
+  - question: 3-month moving average of open projects by month
+    tags: [window, moving_avg]
+    held_out: true
+    shape: trend
+    spec: {measure: {ref: "measure:open_projects"}, time: {ref: "dimension:planned_deployment_date", grain: month}, moving_avg: {window: 3}}
+  - question: Rank open projects by region
+    tags: [window, rank]
+    held_out: true
+    shape: ranking
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:region"}], rank: {}}
+  - question: Open projects by region in quartiles
+    tags: [window, bucket]
+    held_out: true
+    shape: distribution
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:region"}], bucket: {k: 4}}
+  - question: Median forecast cost by programme
+    tags: [window, percentile]
+    held_out: true
+    shape: breakdown
+    spec: {measure: {ref: "measure:forecast_cost_total"}, breakdowns: [{ref: "dimension:programme"}, {ref: "field:projects.name"}], percentile: {p: p50, per: "dimension:programme"}}
+  - question: Programmes with more than 5 open projects
+    tags: [window, having]
+    held_out: true
+    shape: breakdown
+    spec: {measure: {ref: "measure:open_projects"}, breakdowns: [{ref: "dimension:programme"}], having: {op: ">", value: 5}}
+  # Paraphrase set (US-190, ENH-016): held-out rewordings of the questions above, never AG-03 few-shots and
+  # never used to write synonyms. `paraphrase_of` names the original; the spec is the original's. Styles:
+  # reworded, colloquial, look_alike, breakdown_word, money, percentage; `exec102` marks the 38 of the
+  # EXEC-102 probe (the baseline). No filter values, so the set runs on TPG and on a live Dataverse model.
+  - question: "How many projects are still running?"
+    paraphrase_of: "How many open projects are there?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:open_projects"}}
+  - question: "What's our live project count?"
+    paraphrase_of: "How many open projects are there?"
+    tags: [paraphrase, colloquial, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:open_projects"}}
+  - question: "How much demand has come in overall?"
+    paraphrase_of: "How many requests are there?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:total_requests"}}
+  - question: "Split the live projects by geography"
+    paraphrase_of: "Open projects by region"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "How many projects are actively being executed right now?"
+    paraphrase_of: "How many projects are in delivery?"
+    tags: [paraphrase, look_alike, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:in_delivery"}}
+  - question: "How many projects haven't kicked off yet?"
+    paraphrase_of: "How many projects are not yet started?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:project_created"}}
+  - question: "Paused projects per region"
+    paraphrase_of: "Projects on hold by region"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "How many projects have missed their go-live date?"
+    paraphrase_of: "How many projects are overdue?"
+    tags: [paraphrase, look_alike, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}}
+  - question: "How many projects are past their deployment date?"
+    paraphrase_of: "How many projects are overdue?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}}
+  - question: "How many projects are flagged as likely to slip?"
+    paraphrase_of: "How many projects are at schedule risk?"
+    tags: [paraphrase, look_alike, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:schedule_risk"}}
+  - question: "How many deployments are due within the next month?"
+    paraphrase_of: "Go-lives in the next 30 days"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:go_lives_0_30"}}
+  - question: "How many projects haven't been updated in a while?"
+    paraphrase_of: "How many stale projects are there?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:stale_projects"}}
+  - question: "How many projects are planned to deploy each month?"
+    paraphrase_of: "Trend of projects by planned deployment month"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: trend
+    spec: {"measure": {"ref": "measure:total_projects"}, "time": {"ref": "dimension:planned_deployment_date", "grain": "month"}}
+  - question: "How much money has been sanctioned for the open projects?"
+    paraphrase_of: "What is the approved budget for open projects?"
+    tags: [paraphrase, reworded, money, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:approved_budget_total"}}
+  - question: "Expected spend per portfolio"
+    paraphrase_of: "Forecast cost by portfolio"
+    tags: [paraphrase, reworded, money, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:forecast_cost_total"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Where are we over or under budget, by region?"
+    paraphrase_of: "Forecast variance by region"
+    tags: [paraphrase, reworded, money, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:budget_variance"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "How many projects are spending more than planned?"
+    paraphrase_of: "How many projects are over budget?"
+    tags: [paraphrase, look_alike, money, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:over_budget"}}
+  - question: "Live projects split by urgency"
+    paraphrase_of: "Open projects by priority"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:priority"}]}
+  - question: "Breakdown of projects by RAG status"
+    paraphrase_of: "Projects by reported status"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:total_projects"}, "breakdowns": [{"ref": "dimension:reported_status"}]}
+  - question: "Which 5 regions have the most live projects?"
+    paraphrase_of: "Top 5 regions by open projects"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: ranking
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:region"}], "sort": [{"by": "measure", "dir": "desc"}], "limit": 5}
+  - question: "Pending requests by stage"
+    paraphrase_of: "Open demand requests by request state"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_demand"}, "breakdowns": [{"ref": "dimension:request_state"}]}
+  - question: "How many DOU approvals are late?"
+    paraphrase_of: "How many DOU gates are overdue?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:overdue_dou"}}
+  - question: "Where does the reported status disagree with actual health, per portfolio?"
+    paraphrase_of: "RAG contradictions by portfolio"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:rag_contradictions"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Projects paused for over three months"
+    paraphrase_of: "How many projects have been on hold for more than 90 days?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:on_hold_over_90"}}
+  - question: "How healthy is the portfolio overall?"
+    paraphrase_of: "What is the average calculated health of open projects?"
+    tags: [paraphrase, colloquial, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:avg_health_score"}}
+  - question: "Which CIOs have their projects properly baselined?"
+    paraphrase_of: "Baselining compliance by CIO"
+    tags: [paraphrase, reworded, percentage, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:baselining_compliance_pct"}, "breakdowns": [{"ref": "dimension:cio"}]}
+  - question: "What percentage of projects have a budget code?"
+    paraphrase_of: "What is our budget code compliance?"
+    tags: [paraphrase, percentage, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:budget_code_compliance_pct"}}
+  - question: "How late are the overdue go-lives?"
+    paraphrase_of: "Overdue go-lives by days past planned go-live"
+    tags: [paraphrase, breakdown_word, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}, "breakdowns": [{"ref": "dimension:lateness_bucket"}]}
+  - question: "How long have the on-hold projects been parked?"
+    paraphrase_of: "Projects on hold by time on hold"
+    tags: [paraphrase, breakdown_word, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:on_hold_aging"}]}
+  - question: "Why are projects on hold?"
+    paraphrase_of: "Projects on hold by hold reason"
+    tags: [paraphrase, colloquial, breakdown_word, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:hold_reason"}]}
+  - question: "Typical schedule slippage per portfolio"
+    paraphrase_of: "Median slip vs first baseline by portfolio"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:slip_vs_baseline_median"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "How many projects went live on schedule?"
+    paraphrase_of: "How many projects were deployed on time?"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:deployed_on_time"}}
+  - question: "Projects blowing their budget by more than 15%, per portfolio"
+    paraphrase_of: "Projects with forecast more than 15% over budget by portfolio"
+    tags: [paraphrase, reworded, money, percentage, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:forecast_over_budget_15"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "What share of requests turn into projects, by quarter raised?"
+    paraphrase_of: "Conversion rate of requests by quarter raised"
+    tags: [paraphrase, percentage, exec102]
+    held_out: true
+    shape: trend
+    spec: {"measure": {"ref": "measure:conversion_rate"}, "time": {"ref": "dimension:quarter_raised", "grain": "quarter"}}
+  - question: "Late governance approvals per request CIO"
+    paraphrase_of: "Overdue governance actions by request CIO"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_gates_total"}, "breakdowns": [{"ref": "dimension:request_cio"}]}
+  - question: "What percentage of contract value was delivered on time?"
+    paraphrase_of: "What share of TCV was delivered on time?"
+    tags: [paraphrase, percentage, money, exec102]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:north_star_on_time_tcv_pct"}}
+  - question: "Projects in poor health per portfolio"
+    paraphrase_of: "Calculated Red projects by portfolio"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:health_red"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Which delivery managers have projects with no status reported?"
+    paraphrase_of: "Reported status not set by delivery manager"
+    tags: [paraphrase, reworded, exec102]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:status_not_set"}, "breakdowns": [{"ref": "dimension:delivery_manager"}]}
+  - question: "How many projects do we currently have open?"
+    paraphrase_of: "How many open projects are there?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:open_projects"}}
+  - question: "Count the projects that are still going"
+    paraphrase_of: "How many open projects are there?"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:open_projects"}}
+  - question: "Total number of project requests received"
+    paraphrase_of: "How many requests are there?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:total_requests"}}
+  - question: "How many demand requests have been logged?"
+    paraphrase_of: "How many requests are there?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:total_requests"}}
+  - question: "How are open projects spread across regions?"
+    paraphrase_of: "Open projects by region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "Number of open projects in each region"
+    paraphrase_of: "Open projects by region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "How many projects are currently in execution?"
+    paraphrase_of: "How many projects are in delivery?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:in_delivery"}}
+  - question: "Projects being delivered right now"
+    paraphrase_of: "How many projects are in delivery?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:in_delivery"}}
+  - question: "Number of projects that are currently active"
+    paraphrase_of: "How many active projects do we have?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:open_projects"}}
+  - question: "How many projects are yet to begin?"
+    paraphrase_of: "How many projects are not yet started?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:project_created"}}
+  - question: "Projects still at the created stage"
+    paraphrase_of: "How many projects are not yet started?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:project_created"}}
+  - question: "Where are the on-hold projects, by region?"
+    paraphrase_of: "Projects on hold by region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "Count of suspended projects for each region"
+    paraphrase_of: "Projects on hold by region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "How many go-lives have slipped past their planned date?"
+    paraphrase_of: "How many projects are overdue?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}}
+  - question: "Number of late deployments"
+    paraphrase_of: "How many projects are overdue?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}}
+  - question: "Projects whose schedule is at risk"
+    paraphrase_of: "How many projects are at schedule risk?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:schedule_risk"}}
+  - question: "How many projects look like they will miss their schedule?"
+    paraphrase_of: "How many projects are at schedule risk?"
+    tags: [paraphrase, look_alike, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:schedule_risk"}}
+  - question: "Where are the overdue go-lives, region by region?"
+    paraphrase_of: "Overdue go-lives by region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "Late go-lives per region"
+    paraphrase_of: "Overdue go-lives by region"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "How many projects go live in the coming 30 days?"
+    paraphrase_of: "Go-lives in the next 30 days"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:go_lives_0_30"}}
+  - question: "What's deploying in the next four weeks?"
+    paraphrase_of: "Go-lives in the next 30 days"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:go_lives_0_30"}}
+  - question: "Go-lives one to two months out, per portfolio"
+    paraphrase_of: "Go-lives in 31-60 days by portfolio"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:go_lives_31_60"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Projects with no recent updates"
+    paraphrase_of: "How many stale projects are there?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:stale_projects"}}
+  - question: "How many projects have gone quiet?"
+    paraphrase_of: "How many stale projects are there?"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:stale_projects"}}
+  - question: "Monthly trend of planned deployments"
+    paraphrase_of: "Trend of projects by planned deployment month"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: trend
+    spec: {"measure": {"ref": "measure:total_projects"}, "time": {"ref": "dimension:planned_deployment_date", "grain": "month"}}
+  - question: "Projects by month of planned go-live"
+    paraphrase_of: "Trend of projects by planned deployment month"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: trend
+    spec: {"measure": {"ref": "measure:total_projects"}, "time": {"ref": "dimension:planned_deployment_date", "grain": "month"}}
+  - question: "Total sanctioned budget for live projects"
+    paraphrase_of: "What is the approved budget for open projects?"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:approved_budget_total"}}
+  - question: "How much budget is approved across open projects?"
+    paraphrase_of: "What is the approved budget for open projects?"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:approved_budget_total"}}
+  - question: "What is the forecast spend for each portfolio?"
+    paraphrase_of: "Forecast cost by portfolio"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:forecast_cost_total"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Projected cost split by portfolio"
+    paraphrase_of: "Forecast cost by portfolio"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:forecast_cost_total"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Budget variance per region"
+    paraphrase_of: "Forecast variance by region"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:budget_variance"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "How far off budget is each region's forecast?"
+    paraphrase_of: "Forecast variance by region"
+    tags: [paraphrase, money, colloquial]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:budget_variance"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "Number of projects running over their budget"
+    paraphrase_of: "How many projects are over budget?"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:over_budget"}}
+  - question: "How many projects have overspent?"
+    paraphrase_of: "How many projects are over budget?"
+    tags: [paraphrase, money, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:over_budget"}}
+  - question: "Open projects by urgency level"
+    paraphrase_of: "Open projects by priority"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:priority"}]}
+  - question: "How do open projects break down by priority level?"
+    paraphrase_of: "Open projects by priority"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:priority"}]}
+  - question: "Count of projects for each reported RAG"
+    paraphrase_of: "Projects by reported status"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:total_projects"}, "breakdowns": [{"ref": "dimension:reported_status"}]}
+  - question: "Top five regions for open projects"
+    paraphrase_of: "Top 5 regions by open projects"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: ranking
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:region"}], "sort": [{"by": "measure", "dir": "desc"}], "limit": 5}
+  - question: "Open demand per request status"
+    paraphrase_of: "Open demand requests by request state"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_demand"}, "breakdowns": [{"ref": "dimension:request_state"}]}
+  - question: "Where are the open requests in the pipeline?"
+    paraphrase_of: "Open demand requests by request state"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_demand"}, "breakdowns": [{"ref": "dimension:request_state"}]}
+  - question: "Open demand split by the requesting region"
+    paraphrase_of: "Open demand by request region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_demand"}, "breakdowns": [{"ref": "dimension:request_region"}]}
+  - question: "Overdue DOU sign-offs"
+    paraphrase_of: "How many DOU gates are overdue?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:overdue_dou"}}
+  - question: "How many DOU gates have missed their due date?"
+    paraphrase_of: "How many DOU gates are overdue?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:overdue_dou"}}
+  - question: "Late DARB gates per request priority"
+    paraphrase_of: "Overdue DARB gates by request priority"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_darb"}, "breakdowns": [{"ref": "dimension:request_priority"}]}
+  - question: "Portfolios where reported RAG contradicts calculated health"
+    paraphrase_of: "RAG contradictions by portfolio"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:rag_contradictions"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Projects stuck on hold longer than 90 days"
+    paraphrase_of: "How many projects have been on hold for more than 90 days?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:on_hold_over_90"}}
+  - question: "How many projects have been parked for a quarter or more?"
+    paraphrase_of: "How many projects have been on hold for more than 90 days?"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:on_hold_over_90"}}
+  - question: "Average health score of the open projects"
+    paraphrase_of: "What is the average calculated health of open projects?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:avg_health_score"}}
+  - question: "On average, how healthy are our live projects?"
+    paraphrase_of: "What is the average calculated health of open projects?"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:avg_health_score"}}
+  - question: "Projects without enough data to score their health"
+    paraphrase_of: "How many projects have insufficient data for calculated health?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:health_insufficient"}}
+  - question: "Percentage of projects baselined per CIO"
+    paraphrase_of: "Baselining compliance by CIO"
+    tags: [paraphrase, percentage]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:baselining_compliance_pct"}, "breakdowns": [{"ref": "dimension:cio"}]}
+  - question: "Share of projects with a budget code"
+    paraphrase_of: "What is our budget code compliance?"
+    tags: [paraphrase, percentage]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:budget_code_compliance_pct"}}
+  - question: "How compliant are we on budget codes?"
+    paraphrase_of: "What is our budget code compliance?"
+    tags: [paraphrase, colloquial, percentage]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:budget_code_compliance_pct"}}
+  - question: "Share of projects with a PM assigned, by phase"
+    paraphrase_of: "PM assignment compliance by lifecycle phase"
+    tags: [paraphrase, percentage]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:pm_assignment_compliance_pct"}, "breakdowns": [{"ref": "dimension:lifecycle_phase"}]}
+  - question: "How overdue are the late go-lives, in days?"
+    paraphrase_of: "Overdue go-lives by days past planned go-live"
+    tags: [paraphrase, breakdown_word]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}, "breakdowns": [{"ref": "dimension:lateness_bucket"}]}
+  - question: "Overdue go-lives grouped by how many days late"
+    paraphrase_of: "Overdue go-lives by days past planned go-live"
+    tags: [paraphrase, breakdown_word]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_go_lives"}, "breakdowns": [{"ref": "dimension:lateness_bucket"}]}
+  - question: "When are the open projects due to go live?"
+    paraphrase_of: "Open projects by go-live horizon"
+    tags: [paraphrase, breakdown_word]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:go_live_horizon"}]}
+  - question: "Open projects by time to go-live"
+    paraphrase_of: "Open projects by go-live horizon"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:go_live_horizon"}]}
+  - question: "How long have projects been on hold?"
+    paraphrase_of: "Projects on hold by time on hold"
+    tags: [paraphrase, breakdown_word]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:on_hold_aging"}]}
+  - question: "On-hold projects by how long they've been paused"
+    paraphrase_of: "Projects on hold by time on hold"
+    tags: [paraphrase, breakdown_word]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:on_hold_aging"}]}
+  - question: "What are the reasons projects are on hold?"
+    paraphrase_of: "Projects on hold by hold reason"
+    tags: [paraphrase, breakdown_word]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:hold_reason"}]}
+  - question: "Why have projects been put on hold?"
+    paraphrase_of: "Projects on hold by hold reason"
+    tags: [paraphrase, breakdown_word]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "breakdowns": [{"ref": "dimension:hold_reason"}]}
+  - question: "Median schedule slip against the original baseline, per portfolio"
+    paraphrase_of: "Median slip vs first baseline by portfolio"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:slip_vs_baseline_median"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "How much have portfolios slipped from their first baseline?"
+    paraphrase_of: "Median slip vs first baseline by portfolio"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:slip_vs_baseline_median"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Number of projects delivered on time"
+    paraphrase_of: "How many projects were deployed on time?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:deployed_on_time"}}
+  - question: "How many go-lives hit their planned date?"
+    paraphrase_of: "How many projects were deployed on time?"
+    tags: [paraphrase, look_alike]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:deployed_on_time"}}
+  - question: "Portfolios with projects forecast to overrun budget by over 15%"
+    paraphrase_of: "Projects with forecast more than 15% over budget by portfolio"
+    tags: [paraphrase, money, percentage]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:forecast_over_budget_15"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Net forecast against budget for each region"
+    paraphrase_of: "Net forecast vs budget by region"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:net_forecast_variance"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "Overall forecast minus budget per region"
+    paraphrase_of: "Net forecast vs budget by region"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:net_forecast_variance"}, "breakdowns": [{"ref": "dimension:region"}]}
+  - question: "Requests parked for over six months"
+    paraphrase_of: "How many requests have been on hold for more than 180 days?"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:requests_on_hold_over_180"}}
+  - question: "How many requests have been on hold longer than 180 days?"
+    paraphrase_of: "How many requests have been on hold for more than 180 days?"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:requests_on_hold_over_180"}}
+  - question: "Estimated request cost per request CIO"
+    paraphrase_of: "Estimated cost of requests by request CIO"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:estimated_cost_total"}, "breakdowns": [{"ref": "dimension:request_cio"}]}
+  - question: "How much are the requests expected to cost, by CIO?"
+    paraphrase_of: "Estimated cost of requests by request CIO"
+    tags: [paraphrase, money, look_alike]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:estimated_cost_total"}, "breakdowns": [{"ref": "dimension:request_cio"}]}
+  - question: "Request-to-project conversion by quarter"
+    paraphrase_of: "Conversion rate of requests by quarter raised"
+    tags: [paraphrase, percentage]
+    held_out: true
+    shape: trend
+    spec: {"measure": {"ref": "measure:conversion_rate"}, "time": {"ref": "dimension:quarter_raised", "grain": "quarter"}}
+  - question: "Overdue governance gates by request CIO"
+    paraphrase_of: "Overdue governance actions by request CIO"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:overdue_gates_total"}, "breakdowns": [{"ref": "dimension:request_cio"}]}
+  - question: "Internal man-days by requesting region"
+    paraphrase_of: "Internal effort in man-days by request region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:effort_internal_md"}, "breakdowns": [{"ref": "dimension:request_region"}]}
+  - question: "How much internal effort is requested per region?"
+    paraphrase_of: "Internal effort in man-days by request region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:effort_internal_md"}, "breakdowns": [{"ref": "dimension:request_region"}]}
+  - question: "Open projects per region split by reported status"
+    paraphrase_of: "Open projects by region and reported status"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:region"}, {"ref": "dimension:reported_status"}]}
+  - question: "On-time delivery share of total contract value"
+    paraphrase_of: "What share of TCV was delivered on time?"
+    tags: [paraphrase, percentage, money]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:north_star_on_time_tcv_pct"}}
+  - question: "How many projects score Red on calculated health, per portfolio?"
+    paraphrase_of: "Calculated Red projects by portfolio"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:health_red"}, "breakdowns": [{"ref": "dimension:portfolio"}]}
+  - question: "Which key priorities need attention?"
+    paraphrase_of: "Key priorities needing attention"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:key_priorities_attention"}}
+  - question: "Key priority projects that are in trouble"
+    paraphrase_of: "Key priorities needing attention"
+    tags: [paraphrase, colloquial]
+    held_out: true
+    shape: number
+    spec: {"measure": {"ref": "measure:key_priorities_attention"}}
+  - question: "Projects with no reported status, by delivery manager"
+    paraphrase_of: "Reported status not set by delivery manager"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:status_not_set"}, "breakdowns": [{"ref": "dimension:delivery_manager"}]}
+  - question: "Forecast as a percentage of approved budget per CIO"
+    paraphrase_of: "Forecast cost as % of approved budget by CIO"
+    tags: [paraphrase, percentage, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:forecast_cost_total"}, "extra_measures": [{"ref": "measure:approved_budget_total"}], "breakdowns": [{"ref": "dimension:cio"}], "derived": [{"key": "percent_of", "op": "percent_of", "of": "measure:forecast_cost_total", "to": "measure:approved_budget_total"}]}
+  - question: "On-hold projects relative to open projects by region"
+    paraphrase_of: "Ratio of projects on hold to open projects by region"
+    tags: [paraphrase, reworded]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:on_hold"}, "extra_measures": [{"ref": "measure:open_projects"}], "breakdowns": [{"ref": "dimension:region"}], "derived": [{"key": "ratio", "op": "ratio", "of": "measure:on_hold", "to": "measure:open_projects"}]}
+  - question: "Gap between forecast cost and approved budget per programme"
+    paraphrase_of: "Difference between forecast cost and approved budget by programme"
+    tags: [paraphrase, money]
+    held_out: true
+    shape: breakdown
+    spec: {"measure": {"ref": "measure:forecast_cost_total"}, "extra_measures": [{"ref": "measure:approved_budget_total"}], "breakdowns": [{"ref": "dimension:programme"}], "derived": [{"key": "difference", "op": "difference", "of": "measure:forecast_cost_total", "to": "measure:approved_budget_total"}]}
+  - question: "Each region's share of open projects"
+    paraphrase_of: "Open projects by region as a share of total"
+    tags: [paraphrase, percentage]
+    held_out: true
+    shape: share
+    spec: {"measure": {"ref": "measure:open_projects"}, "breakdowns": [{"ref": "dimension:region"}], "share_of_total": ["measure:open_projects"]}
+  # US-250 (0.10.0): EXEC-186 list questions, each beside its count twin (tags exec186, list | count).
+  - question: Show the list of open projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: Show the number of open projects
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: List of open projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: Number of open projects
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: List all open projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: Count all open projects
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: Which projects are open?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects are open?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: Names of the projects on hold
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects are on hold right now?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold'}}
+  - question: Show all projects on hold
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: Count of projects on hold
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold'}}
+  - question: Which projects are overdue?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many overdue projects do we have?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: List the overdue go-lives
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: Number of overdue go-lives
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: Which projects are in delivery?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:in_delivery'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects are currently in delivery?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:in_delivery'}}
+  - question: Which projects go live in the next 30 days?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:go_lives_0_30'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects go live in the next 30 days?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:go_lives_0_30'}}
+  - question: List the projects at schedule risk
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:schedule_risk'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: Number of projects at schedule risk
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:schedule_risk'}}
+  - question: Which projects are over budget?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:over_budget'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects are over budget right now?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:over_budget'}}
+  - question: Show me the stale projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:stale_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects are stale?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:stale_projects'}}
+  - question: Which open projects are in KSA?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:region', op: '=', values: [KSA]}]}
+  - question: How many open projects are in KSA?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:region', op: '=', values: [KSA]}]}
+  - question: List of open projects in Jordan
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:region', op: '=', values: [Jordan]}]}
+  - question: Number of open projects in Jordan
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:region', op: '=', values: [Jordan]}]}
+  - question: Names of open critical projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:priority', op: '=', values: [Critical]}]}
+  - question: How many open critical projects are there?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:priority', op: '=', values: [Critical]}]}
+  - question: Show all open projects on the Network One platform
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:platform', op: '=', values: [Network One]}]}
+  - question: How many open projects are on the Network One platform?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:platform', op: '=', values: [Network One]}]}
+  - question: Which open projects are in the Digital portfolio?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:portfolio', op: '=', values: [Digital]}]}
+  - question: How many open projects are in the Digital portfolio?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:portfolio', op: '=', values: [Digital]}]}
+  - question: List the open projects where Yusuf Ali is the project manager
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:project_manager', op: '=', values: [Yusuf Ali]}]}
+  - question: How many open projects does Yusuf Ali manage?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:project_manager', op: '=', values: [Yusuf Ali]}]}
+  - question: Which open projects does Grace Achieng deliver?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:delivery_manager', op: '=', values: [Grace Achieng]}]}
+  - question: How many open projects does Grace Achieng deliver?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:delivery_manager', op: '=', values: [Grace Achieng]}]}
+  - question: List of open CAPEX projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:budget_type', op: '=', values: [CAPEX]}]}
+  - question: Number of open CAPEX projects
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:budget_type', op: '=', values: [CAPEX]}]}
+  - question: Which projects are on hold awaiting funding?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:hold_reason', op: '=', values: [Awaiting funding]}]}
+  - question: How many projects are on hold awaiting funding?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold'}, filters: [{ref: 'dimension:hold_reason', op: '=', values: [Awaiting funding]}]}
+  - question: Which overdue go-lives are in KSA?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:region', op: '=', values: [KSA]}]}
+  - question: How many overdue go-lives are in KSA?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, filters: [{ref: 'dimension:region', op: '=', values: [KSA]}]}
+  - question: Show the list of projects not yet started
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:project_created'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: Count the projects not yet started
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:project_created'}}
+  - question: Which projects are in UAT?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:lifecycle_phase', op: '=', values: [UAT]}]}
+  - question: How many projects are in UAT?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:lifecycle_phase', op: '=', values: [UAT]}]}
+  - question: Which projects were deployed?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:deployed_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects were deployed?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:deployed_projects'}}
+  - question: Names of the completed projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:completed_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects are completed?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:completed_projects'}}
+  - question: List all projects
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:total_projects'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects are there in total?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:total_projects'}}
+  - question: Which projects have a Red health?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:health_red'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many projects have a Red health?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:health_red'}}
+  - question: Show all key priority projects needing attention
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:key_priorities_attention'}, breakdowns: [{ref: 'field:projects.name'}]}
+  - question: How many key priority projects need attention?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:key_priorities_attention'}}
+  - question: Give me the names of the open projects in the Acquiring portfolio
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:portfolio', op: '=', values: [Acquiring]}]}
+  - question: How many open projects are in the Acquiring portfolio?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:portfolio', op: '=', values: [Acquiring]}]}
+  - question: Display every open project in East Africa
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'field:projects.name'}], filters: [{ref: 'dimension:region', op: '=', values: [East Africa]}]}
+  - question: How many open projects are in East Africa?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:region', op: '=', values: [East Africa]}]}
+  - question: List of open demand requests
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'field:project_requests.title'}]}
+  - question: Number of open demand requests
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_demand'}}
+  - question: Which requests are overdue for DOU?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:overdue_dou'}, breakdowns: [{ref: 'field:project_requests.title'}]}
+  - question: How many requests are overdue for DOU?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_dou'}}
+  - question: Names of the requests from KSA
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:total_requests'}, breakdowns: [{ref: 'field:project_requests.title'}], filters: [{ref: 'dimension:request_region', op: '=', values: [KSA]}]}
+  - question: How many requests come from KSA?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}, filters: [{ref: 'dimension:request_region', op: '=', values: [KSA]}]}
+  - question: Which requests are approved for delivery?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:approved_for_delivery'}, breakdowns: [{ref: 'field:project_requests.title'}]}
+  - question: How many requests are approved for delivery?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:approved_for_delivery'}}
+  - question: Show all critical requests
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:total_requests'}, breakdowns: [{ref: 'field:project_requests.title'}], filters: [{ref: 'dimension:request_priority', op: '=', values: [Critical]}]}
+  - question: How many critical requests are there?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}, filters: [{ref: 'dimension:request_priority', op: '=', values: [Critical]}]}
+  - question: List the open risks
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_risks'}, breakdowns: [{ref: 'field:risks.title'}]}
+  - question: How many open risks are there?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_risks'}}
+  - question: Which risks have high exposure?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:high_exposure_risks'}, breakdowns: [{ref: 'field:risks.title'}]}
+  - question: How many risks have high exposure?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:high_exposure_risks'}}
+  - question: Which risks are overdue?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:overdue_risks'}, breakdowns: [{ref: 'field:risks.title'}]}
+  - question: Number of overdue risks
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_risks'}}
+  - question: List of open issues
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_issues'}, breakdowns: [{ref: 'field:issues.title'}]}
+  - question: Count of open issues
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_issues'}}
+  - question: Which issues are high priority?
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:high_priority_issues'}, breakdowns: [{ref: 'field:issues.title'}]}
+  - question: How many high priority issues are there?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:high_priority_issues'}}
+  - question: Show all overdue action items
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:overdue_actions'}, breakdowns: [{ref: 'field:action_items.title'}]}
+  - question: How many action items are overdue?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_actions'}}
+  - question: List the open action items
+    tags: [exec186, list]
+    held_out: true
+    shape: list_of_records
+    spec: {measure: {ref: 'measure:open_actions'}, breakdowns: [{ref: 'field:action_items.title'}]}
+  - question: How many open action items do we have?
+    tags: [exec186, count]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_actions'}}
+  # --- noise (US-220): generated by `uv run python -m tela_api.knowledge.noise`; do not edit by hand ---
+  - question: How many number of project will be active in UAE region
+    tags: [noise, exec139]
+    held_out: true
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}, filters: [{ref: 'dimension:region', op: '=', values: [GCC - UAE]}]}
+  - question: Kindly tell me how many open projects are there
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many open projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: I would like to know how many open projects are there
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many open projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many number of open projects are there
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many open projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many open projects will be there
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many open projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many open project are there
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many open projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many open proejcts are there
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many open projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: Kindly tell me how many requests are there
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many requests are there?
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}}
+  - question: I would like to know how many requests are there
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many requests are there?
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}}
+  - question: How many number of requests are there
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many requests are there?
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}}
+  - question: How many requests will be there
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many requests are there?
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}}
+  - question: How many request are there
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many requests are there?
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}}
+  - question: How many reqeusts are there
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many requests are there?
+    shape: number
+    spec: {measure: {ref: 'measure:total_requests'}}
+  - question: Kindly tell me open projects by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: I would like to know open projects by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Open projects by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Open project by region
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Open proejcts by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Kindly tell me how many projects are in delivery
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects are in delivery?
+    shape: number
+    spec: {measure: {ref: 'measure:in_delivery'}}
+  - question: I would like to know how many projects are in delivery
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects are in delivery?
+    shape: number
+    spec: {measure: {ref: 'measure:in_delivery'}}
+  - question: How many number of projects are in delivery
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects are in delivery?
+    shape: number
+    spec: {measure: {ref: 'measure:in_delivery'}}
+  - question: How many projects will be in delivery
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects are in delivery?
+    shape: number
+    spec: {measure: {ref: 'measure:in_delivery'}}
+  - question: How many project are in delivery
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects are in delivery?
+    shape: number
+    spec: {measure: {ref: 'measure:in_delivery'}}
+  - question: How many proejcts are in delivery
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects are in delivery?
+    shape: number
+    spec: {measure: {ref: 'measure:in_delivery'}}
+  - question: Kindly tell me how many active projects do we have
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many active projects do we have?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: I would like to know how many active projects do we have
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many active projects do we have?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many number of active projects do we have
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many active projects do we have?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many active projects do we have going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many active projects do we have?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many active project do we have
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many active projects do we have?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many active proejcts do we have
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many active projects do we have?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: Kindly tell me how many open projects (current state Project Created, Active or On Hold) are there
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many open projects (current state Project Created, Active or On Hold) are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: I would like to know how many open projects (current state Project Created, Active or On Hold) are there
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many open projects (current state Project Created, Active or On Hold) are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many number of open projects (current state Project Created, Active or On Hold) are there
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many open projects (current state Project Created, Active or On Hold) are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many open projects (current state Project Created, Active or On Hold) will be there
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many open projects (current state Project Created, Active or On Hold) are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many open project (current state Project Created, Active or On Hold) are there
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many open projects (current state Project Created, Active or On Hold) are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: How many open proejcts (current state Project Created, Active or On Hold) are there
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many open projects (current state Project Created, Active or On Hold) are there?
+    shape: number
+    spec: {measure: {ref: 'measure:open_projects'}}
+  - question: Kindly tell me how many projects are not yet started
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects are not yet started?
+    shape: number
+    spec: {measure: {ref: 'measure:project_created'}}
+  - question: I would like to know how many projects are not yet started
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects are not yet started?
+    shape: number
+    spec: {measure: {ref: 'measure:project_created'}}
+  - question: How many number of projects are not yet started
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects are not yet started?
+    shape: number
+    spec: {measure: {ref: 'measure:project_created'}}
+  - question: How many projects will be not yet started
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects are not yet started?
+    shape: number
+    spec: {measure: {ref: 'measure:project_created'}}
+  - question: How many project are not yet started
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects are not yet started?
+    shape: number
+    spec: {measure: {ref: 'measure:project_created'}}
+  - question: How many proejcts are not yet started
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects are not yet started?
+    shape: number
+    spec: {measure: {ref: 'measure:project_created'}}
+  - question: Kindly tell me projects on hold by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Projects on hold by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: I would like to know projects on hold by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Projects on hold by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Projects on hold by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Projects on hold by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Proejcts on hold by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Projects on hold by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Kindly tell me how many projects are overdue
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: I would like to know how many projects are overdue
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: How many number of projects are overdue
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: How many projects will be overdue
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: How many project are overdue
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: How many proejcts are overdue
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_go_lives'}}
+  - question: Kindly tell me how many projects are at schedule risk
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects are at schedule risk?
+    shape: number
+    spec: {measure: {ref: 'measure:schedule_risk'}}
+  - question: I would like to know how many projects are at schedule risk
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects are at schedule risk?
+    shape: number
+    spec: {measure: {ref: 'measure:schedule_risk'}}
+  - question: How many number of projects are at schedule risk
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects are at schedule risk?
+    shape: number
+    spec: {measure: {ref: 'measure:schedule_risk'}}
+  - question: How many projects will be at schedule risk
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects are at schedule risk?
+    shape: number
+    spec: {measure: {ref: 'measure:schedule_risk'}}
+  - question: How many project are at schedule risk
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects are at schedule risk?
+    shape: number
+    spec: {measure: {ref: 'measure:schedule_risk'}}
+  - question: How many proejcts are at schedule risk
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects are at schedule risk?
+    shape: number
+    spec: {measure: {ref: 'measure:schedule_risk'}}
+  - question: Kindly tell me overdue go-lives by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Overdue go-lives by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: I would like to know overdue go-lives by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Overdue go-lives by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Overdue go-lives by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Overdue go-lives by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Ovredue go-lives by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Overdue go-lives by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Kindly tell me go-lives in the next 30 days
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Go-lives in the next 30 days
+    shape: number
+    spec: {measure: {ref: 'measure:go_lives_0_30'}}
+  - question: I would like to know go-lives in the next 30 days
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Go-lives in the next 30 days
+    shape: number
+    spec: {measure: {ref: 'measure:go_lives_0_30'}}
+  - question: Go-lives in the next 30 days going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Go-lives in the next 30 days
+    shape: number
+    spec: {measure: {ref: 'measure:go_lives_0_30'}}
+  - question: Kindly tell me go-lives in 31-60 days by portfolio
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Go-lives in 31-60 days by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:go_lives_31_60'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: I would like to know go-lives in 31-60 days by portfolio
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Go-lives in 31-60 days by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:go_lives_31_60'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Go-lives in 31-60 days by portfolio going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Go-lives in 31-60 days by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:go_lives_31_60'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Go-lives in 31-60 days by porftolio
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Go-lives in 31-60 days by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:go_lives_31_60'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Kindly tell me how many stale projects are there
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many stale projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:stale_projects'}}
+  - question: I would like to know how many stale projects are there
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many stale projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:stale_projects'}}
+  - question: How many number of stale projects are there
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many stale projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:stale_projects'}}
+  - question: How many stale projects will be there
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many stale projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:stale_projects'}}
+  - question: How many stale project are there
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many stale projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:stale_projects'}}
+  - question: How many stale proejcts are there
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many stale projects are there?
+    shape: number
+    spec: {measure: {ref: 'measure:stale_projects'}}
+  - question: Kindly tell me trend of projects by planned deployment month
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Trend of projects by planned deployment month
+    shape: trend
+    spec: {measure: {ref: 'measure:total_projects'}, time: {ref: 'dimension:planned_deployment_date', grain: month}}
+  - question: I would like to know trend of projects by planned deployment month
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Trend of projects by planned deployment month
+    shape: trend
+    spec: {measure: {ref: 'measure:total_projects'}, time: {ref: 'dimension:planned_deployment_date', grain: month}}
+  - question: Trend of projects by planned deployment month going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Trend of projects by planned deployment month
+    shape: trend
+    spec: {measure: {ref: 'measure:total_projects'}, time: {ref: 'dimension:planned_deployment_date', grain: month}}
+  - question: Trend of project by planned deployment month
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Trend of projects by planned deployment month
+    shape: trend
+    spec: {measure: {ref: 'measure:total_projects'}, time: {ref: 'dimension:planned_deployment_date', grain: month}}
+  - question: Trend of projects by planned deplyoment month
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Trend of projects by planned deployment month
+    shape: trend
+    spec: {measure: {ref: 'measure:total_projects'}, time: {ref: 'dimension:planned_deployment_date', grain: month}}
+  - question: Kindly tell me what is the approved budget for open projects
+    tags: [noise, polite]
+    held_out: true
+    noise_of: What is the approved budget for open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:approved_budget_total'}}
+  - question: I would like to know what is the approved budget for open projects
+    tags: [noise, filler]
+    held_out: true
+    noise_of: What is the approved budget for open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:approved_budget_total'}}
+  - question: What will be the approved budget for open projects
+    tags: [noise, future]
+    held_out: true
+    noise_of: What is the approved budget for open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:approved_budget_total'}}
+  - question: What is the approved budget for open project
+    tags: [noise, singular]
+    held_out: true
+    noise_of: What is the approved budget for open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:approved_budget_total'}}
+  - question: What is the apporved budget for open projects
+    tags: [noise, typo]
+    held_out: true
+    noise_of: What is the approved budget for open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:approved_budget_total'}}
+  - question: Kindly tell me forecast cost by portfolio
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Forecast cost by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: I would like to know forecast cost by portfolio
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Forecast cost by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Forecast cost by portfolio going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Forecast cost by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Forecast cost by porftolio
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Forecast cost by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Kindly tell me forecast variance by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Forecast variance by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:budget_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: I would like to know forecast variance by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Forecast variance by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:budget_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Forecast variance by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Forecast variance by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:budget_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Forceast variance by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Forecast variance by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:budget_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Kindly tell me how many projects are over budget
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects are over budget?
+    shape: number
+    spec: {measure: {ref: 'measure:over_budget'}}
+  - question: I would like to know how many projects are over budget
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects are over budget?
+    shape: number
+    spec: {measure: {ref: 'measure:over_budget'}}
+  - question: How many number of projects are over budget
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects are over budget?
+    shape: number
+    spec: {measure: {ref: 'measure:over_budget'}}
+  - question: How many projects will be over budget
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects are over budget?
+    shape: number
+    spec: {measure: {ref: 'measure:over_budget'}}
+  - question: How many project are over budget
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects are over budget?
+    shape: number
+    spec: {measure: {ref: 'measure:over_budget'}}
+  - question: How many proejcts are over budget
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects are over budget?
+    shape: number
+    spec: {measure: {ref: 'measure:over_budget'}}
+  - question: Kindly tell me open projects by priority
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Open projects by priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:priority'}]}
+  - question: I would like to know open projects by priority
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Open projects by priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:priority'}]}
+  - question: Open projects by priority going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Open projects by priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:priority'}]}
+  - question: Open project by priority
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Open projects by priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:priority'}]}
+  - question: Open proejcts by priority
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Open projects by priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:priority'}]}
+  - question: Kindly tell me projects by reported status
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Projects by reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:total_projects'}, breakdowns: [{ref: 'dimension:reported_status'}]}
+  - question: I would like to know projects by reported status
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Projects by reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:total_projects'}, breakdowns: [{ref: 'dimension:reported_status'}]}
+  - question: Projects by reported status going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Projects by reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:total_projects'}, breakdowns: [{ref: 'dimension:reported_status'}]}
+  - question: Proejcts by reported status
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Projects by reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:total_projects'}, breakdowns: [{ref: 'dimension:reported_status'}]}
+  - question: Kindly tell me top 5 regions by open projects
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Top 5 regions by open projects
+    shape: ranking
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], sort: [{by: measure, dir: desc}], limit: 5}
+  - question: I would like to know top 5 regions by open projects
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Top 5 regions by open projects
+    shape: ranking
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], sort: [{by: measure, dir: desc}], limit: 5}
+  - question: Top 5 regions by open projects going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Top 5 regions by open projects
+    shape: ranking
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], sort: [{by: measure, dir: desc}], limit: 5}
+  - question: Top 5 regions by open project
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Top 5 regions by open projects
+    shape: ranking
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], sort: [{by: measure, dir: desc}], limit: 5}
+  - question: Top 5 regions by open proejcts
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Top 5 regions by open projects
+    shape: ranking
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], sort: [{by: measure, dir: desc}], limit: 5}
+  - question: Kindly tell me open demand requests by request state
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Open demand requests by request state
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_state'}]}
+  - question: I would like to know open demand requests by request state
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Open demand requests by request state
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_state'}]}
+  - question: Open demand requests by request state going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Open demand requests by request state
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_state'}]}
+  - question: Open demand request by request state
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Open demand requests by request state
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_state'}]}
+  - question: Open demand reqeusts by request state
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Open demand requests by request state
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_state'}]}
+  - question: Kindly tell me open demand by request region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Open demand by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: I would like to know open demand by request region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Open demand by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: Open demand by request region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Open demand by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: Open demand by reuqest region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Open demand by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_demand'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: Kindly tell me how many DOU gates are overdue
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many DOU gates are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_dou'}}
+  - question: I would like to know how many DOU gates are overdue
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many DOU gates are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_dou'}}
+  - question: How many number of DOU gates are overdue
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many DOU gates are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_dou'}}
+  - question: How many DOU gates will be overdue
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many DOU gates are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_dou'}}
+  - question: How many DOU gates are ovredue
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many DOU gates are overdue?
+    shape: number
+    spec: {measure: {ref: 'measure:overdue_dou'}}
+  - question: Kindly tell me overdue DARB gates by request priority
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Overdue DARB gates by request priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_darb'}, breakdowns: [{ref: 'dimension:request_priority'}]}
+  - question: I would like to know overdue DARB gates by request priority
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Overdue DARB gates by request priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_darb'}, breakdowns: [{ref: 'dimension:request_priority'}]}
+  - question: Overdue DARB gates by request priority going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Overdue DARB gates by request priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_darb'}, breakdowns: [{ref: 'dimension:request_priority'}]}
+  - question: Overdue DARB gates by request priroity
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Overdue DARB gates by request priority
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_darb'}, breakdowns: [{ref: 'dimension:request_priority'}]}
+  - question: Kindly tell me RAG contradictions by portfolio
+    tags: [noise, polite]
+    held_out: true
+    noise_of: RAG contradictions by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:rag_contradictions'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: I would like to know RAG contradictions by portfolio
+    tags: [noise, filler]
+    held_out: true
+    noise_of: RAG contradictions by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:rag_contradictions'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: RAG contradictions by portfolio going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: RAG contradictions by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:rag_contradictions'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: RAG contraidctions by portfolio
+    tags: [noise, typo]
+    held_out: true
+    noise_of: RAG contradictions by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:rag_contradictions'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Kindly tell me how many projects have been on hold for more than 90 days
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects have been on hold for more than 90 days?
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold_over_90'}}
+  - question: I would like to know how many projects have been on hold for more than 90 days
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects have been on hold for more than 90 days?
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold_over_90'}}
+  - question: How many number of projects have been on hold for more than 90 days
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects have been on hold for more than 90 days?
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold_over_90'}}
+  - question: How many projects have been on hold for more than 90 days going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects have been on hold for more than 90 days?
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold_over_90'}}
+  - question: How many project have been on hold for more than 90 days
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects have been on hold for more than 90 days?
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold_over_90'}}
+  - question: How many proejcts have been on hold for more than 90 days
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects have been on hold for more than 90 days?
+    shape: number
+    spec: {measure: {ref: 'measure:on_hold_over_90'}}
+  - question: Kindly tell me what is the average calculated health of open projects
+    tags: [noise, polite]
+    held_out: true
+    noise_of: What is the average calculated health of open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:avg_health_score'}}
+  - question: I would like to know what is the average calculated health of open projects
+    tags: [noise, filler]
+    held_out: true
+    noise_of: What is the average calculated health of open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:avg_health_score'}}
+  - question: What will be the average calculated health of open projects
+    tags: [noise, future]
+    held_out: true
+    noise_of: What is the average calculated health of open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:avg_health_score'}}
+  - question: What is the average calculated health of open project
+    tags: [noise, singular]
+    held_out: true
+    noise_of: What is the average calculated health of open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:avg_health_score'}}
+  - question: What is the average calcluated health of open projects
+    tags: [noise, typo]
+    held_out: true
+    noise_of: What is the average calculated health of open projects?
+    shape: number
+    spec: {measure: {ref: 'measure:avg_health_score'}}
+  - question: Kindly tell me how many projects have insufficient data for calculated health
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects have insufficient data for calculated health?
+    shape: number
+    spec: {measure: {ref: 'measure:health_insufficient'}}
+  - question: I would like to know how many projects have insufficient data for calculated health
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects have insufficient data for calculated health?
+    shape: number
+    spec: {measure: {ref: 'measure:health_insufficient'}}
+  - question: How many number of projects have insufficient data for calculated health
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects have insufficient data for calculated health?
+    shape: number
+    spec: {measure: {ref: 'measure:health_insufficient'}}
+  - question: How many projects have insufficient data for calculated health going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects have insufficient data for calculated health?
+    shape: number
+    spec: {measure: {ref: 'measure:health_insufficient'}}
+  - question: How many project have insufficient data for calculated health
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects have insufficient data for calculated health?
+    shape: number
+    spec: {measure: {ref: 'measure:health_insufficient'}}
+  - question: How many projects have insufifcient data for calculated health
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects have insufficient data for calculated health?
+    shape: number
+    spec: {measure: {ref: 'measure:health_insufficient'}}
+  - question: Kindly tell me baselining compliance by CIO
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Baselining compliance by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:baselining_compliance_pct'}, breakdowns: [{ref: 'dimension:cio'}]}
+  - question: I would like to know baselining compliance by CIO
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Baselining compliance by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:baselining_compliance_pct'}, breakdowns: [{ref: 'dimension:cio'}]}
+  - question: Baselining compliance by CIO going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Baselining compliance by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:baselining_compliance_pct'}, breakdowns: [{ref: 'dimension:cio'}]}
+  - question: Baseilning compliance by CIO
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Baselining compliance by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:baselining_compliance_pct'}, breakdowns: [{ref: 'dimension:cio'}]}
+  - question: Kindly tell me what is our budget code compliance
+    tags: [noise, polite]
+    held_out: true
+    noise_of: What is our budget code compliance?
+    shape: number
+    spec: {measure: {ref: 'measure:budget_code_compliance_pct'}}
+  - question: I would like to know what is our budget code compliance
+    tags: [noise, filler]
+    held_out: true
+    noise_of: What is our budget code compliance?
+    shape: number
+    spec: {measure: {ref: 'measure:budget_code_compliance_pct'}}
+  - question: What will be our budget code compliance
+    tags: [noise, future]
+    held_out: true
+    noise_of: What is our budget code compliance?
+    shape: number
+    spec: {measure: {ref: 'measure:budget_code_compliance_pct'}}
+  - question: What is our budget code compilance
+    tags: [noise, typo]
+    held_out: true
+    noise_of: What is our budget code compliance?
+    shape: number
+    spec: {measure: {ref: 'measure:budget_code_compliance_pct'}}
+  - question: Kindly tell me PM assignment compliance by lifecycle phase
+    tags: [noise, polite]
+    held_out: true
+    noise_of: PM assignment compliance by lifecycle phase
+    shape: breakdown
+    spec: {measure: {ref: 'measure:pm_assignment_compliance_pct'}, breakdowns: [{ref: 'dimension:lifecycle_phase'}]}
+  - question: I would like to know PM assignment compliance by lifecycle phase
+    tags: [noise, filler]
+    held_out: true
+    noise_of: PM assignment compliance by lifecycle phase
+    shape: breakdown
+    spec: {measure: {ref: 'measure:pm_assignment_compliance_pct'}, breakdowns: [{ref: 'dimension:lifecycle_phase'}]}
+  - question: PM assignment compliance by lifecycle phase going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: PM assignment compliance by lifecycle phase
+    shape: breakdown
+    spec: {measure: {ref: 'measure:pm_assignment_compliance_pct'}, breakdowns: [{ref: 'dimension:lifecycle_phase'}]}
+  - question: PM assingment compliance by lifecycle phase
+    tags: [noise, typo]
+    held_out: true
+    noise_of: PM assignment compliance by lifecycle phase
+    shape: breakdown
+    spec: {measure: {ref: 'measure:pm_assignment_compliance_pct'}, breakdowns: [{ref: 'dimension:lifecycle_phase'}]}
+  - question: Kindly tell me overdue go-lives by days past planned go-live
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Overdue go-lives by days past planned go-live
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:lateness_bucket'}]}
+  - question: I would like to know overdue go-lives by days past planned go-live
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Overdue go-lives by days past planned go-live
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:lateness_bucket'}]}
+  - question: Overdue go-lives by days past planned go-live going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Overdue go-lives by days past planned go-live
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:lateness_bucket'}]}
+  - question: Ovredue go-lives by days past planned go-live
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Overdue go-lives by days past planned go-live
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, breakdowns: [{ref: 'dimension:lateness_bucket'}]}
+  - question: Kindly tell me open projects by go-live horizon
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Open projects by go-live horizon
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:go_live_horizon'}]}
+  - question: I would like to know open projects by go-live horizon
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Open projects by go-live horizon
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:go_live_horizon'}]}
+  - question: Open projects by go-live horizon going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Open projects by go-live horizon
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:go_live_horizon'}]}
+  - question: Open project by go-live horizon
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Open projects by go-live horizon
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:go_live_horizon'}]}
+  - question: Open proejcts by go-live horizon
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Open projects by go-live horizon
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:go_live_horizon'}]}
+  - question: Kindly tell me projects on hold by time on hold
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Projects on hold by time on hold
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:on_hold_aging'}]}
+  - question: I would like to know projects on hold by time on hold
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Projects on hold by time on hold
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:on_hold_aging'}]}
+  - question: Projects on hold by time on hold going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Projects on hold by time on hold
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:on_hold_aging'}]}
+  - question: Proejcts on hold by time on hold
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Projects on hold by time on hold
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:on_hold_aging'}]}
+  - question: Kindly tell me projects on hold by hold reason
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Projects on hold by hold reason
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:hold_reason'}]}
+  - question: I would like to know projects on hold by hold reason
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Projects on hold by hold reason
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:hold_reason'}]}
+  - question: Projects on hold by hold reason going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Projects on hold by hold reason
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:hold_reason'}]}
+  - question: Proejcts on hold by hold reason
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Projects on hold by hold reason
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, breakdowns: [{ref: 'dimension:hold_reason'}]}
+  - question: Kindly tell me median slip vs first baseline by portfolio
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Median slip vs first baseline by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:slip_vs_baseline_median'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: I would like to know median slip vs first baseline by portfolio
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Median slip vs first baseline by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:slip_vs_baseline_median'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Median slip vs first baseline by portfolio going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Median slip vs first baseline by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:slip_vs_baseline_median'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Median slip vs first baseline by porftolio
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Median slip vs first baseline by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:slip_vs_baseline_median'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Kindly tell me how many projects were deployed on time
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many projects were deployed on time?
+    shape: number
+    spec: {measure: {ref: 'measure:deployed_on_time'}}
+  - question: I would like to know how many projects were deployed on time
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many projects were deployed on time?
+    shape: number
+    spec: {measure: {ref: 'measure:deployed_on_time'}}
+  - question: How many number of projects were deployed on time
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many projects were deployed on time?
+    shape: number
+    spec: {measure: {ref: 'measure:deployed_on_time'}}
+  - question: How many projects were deployed on time going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many projects were deployed on time?
+    shape: number
+    spec: {measure: {ref: 'measure:deployed_on_time'}}
+  - question: How many project were deployed on time
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many projects were deployed on time?
+    shape: number
+    spec: {measure: {ref: 'measure:deployed_on_time'}}
+  - question: How many proejcts were deployed on time
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many projects were deployed on time?
+    shape: number
+    spec: {measure: {ref: 'measure:deployed_on_time'}}
+  - question: Kindly tell me projects with forecast more than 15% over budget by portfolio
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Projects with forecast more than 15% over budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_over_budget_15'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: I would like to know projects with forecast more than 15% over budget by portfolio
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Projects with forecast more than 15% over budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_over_budget_15'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Projects with forecast more than 15% over budget by portfolio going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Projects with forecast more than 15% over budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_over_budget_15'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Projects with forecast more than 15% over budget by porftolio
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Projects with forecast more than 15% over budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_over_budget_15'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Kindly tell me net forecast vs budget by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Net forecast vs budget by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:net_forecast_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: I would like to know net forecast vs budget by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Net forecast vs budget by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:net_forecast_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Net forecast vs budget by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Net forecast vs budget by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:net_forecast_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Net forceast vs budget by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Net forecast vs budget by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:net_forecast_variance'}, breakdowns: [{ref: 'dimension:region'}]}
+  - question: Kindly tell me how many requests have been on hold for more than 180 days
+    tags: [noise, polite]
+    held_out: true
+    noise_of: How many requests have been on hold for more than 180 days?
+    shape: number
+    spec: {measure: {ref: 'measure:requests_on_hold_over_180'}}
+  - question: I would like to know how many requests have been on hold for more than 180 days
+    tags: [noise, filler]
+    held_out: true
+    noise_of: How many requests have been on hold for more than 180 days?
+    shape: number
+    spec: {measure: {ref: 'measure:requests_on_hold_over_180'}}
+  - question: How many number of requests have been on hold for more than 180 days
+    tags: [noise, number_of]
+    held_out: true
+    noise_of: How many requests have been on hold for more than 180 days?
+    shape: number
+    spec: {measure: {ref: 'measure:requests_on_hold_over_180'}}
+  - question: How many requests have been on hold for more than 180 days going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: How many requests have been on hold for more than 180 days?
+    shape: number
+    spec: {measure: {ref: 'measure:requests_on_hold_over_180'}}
+  - question: How many request have been on hold for more than 180 days
+    tags: [noise, singular]
+    held_out: true
+    noise_of: How many requests have been on hold for more than 180 days?
+    shape: number
+    spec: {measure: {ref: 'measure:requests_on_hold_over_180'}}
+  - question: How many reqeusts have been on hold for more than 180 days
+    tags: [noise, typo]
+    held_out: true
+    noise_of: How many requests have been on hold for more than 180 days?
+    shape: number
+    spec: {measure: {ref: 'measure:requests_on_hold_over_180'}}
+  - question: Kindly tell me estimated cost of requests by request CIO
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Estimated cost of requests by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:estimated_cost_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: I would like to know estimated cost of requests by request CIO
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Estimated cost of requests by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:estimated_cost_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: Estimated cost of requests by request CIO going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Estimated cost of requests by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:estimated_cost_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: Estimated cost of request by request CIO
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Estimated cost of requests by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:estimated_cost_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: Estmiated cost of requests by request CIO
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Estimated cost of requests by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:estimated_cost_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: Kindly tell me conversion rate of requests by quarter raised
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Conversion rate of requests by quarter raised
+    shape: trend
+    spec: {measure: {ref: 'measure:conversion_rate'}, time: {ref: 'dimension:quarter_raised', grain: quarter}}
+  - question: I would like to know conversion rate of requests by quarter raised
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Conversion rate of requests by quarter raised
+    shape: trend
+    spec: {measure: {ref: 'measure:conversion_rate'}, time: {ref: 'dimension:quarter_raised', grain: quarter}}
+  - question: Conversion rate of requests by quarter raised going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Conversion rate of requests by quarter raised
+    shape: trend
+    spec: {measure: {ref: 'measure:conversion_rate'}, time: {ref: 'dimension:quarter_raised', grain: quarter}}
+  - question: Conversion rate of request by quarter raised
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Conversion rate of requests by quarter raised
+    shape: trend
+    spec: {measure: {ref: 'measure:conversion_rate'}, time: {ref: 'dimension:quarter_raised', grain: quarter}}
+  - question: Convresion rate of requests by quarter raised
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Conversion rate of requests by quarter raised
+    shape: trend
+    spec: {measure: {ref: 'measure:conversion_rate'}, time: {ref: 'dimension:quarter_raised', grain: quarter}}
+  - question: Kindly tell me overdue governance actions by request CIO
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Overdue governance actions by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_gates_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: I would like to know overdue governance actions by request CIO
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Overdue governance actions by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_gates_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: Overdue governance actions by request CIO going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Overdue governance actions by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_gates_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: Overdue govenrance actions by request CIO
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Overdue governance actions by request CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_gates_total'}, breakdowns: [{ref: 'dimension:request_cio'}]}
+  - question: Kindly tell me internal effort in man-days by request region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Internal effort in man-days by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:effort_internal_md'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: I would like to know internal effort in man-days by request region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Internal effort in man-days by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:effort_internal_md'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: Internal effort in man-days by request region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Internal effort in man-days by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:effort_internal_md'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: Intrenal effort in man-days by request region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Internal effort in man-days by request region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:effort_internal_md'}, breakdowns: [{ref: 'dimension:request_region'}]}
+  - question: Kindly tell me open projects by region and reported status
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Open projects by region and reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}, {ref: 'dimension:reported_status'}]}
+  - question: I would like to know open projects by region and reported status
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Open projects by region and reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}, {ref: 'dimension:reported_status'}]}
+  - question: Open projects by region and reported status going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Open projects by region and reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}, {ref: 'dimension:reported_status'}]}
+  - question: Open project by region and reported status
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Open projects by region and reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}, {ref: 'dimension:reported_status'}]}
+  - question: Open proejcts by region and reported status
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Open projects by region and reported status
+    shape: breakdown
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}, {ref: 'dimension:reported_status'}]}
+  - question: Kindly tell me what share of TCV was delivered on time
+    tags: [noise, polite]
+    held_out: true
+    noise_of: What share of TCV was delivered on time?
+    shape: number
+    spec: {measure: {ref: 'measure:north_star_on_time_tcv_pct'}}
+  - question: I would like to know what share of TCV was delivered on time
+    tags: [noise, filler]
+    held_out: true
+    noise_of: What share of TCV was delivered on time?
+    shape: number
+    spec: {measure: {ref: 'measure:north_star_on_time_tcv_pct'}}
+  - question: What share of TCV was delivered on time going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: What share of TCV was delivered on time?
+    shape: number
+    spec: {measure: {ref: 'measure:north_star_on_time_tcv_pct'}}
+  - question: What share of TCV was delviered on time
+    tags: [noise, typo]
+    held_out: true
+    noise_of: What share of TCV was delivered on time?
+    shape: number
+    spec: {measure: {ref: 'measure:north_star_on_time_tcv_pct'}}
+  - question: Kindly tell me calculated Red projects by portfolio
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Calculated Red projects by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:health_red'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: I would like to know calculated Red projects by portfolio
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Calculated Red projects by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:health_red'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Calculated Red projects by portfolio going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Calculated Red projects by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:health_red'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Calculated Red project by portfolio
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Calculated Red projects by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:health_red'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Calcluated Red projects by portfolio
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Calculated Red projects by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:health_red'}, breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Kindly tell me key priorities needing attention
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Key priorities needing attention
+    shape: number
+    spec: {measure: {ref: 'measure:key_priorities_attention'}}
+  - question: I would like to know key priorities needing attention
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Key priorities needing attention
+    shape: number
+    spec: {measure: {ref: 'measure:key_priorities_attention'}}
+  - question: Key priorities needing attention going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Key priorities needing attention
+    shape: number
+    spec: {measure: {ref: 'measure:key_priorities_attention'}}
+  - question: Key prioirties needing attention
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Key priorities needing attention
+    shape: number
+    spec: {measure: {ref: 'measure:key_priorities_attention'}}
+  - question: Kindly tell me reported status not set by delivery manager
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Reported status not set by delivery manager
+    shape: breakdown
+    spec: {measure: {ref: 'measure:status_not_set'}, breakdowns: [{ref: 'dimension:delivery_manager'}]}
+  - question: I would like to know reported status not set by delivery manager
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Reported status not set by delivery manager
+    shape: breakdown
+    spec: {measure: {ref: 'measure:status_not_set'}, breakdowns: [{ref: 'dimension:delivery_manager'}]}
+  - question: Reported status not set by delivery manager going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Reported status not set by delivery manager
+    shape: breakdown
+    spec: {measure: {ref: 'measure:status_not_set'}, breakdowns: [{ref: 'dimension:delivery_manager'}]}
+  - question: Reproted status not set by delivery manager
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Reported status not set by delivery manager
+    shape: breakdown
+    spec: {measure: {ref: 'measure:status_not_set'}, breakdowns: [{ref: 'dimension:delivery_manager'}]}
+  - question: Kindly tell me forecast cost as % of approved budget by CIO
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Forecast cost as % of approved budget by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:cio'}], derived: [{key: percent_of, op: percent_of, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: I would like to know forecast cost as % of approved budget by CIO
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Forecast cost as % of approved budget by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:cio'}], derived: [{key: percent_of, op: percent_of, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Forecast cost as % of approved budget by CIO going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Forecast cost as % of approved budget by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:cio'}], derived: [{key: percent_of, op: percent_of, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Forceast cost as % of approved budget by CIO
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Forecast cost as % of approved budget by CIO
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:cio'}], derived: [{key: percent_of, op: percent_of, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Kindly tell me forecast cost over approved budget % by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Forecast cost over approved budget % by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_change, op: percent_change, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: I would like to know forecast cost over approved budget % by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Forecast cost over approved budget % by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_change, op: percent_change, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Forecast cost over approved budget % by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Forecast cost over approved budget % by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_change, op: percent_change, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Forceast cost over approved budget % by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Forecast cost over approved budget % by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_change, op: percent_change, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Kindly tell me ratio of projects on hold to open projects by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Ratio of projects on hold to open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, extra_measures: [{ref: 'measure:open_projects'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: ratio, op: ratio, of: 'measure:on_hold', to: 'measure:open_projects'}]}
+  - question: I would like to know ratio of projects on hold to open projects by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Ratio of projects on hold to open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, extra_measures: [{ref: 'measure:open_projects'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: ratio, op: ratio, of: 'measure:on_hold', to: 'measure:open_projects'}]}
+  - question: Ratio of projects on hold to open projects by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Ratio of projects on hold to open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, extra_measures: [{ref: 'measure:open_projects'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: ratio, op: ratio, of: 'measure:on_hold', to: 'measure:open_projects'}]}
+  - question: Ratio of project on hold to open projects by region
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Ratio of projects on hold to open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, extra_measures: [{ref: 'measure:open_projects'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: ratio, op: ratio, of: 'measure:on_hold', to: 'measure:open_projects'}]}
+  - question: Ratio of proejcts on hold to open projects by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Ratio of projects on hold to open projects by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:on_hold'}, extra_measures: [{ref: 'measure:open_projects'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: ratio, op: ratio, of: 'measure:on_hold', to: 'measure:open_projects'}]}
+  - question: Kindly tell me difference between forecast cost and approved budget by programme
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Difference between forecast cost and approved budget by programme
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:programme'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: I would like to know difference between forecast cost and approved budget by programme
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Difference between forecast cost and approved budget by programme
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:programme'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Difference between forecast cost and approved budget by programme going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Difference between forecast cost and approved budget by programme
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:programme'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Diffreence between forecast cost and approved budget by programme
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Difference between forecast cost and approved budget by programme
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:programme'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Kindly tell me forecast cost minus approved budget by platform
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Forecast cost minus approved budget by platform
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:platform'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: I would like to know forecast cost minus approved budget by platform
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Forecast cost minus approved budget by platform
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:platform'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Forecast cost minus approved budget by platform going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Forecast cost minus approved budget by platform
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:platform'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Forceast cost minus approved budget by platform
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Forecast cost minus approved budget by platform
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:platform'}], derived: [{key: difference, op: difference, of: 'measure:forecast_cost_total', to: 'measure:approved_budget_total'}]}
+  - question: Kindly tell me overdue go-lives as % of in delivery by region
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Overdue go-lives as % of in delivery by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, extra_measures: [{ref: 'measure:in_delivery'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_of, op: percent_of, of: 'measure:overdue_go_lives', to: 'measure:in_delivery'}]}
+  - question: I would like to know overdue go-lives as % of in delivery by region
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Overdue go-lives as % of in delivery by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, extra_measures: [{ref: 'measure:in_delivery'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_of, op: percent_of, of: 'measure:overdue_go_lives', to: 'measure:in_delivery'}]}
+  - question: Overdue go-lives as % of in delivery by region going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Overdue go-lives as % of in delivery by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, extra_measures: [{ref: 'measure:in_delivery'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_of, op: percent_of, of: 'measure:overdue_go_lives', to: 'measure:in_delivery'}]}
+  - question: Overdue go-lives as % of in delviery by region
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Overdue go-lives as % of in delivery by region
+    shape: breakdown
+    spec: {measure: {ref: 'measure:overdue_go_lives'}, extra_measures: [{ref: 'measure:in_delivery'}], breakdowns: [{ref: 'dimension:region'}], derived: [{key: percent_of, op: percent_of, of: 'measure:overdue_go_lives', to: 'measure:in_delivery'}]}
+  - question: Kindly tell me forecast cost vs approved budget by portfolio
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Forecast cost vs approved budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: I would like to know forecast cost vs approved budget by portfolio
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Forecast cost vs approved budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Forecast cost vs approved budget by portfolio going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Forecast cost vs approved budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Forecast cost vs approved budget by porftolio
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Forecast cost vs approved budget by portfolio
+    shape: breakdown
+    spec: {measure: {ref: 'measure:forecast_cost_total'}, extra_measures: [{ref: 'measure:approved_budget_total'}], breakdowns: [{ref: 'dimension:portfolio'}]}
+  - question: Kindly tell me open projects by region as a share of total
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Open projects by region as a share of total
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], share_of_total: ['measure:open_projects']}
+  - question: I would like to know open projects by region as a share of total
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Open projects by region as a share of total
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], share_of_total: ['measure:open_projects']}
+  - question: Open projects by region as a share of total going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Open projects by region as a share of total
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], share_of_total: ['measure:open_projects']}
+  - question: Open project by region as a share of total
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Open projects by region as a share of total
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], share_of_total: ['measure:open_projects']}
+  - question: Open proejcts by region as a share of total
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Open projects by region as a share of total
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:region'}], share_of_total: ['measure:open_projects']}
+  - question: Kindly tell me share of total open projects by CIO
+    tags: [noise, polite]
+    held_out: true
+    noise_of: Share of total open projects by CIO
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:cio'}], share_of_total: ['measure:open_projects']}
+  - question: I would like to know share of total open projects by CIO
+    tags: [noise, filler]
+    held_out: true
+    noise_of: Share of total open projects by CIO
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:cio'}], share_of_total: ['measure:open_projects']}
+  - question: Share of total open projects by CIO going forward
+    tags: [noise, future]
+    held_out: true
+    noise_of: Share of total open projects by CIO
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:cio'}], share_of_total: ['measure:open_projects']}
+  - question: Share of total open project by CIO
+    tags: [noise, singular]
+    held_out: true
+    noise_of: Share of total open projects by CIO
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:cio'}], share_of_total: ['measure:open_projects']}
+  - question: Share of total open proejcts by CIO
+    tags: [noise, typo]
+    held_out: true
+    noise_of: Share of total open projects by CIO
+    shape: share
+    spec: {measure: {ref: 'measure:open_projects'}, breakdowns: [{ref: 'dimension:cio'}], share_of_total: ['measure:open_projects']}

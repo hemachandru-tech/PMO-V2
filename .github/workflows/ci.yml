@@ -1,0 +1,171 @@
+# CI from day one (US-004, REC-012). Stages follow technical_document §CI.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python — lint, types, tests, migrations
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: tela_owner
+          POSTGRES_PASSWORD: ci_owner_pw
+          POSTGRES_DB: tela
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U tela_owner -d tela" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      TELA_MIGRATE_DATABASE_URL: postgresql://tela_owner:ci_owner_pw@localhost:5432/tela
+      TELA_TEST_OWNER_DATABASE_URL: postgresql://tela_owner:ci_owner_pw@localhost:5432/tela
+      TELA_TEST_APP_DATABASE_URL: postgresql://tela_app:ci_app_pw@localhost:5432/tela
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with: { version: "0.9.7" }
+      - run: uv python install 3.13
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check .
+      - name: Types
+        run: uv run mypy packages/tela-common/src services/api/src services/llm-gateway/src services/connector-runner/src workers/src
+      - name: Provider SDKs only inside the LLM gateway (ADR-008)
+        run: |
+          if grep -rnE '^\s*(import|from)\s+(openai|anthropic|google\.genai|ollama)\b' \
+               --include='*.py' packages services/api services/connector-runner workers; then
+            echo "::error::LLM provider SDK imported outside services/llm-gateway"; exit 1
+          fi
+      - name: Application role (non-owner, no RLS bypass)
+        run: psql "$TELA_MIGRATE_DATABASE_URL" -c "CREATE ROLE tela_app LOGIN PASSWORD 'ci_app_pw' NOBYPASSRLS"
+      - name: Migrations — upgrade, downgrade one, upgrade (TEST-098 baseline)
+        run: |
+          uv run alembic upgrade head
+          uv run alembic downgrade -1
+          uv run alembic upgrade head
+      - name: Query Spec TypeScript types are current (US-017)
+        run: uv run python packages/query-spec/scripts/gen_ts.py | diff -u apps/web/src/api/querySpec.ts -
+      - name: Tests with coverage gate (includes adversarial and scope-isolation suites, US-027)
+        run: uv run pytest -q --cov --cov-report=term --cov-fail-under=80
+      - name: Dependency audit
+        run: uvx pip-audit --strict --progress-spinner off -r <(uv export --frozen --no-dev --no-hashes)
+
+  conformance:
+    # US-117 (TEST-077, TEST-078, TEST-084, TEST-085): one contract suite on live engine containers, the
+    # dialect parity of the query engine on each, and the Dataverse adapter against its fake.
+    name: Connector conformance matrix
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: conf_owner, POSTGRES_PASSWORD: conf_owner_pw }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U conf_owner" --health-interval 5s --health-timeout 3s --health-retries 20
+      mysql:
+        image: mysql:8.4.10
+        env: { MYSQL_ROOT_PASSWORD: root_pw_local }
+        ports: ["3306:3306"]
+        options: --health-cmd "mysqladmin ping -uroot -proot_pw_local --silent" --health-interval 5s --health-retries 30
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env: { ACCEPT_EULA: "Y", MSSQL_SA_PASSWORD: "Sa_pw_local_1!" }
+        ports: ["1433:1433"]
+      mongo:
+        image: mongo:7.0
+        env: { MONGO_INITDB_ROOT_USERNAME: root, MONGO_INITDB_ROOT_PASSWORD: root_pw_local }
+        ports: ["27017:27017"]
+    env:
+      TELA_TEST_POSTGRES_URL: postgresql://conf_owner:conf_owner_pw@localhost:5432
+      TELA_TEST_MYSQL_URL: mysql://root:root_pw_local@127.0.0.1:3306
+      TELA_TEST_MSSQL_URL: "mssql://sa:Sa_pw_local_1!@127.0.0.1:1433"
+      TELA_TEST_MONGO_URL: mongodb://root:root_pw_local@127.0.0.1:27017
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with: { version: "0.9.7" }
+      - run: uv python install 3.13
+      - run: uv sync --frozen
+      - name: Microsoft ODBC Driver 18
+        run: |
+          if ! odbcinst -q -d 2>/dev/null | grep -q "ODBC Driver 18"; then
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" \
+              | sudo tee /etc/apt/sources.list.d/mssql-release.list
+            sudo apt-get update && sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc
+          fi
+      - name: Wait for SQL Server
+        run: |
+          for i in $(seq 1 60); do
+            uv run python -c "import pyodbc; pyodbc.connect('Driver={ODBC Driver 18 for SQL Server};Server=127.0.0.1,1433;UID=sa;PWD={Sa_pw_local_1!};Encrypt=yes;TrustServerCertificate=yes', timeout=3)" && exit 0
+            sleep 3
+          done
+          exit 1
+      - name: Conformance, dialect parity, Excel/CSV, MongoDB and Dataverse suites
+        run: uv run pytest -q services/connector-runner/tests services/api/tests/test_dialect_parity.py
+
+  web:
+    name: Web — typecheck, lint, tests, build
+    runs-on: ubuntu-24.04
+    defaults:
+      run: { working-directory: apps/web }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: "9.15.0" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22.12", cache: pnpm, cache-dependency-path: apps/web/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm audit --prod --audit-level high
+
+  images:
+    name: Images — build, SBOM, scan
+    needs: [python, web]
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - { name: tela-api, dockerfile: deploy/docker/python.Dockerfile, target: api, service: api }
+          - { name: tela-migrate, dockerfile: deploy/docker/python.Dockerfile, target: migrate, service: api }
+          - { name: tela-llm-gateway, dockerfile: deploy/docker/python.Dockerfile, target: gateway, service: gateway }
+          - { name: tela-connector-runner, dockerfile: deploy/docker/python.Dockerfile, target: runner, service: runner }
+          - { name: tela-worker, dockerfile: deploy/docker/python.Dockerfile, target: worker, service: worker }
+          - { name: tela-web, dockerfile: apps/web/Dockerfile, target: runtime, service: "" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          build-args: SERVICE=${{ matrix.service }}
+          tags: ${{ matrix.name }}:ci
+          load: true
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+      - name: SBOM
+        uses: anchore/sbom-action@v0
+        with: { image: "${{ matrix.name }}:ci", artifact-name: "sbom-${{ matrix.name }}.spdx.json" }
+      - name: Vulnerability scan (fail on critical)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ matrix.name }}:ci
+          severity: CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+      # Multi-arch build, cosign signing and deploy jobs are added with the registry (US-121).

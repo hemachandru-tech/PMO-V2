@@ -1,0 +1,5 @@
+{
+  "oidcAuthority": "https://telaauth.prodiantela.ai/realms/tela",
+  "oidcClientId": "tela-web",
+  "apiBaseUrl": ""
+}

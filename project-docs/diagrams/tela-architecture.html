@@ -1,0 +1,794 @@
+<title>System Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column; each diagram is a wide figure that scrolls inside itself on phones. */
+:root {
+  --bg: #f3f6f7; --surface: #ffffff; --zone: #e8eef0; --fg: #14212b; --muted: #566876;
+  --line: #c3ced5; --accent: #0d6e66; --accent-soft: #d5ece9; --amber: #a85a06; --amber-soft: #f6e6d2;
+  --t1: #e4eefb; --k1: #2f63b5; --t2: #e3f3e8; --k2: #2f7d4a; --t3: #fbf0d6; --k3: #9a6a0c;
+  --t4: #ece8fa; --k4: #5b47b3; --t5: #fbe5e4; --k5: #b0413b; --t6: #e0f2e7; --k6: #2a7a52;
+  --t7: #e1ecfa; --k7: #2b5fa8; --t8: #fbeed8; --k8: #9a640f; --t9: #ebe8f8; --k9: #5d4fae;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1317; --surface: #141d22; --zone: #18232a; --fg: #e1e9ed; --muted: #92a3ae;
+  --line: #2f3e48; --accent: #3cc9b8; --accent-soft: #143633; --amber: #f0a43a; --amber-soft: #3a2a14;
+  --t1: #15233a; --k1: #7fa9ec; --t2: #142a1d; --k2: #74c08f; --t3: #2c2410; --k3: #e2b65a;
+  --t4: #211c38; --k4: #a596ec; --t5: #331a1a; --k5: #ec8f88; --t6: #13291d; --k6: #6fc495;
+  --t7: #14223a; --k7: #82aaeb; --t8: #2d2311; --k8: #e3b25e; --t9: #201c36; --k9: #a89aea;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1317; --surface: #141d22; --zone: #18232a; --fg: #e1e9ed; --muted: #92a3ae;
+  --line: #2f3e48; --accent: #3cc9b8; --accent-soft: #143633; --amber: #f0a43a; --amber-soft: #3a2a14;
+  --t1: #15233a; --k1: #7fa9ec; --t2: #142a1d; --k2: #74c08f; --t3: #2c2410; --k3: #e2b65a;
+  --t4: #211c38; --k4: #a596ec; --t5: #331a1a; --k5: #ec8f88; --t6: #13291d; --k6: #6fc495;
+  --t7: #14223a; --k7: #82aaeb; --t8: #2d2311; --k8: #e3b25e; --t9: #201c36; --k9: #a89aea;
+  color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+header { display: grid; gap: 12px; max-width: 760px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 600 clamp(32px, 5vw, 46px)/1.08 var(--display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font: 600 26px/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--body); margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 17px; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 12px/1.4 var(--mono); color: var(--muted); }
+section { display: grid; gap: 18px; }
+section > header { gap: 8px; }
+figure { margin: 0; display: grid; gap: 12px; }
+.canvas { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; }
+.canvas svg { display: block; width: 100%; min-width: 980px; height: auto; color: var(--fg); }
+.canvas.small svg { min-width: 760px; }
+figcaption { font-size: 13px; color: var(--muted); max-width: 90ch; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 32px; }
+.grid2 > * { min-width: 0; }
+ol.keys { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 8px 28px; font-size: 14px; }
+ol.keys li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: baseline; }
+ol.keys b { font: 500 12px/22px var(--mono); width: 22px; height: 22px; text-align: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+ol.keys li.sec b { background: var(--amber-soft); color: var(--amber); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); }
+th { font: 500 11px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+code, .mono { font: 13px/1.4 var(--mono); }
+.pill { display: inline-block; font: 500 11px/1 var(--mono); padding: 4px 7px; border-radius: 3px; background: var(--zone); color: var(--muted); white-space: nowrap; }
+.pill.ok { background: var(--accent-soft); color: var(--accent); }
+.pill.gap { background: var(--amber-soft); color: var(--amber); }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px 28px; }
+.rules > div { display: grid; gap: 6px; padding-top: 12px; border-top: 2px solid var(--fg); min-width: 0; }
+.rules p { font-size: 14px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+/* SVG */
+.z { fill: var(--zone); stroke: var(--line); stroke-dasharray: 5 4; }
+.zl { font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; fill: var(--muted); }
+.n { fill: var(--surface); stroke: var(--muted); stroke-width: 1; }
+.n.key { stroke: var(--accent); stroke-width: 1.6; }
+.n.ext { fill: var(--zone); stroke-dasharray: 3 3; }
+.n.llm { fill: var(--accent-soft); stroke: var(--accent); }
+.m { fill: var(--zone); stroke: none; }
+.t { font: 600 13px var(--body); fill: currentColor; }
+.tc { font: 600 13px var(--display); fill: currentColor; }
+.s { font: 11px var(--body); fill: var(--muted); }
+.sm { font: 11px var(--mono); fill: var(--muted); }
+.e { stroke: currentColor; stroke-width: 1.3; fill: none; }
+.e.sec { stroke: var(--amber); stroke-dasharray: 5 3; }
+.e.thin { stroke: var(--muted); stroke-dasharray: 2 3; }
+.ah { fill: currentColor; } .ah.sec { fill: var(--amber); } .ah.thin { fill: var(--muted); }
+.b { fill: var(--accent); } .b.sec { fill: var(--amber); }
+.bt { font: 600 10.5px var(--mono); fill: var(--surface); }
+.exit { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1; }
+.exitt { font: 11px var(--body); fill: var(--amber); }
+.tag { font: 600 9.5px var(--mono); fill: var(--accent); letter-spacing: .05em; }
+.num { font: 500 11px var(--mono); fill: var(--muted); }
+
+/* layered view */
+.canvas.layers svg { min-width: 1120px; }
+.lb, .lm { stroke-width: 1; }
+.t1 { fill: var(--t1); stroke: var(--k1); stroke-opacity: .35; } .b1 { stroke: var(--k1); } .s1 { stroke: var(--k1); } .k1 { fill: var(--k1); }
+.t2 { fill: var(--t2); stroke: var(--k2); stroke-opacity: .35; } .b2 { stroke: var(--k2); } .s2 { stroke: var(--k2); } .k2 { fill: var(--k2); }
+.t3 { fill: var(--t3); stroke: var(--k3); stroke-opacity: .35; } .b3 { stroke: var(--k3); } .s3 { stroke: var(--k3); } .k3 { fill: var(--k3); }
+.t4 { fill: var(--t4); stroke: var(--k4); stroke-opacity: .35; } .b4 { stroke: var(--k4); } .s4 { stroke: var(--k4); } .k4 { fill: var(--k4); }
+.t5 { fill: var(--t5); stroke: var(--k5); stroke-opacity: .35; } .b5 { stroke: var(--k5); } .s5 { stroke: var(--k5); } .k5 { fill: var(--k5); }
+.t6 { fill: var(--t6); stroke: var(--k6); stroke-opacity: .35; } .b6 { stroke: var(--k6); } .s6 { stroke: var(--k6); } .k6 { fill: var(--k6); }
+.t7 { fill: var(--t7); stroke: var(--k7); stroke-opacity: .35; } .b7 { stroke: var(--k7); } .s7 { stroke: var(--k7); } .k7 { fill: var(--k7); }
+.t8 { fill: var(--t8); stroke: var(--k8); stroke-opacity: .35; } .b8 { stroke: var(--k8); } .s8 { stroke: var(--k8); } .k8 { fill: var(--k8); }
+.t9 { fill: var(--t9); stroke: var(--k9); stroke-opacity: .35; } .b9 { stroke: var(--k9); } .s9 { stroke: var(--k9); } .k9 { fill: var(--k9); }
+.s0 { stroke: currentColor; }
+.c { fill: var(--surface); stroke-opacity: .45; stroke-width: 1; }
+.c.hot { stroke-opacity: 1; stroke-width: 1.8; }
+.c.ec { stroke-opacity: .7; }
+.ic { fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.grp { fill: none; stroke-dasharray: 5 4; stroke-opacity: .7; }
+.ct { font: 600 13px var(--body); fill: currentColor; }
+.cs { font: 11px var(--body); fill: var(--muted); }
+.gt { font: 600 12px var(--body); fill: currentColor; }
+.ln { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.lt { font: 600 16px var(--display); fill: currentColor; }
+.lsub { font: 10.5px var(--mono); fill: var(--muted); }
+.ext { fill: var(--zone); stroke: var(--line); }
+.exh { fill: var(--muted); }
+.eht { font: 600 16px var(--display); fill: var(--surface); }
+.ehs { font: 11px var(--body); fill: var(--surface); }
+.ez { fill: none; stroke: var(--muted); stroke-dasharray: 4 4; }
+.ezl { font: 500 10.5px var(--mono); letter-spacing: .06em; fill: var(--muted); }
+.ar { stroke: var(--muted); stroke-width: 1.3; }
+.ar.sm { stroke-width: 1.1; }
+.xc { fill: var(--zone); stroke: var(--line); }
+.xct { font: 13px var(--body); fill: currentColor; }
+.xb { font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { .canvas { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">NI · conversational PMO analytics</span>
+    <h1>System Architecture</h1>
+    <p class="lede">How the services fit together, how a question becomes a scoped read-only query, and where every trust boundary sits. Drawn from the code on <span class="mono">master</span>, not from the original proposal.</p>
+    <div class="meta"><span>As of 2026-11-03</span><span>master 16ffffe</span><span>migration head 0042</span><span>pack pmo_tpg 2.x</span></div>
+  </header>
+
+  <section>
+    <header>
+      <span class="eyebrow">View 1 · Layers</span>
+      <h2>Nine layers, three ways out</h2>
+      <p>Each band is one layer of the platform, top to bottom from the browser to the runtime. Only three services reach the external resources on the right: Keycloak to Entra ID, the connector runner to Dataverse, and the LLM gateway to Azure OpenAI or Ollama.</p>
+    </header>
+    <figure>
+      <div class="canvas layers">
+        <svg viewBox="0 0 1400 1060" role="img" aria-label="Layered architecture of NI in nine layers: user experience, edge and identity, application services, Ask and agent framework, AI and retrieval, data and storage, knowledge ingestion, deployment, observability. On the right, the external resources: Microsoft Entra ID, Dataverse on the sources network, and Azure OpenAI and Ollama on the llm-egress network.">
+<defs><marker id="la" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+<rect class="lb t1" x="10" y="20" width="180" height="96" rx="6"/>
+<rect class="lm t1" x="200" y="20" width="910" height="96" rx="6"/>
+<text class="ln k1" x="24" y="55.0">Layer 1</text>
+<text class="lt" x="24" y="74.0">User experience</text>
+<text class="lsub" x="24" y="94.0">React 18 · TypeScript · Vite</text>
+<rect class="lb t2" x="10" y="128" width="180" height="96" rx="6"/>
+<rect class="lm t2" x="200" y="128" width="910" height="96" rx="6"/>
+<text class="ln k2" x="24" y="171.0">Layer 2</text>
+<text class="lt" x="24" y="190.0">Edge and identity</text>
+<rect class="lb t3" x="10" y="236" width="180" height="96" rx="6"/>
+<rect class="lm t3" x="200" y="236" width="910" height="96" rx="6"/>
+<text class="ln k3" x="24" y="262.0">Layer 3</text>
+<text class="lt" x="24" y="281.0">Application</text>
+<text class="lt" x="24" y="299.0">services</text>
+<text class="lsub" x="24" y="319.0">pmo-api · FastAPI</text>
+<rect class="lb t4" x="10" y="344" width="180" height="140" rx="6"/>
+<rect class="lm t4" x="200" y="344" width="910" height="140" rx="6"/>
+<text class="ln k4" x="24" y="392.0">Layer 4</text>
+<text class="lt" x="24" y="411.0">Ask and agent</text>
+<text class="lt" x="24" y="429.0">framework</text>
+<text class="lsub" x="24" y="449.0">in pmo-api + runner</text>
+<rect class="lb t5" x="10" y="496" width="180" height="110" rx="6"/>
+<rect class="lm t5" x="200" y="496" width="910" height="110" rx="6"/>
+<text class="ln k5" x="24" y="538.0">Layer 5</text>
+<text class="lt" x="24" y="557.0">AI and retrieval</text>
+<text class="lsub" x="24" y="577.0">pmo-llm-gateway</text>
+<rect class="lb t6" x="10" y="618" width="180" height="90" rx="6"/>
+<rect class="lm t6" x="200" y="618" width="910" height="90" rx="6"/>
+<text class="ln k6" x="24" y="649.0">Layer 6</text>
+<text class="lt" x="24" y="668.0">Data, knowledge</text>
+<text class="lt" x="24" y="686.0">and storage</text>
+<rect class="lb t7" x="10" y="720" width="180" height="90" rx="6"/>
+<rect class="lm t7" x="200" y="720" width="910" height="90" rx="6"/>
+<text class="ln k7" x="24" y="743.0">Layer 7</text>
+<text class="lt" x="24" y="762.0">Knowledge ingestion</text>
+<text class="lt" x="24" y="780.0">and processing</text>
+<text class="lsub" x="24" y="800.0">pmo-worker · Celery</text>
+<rect class="lb t8" x="10" y="822" width="180" height="84" rx="6"/>
+<rect class="lm t8" x="200" y="822" width="910" height="84" rx="6"/>
+<text class="ln k8" x="24" y="850.0">Layer 8</text>
+<text class="lt" x="24" y="869.0">Deployment and</text>
+<text class="lt" x="24" y="887.0">runtime</text>
+<rect class="lb t9" x="10" y="918" width="180" height="70" rx="6"/>
+<rect class="lm t9" x="200" y="918" width="910" height="70" rx="6"/>
+<text class="ln k9" x="24" y="948.0">Layer 9</text>
+<text class="lt" x="24" y="967.0">Observability</text>
+<rect class="c b1" x="214" y="32" width="190" height="72" rx="6"/>
+<g class="ic s1" transform="translate(226,55.0) scale(1.083)"><path d="M4 5h16v10H9l-5 4z"/></g>
+<text class="ct" x="260" y="58.5">Ask</text>
+<text class="cs" x="260" y="75.5">plain-English questions</text>
+<text class="cs" x="260" y="89.5">answers, charts, clarify</text>
+<rect class="c b1" x="416" y="32" width="190" height="72" rx="6"/>
+<g class="ic s1" transform="translate(428,55.0) scale(1.083)"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="5"/><rect x="13" y="10" width="8" height="11"/><rect x="3" y="13" width="8" height="8"/></g>
+<text class="ct" x="462" y="58.5">Dashboards and reports</text>
+<text class="cs" x="462" y="75.5">12-column canvas, tabs</text>
+<text class="cs" x="462" y="89.5">publish to roles</text>
+<rect class="c b1" x="618" y="32" width="190" height="72" rx="6"/>
+<g class="ic s1" transform="translate(630,55.0) scale(1.083)"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2L19 19M5 19l2.8-2.8M16.2 7.8L19 5"/></g>
+<text class="ct" x="664" y="58.5">Admin</text>
+<text class="cs" x="664" y="75.5">connections, data models</text>
+<text class="cs" x="664" y="89.5">certification, packs</text>
+<rect class="c b1" x="820" y="32" width="190" height="72" rx="6"/>
+<g class="ic s1" transform="translate(832,55.0) scale(1.083)"><path d="M3 5c3-1 6-1 9 1v14c-3-2-6-2-9-1zM21 5c-3-1-6-1-9 1v14c3-2 6-2 9-1z"/></g>
+<text class="ct" x="866" y="58.5">Knowledge</text>
+<text class="cs" x="866" y="75.5">curation queue, gold set</text>
+<text class="cs" x="866" y="89.5">glossary, documents</text>
+<g class="ic s1" transform="translate(1036,36) scale(1.250)"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6"/><circle cx="17" cy="7" r="2.5"/><path d="M17 12c3 0 5 2 5 5"/></g>
+<text class="cs" x="1024" y="84">PMO staff,</text>
+<text class="cs" x="1024" y="98">admins, viewers</text>
+<rect class="c b2" x="214" y="136" width="250" height="80" rx="6"/>
+<g class="ic s2" transform="translate(226,161.0) scale(1.250)"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.5 12H13M13 12l4-6M13 12l4 6"/></g>
+<text class="ct" x="264" y="166.5">nginx proxy</text>
+<text class="cs" x="264" y="183.5">/  /api  /auth routing</text>
+<text class="cs" x="264" y="197.5">only published port :8088</text>
+<rect class="c b2" x="500" y="136" width="270" height="80" rx="6"/>
+<g class="ic s2" transform="translate(512,161.0) scale(1.250)"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></g>
+<text class="ct" x="550" y="166.5">Keycloak 26</text>
+<text class="cs" x="550" y="183.5">OIDC + PKCE, realm per env</text>
+<text class="cs" x="550" y="197.5">brokers Entra ID sign-in</text>
+<rect class="c b2" x="806" y="136" width="290" height="80" rx="6"/>
+<g class="ic s2" transform="translate(818,161.0) scale(1.250)"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></g>
+<text class="ct" x="856" y="159.5">API auth functions</text>
+<text class="cs" x="856" y="176.5">JWT check against JWKS</text>
+<text class="cs" x="856" y="190.5">roles → permission keys</text>
+<text class="cs" x="856" y="204.5">scope + field policies, tenant RLS</text>
+<line class="ar" x1="464" y1="176" x2="498" y2="176" marker-end="url(#la)"/>
+<line class="ar" x1="770" y1="176" x2="804" y2="176" marker-end="url(#la)"/>
+<rect class="c b3" x="214" y="248" width="168" height="72" rx="6"/>
+<g class="ic s3" transform="translate(226,272.0) scale(1.000)"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></g>
+<text class="ct" x="258" y="274.5">Connections</text>
+<text class="cs" x="258" y="291.5">introspection, SSH</text>
+<text class="cs" x="258" y="305.5">tunnels, key library</text>
+<rect class="c b3" x="392" y="248" width="168" height="72" rx="6"/>
+<g class="ic s3" transform="translate(404,272.0) scale(1.000)"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 12l3 3 6-6"/></g>
+<text class="ct" x="436" y="274.5">Data models</text>
+<text class="cs" x="436" y="291.5">versions, certification</text>
+<text class="cs" x="436" y="305.5">publish, restore</text>
+<rect class="c b3" x="570" y="248" width="168" height="72" rx="6"/>
+<g class="ic s3" transform="translate(582,272.0) scale(1.000)"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="5"/><rect x="13" y="10" width="8" height="11"/><rect x="3" y="13" width="8" height="8"/></g>
+<text class="ct" x="614" y="274.5">Content</text>
+<text class="cs" x="614" y="291.5">widgets, reports,</text>
+<text class="cs" x="614" y="305.5">dashboards, exports</text>
+<rect class="c b3" x="748" y="248" width="168" height="72" rx="6"/>
+<g class="ic s3" transform="translate(760,272.0) scale(1.000)"><path d="M3 5c3-1 6-1 9 1v14c-3-2-6-2-9-1zM21 5c-3-1-6-1-9 1v14c3-2 6-2 9-1z"/></g>
+<text class="ct" x="792" y="274.5">Knowledge</text>
+<text class="cs" x="792" y="291.5">corpus, gold, curation</text>
+<text class="cs" x="792" y="305.5">value index</text>
+<rect class="c b3" x="926" y="248" width="168" height="72" rx="6"/>
+<g class="ic s3" transform="translate(938,272.0) scale(1.000)"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h6M13 14h4"/></g>
+<text class="ct" x="970" y="274.5">Identity and audit</text>
+<text class="cs" x="970" y="291.5">SCIM, groups, roles</text>
+<text class="cs" x="970" y="305.5">audit log, outbox</text>
+<rect class="c b4" x="300" y="354" width="710" height="44" rx="6"/>
+<g class="ic s4" transform="translate(312,363.0) scale(1.083)"><circle cx="12" cy="4" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 6.5v3M10 13.5l-3.5 4M14 13.5l3.5 4"/></g>
+<text class="ct" x="346" y="373.5">Ask orchestrator</text>
+<text class="cs" x="346" y="390.5">routes each turn · rules first, LLM second · streams steps over SSE</text>
+<rect class="c b4" x="214" y="408" width="168" height="66" rx="6"/>
+<g class="ic s4" transform="translate(226,429.0) scale(1.000)"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6 7-6s7 2 7 6"/><circle cx="17" cy="7" r="2.5"/><path d="M17 12c3 0 5 2 5 5"/></g>
+<text class="ct" x="258" y="431.5">Agents AG-01 – 10</text>
+<text class="cs" x="258" y="448.5">router, clarifier, planner,</text>
+<text class="cs" x="258" y="462.5">narrator, visual advisor</text>
+<rect class="c b4" x="392" y="408" width="168" height="66" rx="6"/>
+<g class="ic s4" transform="translate(404,429.0) scale(1.000)"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></g>
+<text class="ct" x="436" y="431.5">Query engine</text>
+<text class="cs" x="436" y="448.5">validate, compile dialect,</text>
+<text class="cs" x="436" y="462.5">inject row scope, sign</text>
+<rect class="c b4" x="570" y="408" width="168" height="66" rx="6"/>
+<g class="ic s4" transform="translate(582,429.0) scale(1.000)"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></g>
+<text class="ct" x="614" y="431.5">Policy and scope</text>
+<text class="cs" x="614" y="448.5">permission keys, row</text>
+<text class="cs" x="614" y="462.5">scope, field masking</text>
+<rect class="c b4" x="748" y="408" width="168" height="66" rx="6"/>
+<g class="ic s4" transform="translate(760,429.0) scale(1.000)"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h8"/></g>
+<text class="ct" x="792" y="431.5">Evidence and audit</text>
+<text class="cs" x="792" y="448.5">confidence, citations,</text>
+<text class="cs" x="792" y="462.5">append-only audit</text>
+<rect class="c hot b4" x="926" y="408" width="168" height="66" rx="6"/>
+<g class="ic s4" transform="translate(938,429.0) scale(1.000)"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></g>
+<text class="ct" x="970" y="431.5">Connector runner</text>
+<text class="cs" x="970" y="448.5">read-only guards,</text>
+<text class="cs" x="970" y="462.5">only source egress</text>
+<rect class="c b5" x="214" y="508" width="210" height="86" rx="6"/>
+<g class="ic s5" transform="translate(226,538.0) scale(1.083)"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></g>
+<text class="ct" x="260" y="534.5">Hybrid retrieval</text>
+<text class="cs" x="260" y="551.5">pgvector HNSW + full text</text>
+<text class="cs" x="260" y="565.5">value index, gold examples</text>
+<text class="cs" x="260" y="579.5">approved items only</text>
+<rect class="c b5" x="434" y="508" width="190" height="86" rx="6"/>
+<g class="ic s5" transform="translate(446,538.0) scale(1.083)"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></g>
+<text class="ct" x="480" y="534.5">Embeddings</text>
+<text class="cs" x="480" y="551.5">1024 dimensions</text>
+<text class="cs" x="480" y="565.5">knowledge, values,</text>
+<text class="cs" x="480" y="579.5">semantic linking</text>
+<rect class="grp b5" x="636" y="504" width="460" height="94" rx="6"/>
+<text class="gt" x="650" y="524">LLM gateway · routing and policy</text>
+<rect class="c b5" x="650" y="534" width="210" height="56" rx="6"/>
+<g class="ic s5" transform="translate(662,551.0) scale(0.917)"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></g>
+<text class="ct" x="692" y="559.5">Policy</text>
+<text class="cs" x="692" y="576.5">allow-list, leak scan, masking</text>
+<rect class="c hot b5" x="872" y="534" width="210" height="56" rx="6"/>
+<g class="ic s5" transform="translate(884,551.0) scale(0.917)"><ellipse cx="12" cy="7" rx="8" ry="3.5"/><path d="M4 7v5c0 2 3.6 3.5 8 3.5s8-1.5 8-3.5V7M4 12v5c0 2 3.6 3.5 8 3.5s8-1.5 8-3.5v-5"/></g>
+<text class="ct" x="914" y="559.5">Usage ledger</text>
+<text class="cs" x="914" y="576.5">tokens and cost per call</text>
+<rect class="c b6" x="214" y="628" width="168" height="70" rx="6"/>
+<g class="ic s6" transform="translate(226,650.0) scale(1.083)"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text class="ct" x="260" y="653.5">PostgreSQL 16</text>
+<text class="cs" x="260" y="670.5">metadata, data models</text>
+<text class="cs" x="260" y="684.5">RLS by tenant</text>
+<rect class="c b6" x="392" y="628" width="168" height="70" rx="6"/>
+<g class="ic s6" transform="translate(404,650.0) scale(1.083)"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></g>
+<text class="ct" x="438" y="653.5">pgvector</text>
+<text class="cs" x="438" y="670.5">embeddings</text>
+<text class="cs" x="438" y="684.5">HNSW cosine index</text>
+<rect class="c b6" x="570" y="628" width="168" height="70" rx="6"/>
+<g class="ic s6" transform="translate(582,650.0) scale(1.083)"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></g>
+<text class="ct" x="616" y="653.5">Redis 7.4</text>
+<text class="cs" x="616" y="670.5">Celery broker</text>
+<text class="cs" x="616" y="684.5">scope-keyed cache</text>
+<rect class="c b6" x="748" y="628" width="168" height="70" rx="6"/>
+<g class="ic s6" transform="translate(760,650.0) scale(1.083)"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></g>
+<text class="ct" x="794" y="653.5">OpenBao 2.1</text>
+<text class="cs" x="794" y="670.5">source credentials,</text>
+<text class="cs" x="794" y="684.5">LLM and SSH keys</text>
+<rect class="c b6" x="926" y="628" width="168" height="70" rx="6"/>
+<g class="ic s6" transform="translate(938,650.0) scale(1.083)"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></g>
+<text class="ct" x="972" y="653.5">SeaweedFS · S3</text>
+<text class="cs" x="972" y="670.5">exports, uploads,</text>
+<text class="cs" x="972" y="684.5">knowledge files</text>
+<rect class="c b7" x="214" y="732" width="132" height="66" rx="6"/>
+<g class="ic s7" transform="translate(226,754.0) scale(0.917)"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></g>
+<text class="ct" x="256" y="762.5">Introspect</text>
+<text class="cs" x="256" y="779.5">catalogue only</text>
+<line class="ar" x1="347" y1="765" x2="363" y2="765" marker-end="url(#la)"/>
+<rect class="c b7" x="364" y="732" width="132" height="66" rx="6"/>
+<g class="ic s7" transform="translate(376,754.0) scale(0.917)"><path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.5"/></g>
+<text class="ct" x="406" y="762.5">Map pack</text>
+<text class="cs" x="406" y="779.5">fields and values</text>
+<line class="ar" x1="497" y1="765" x2="513" y2="765" marker-end="url(#la)"/>
+<rect class="c b7" x="514" y="732" width="132" height="66" rx="6"/>
+<g class="ic s7" transform="translate(526,754.0) scale(0.917)"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1.3"/><circle cx="4.5" cy="12" r="1.3"/><circle cx="4.5" cy="18" r="1.3"/></g>
+<text class="ct" x="556" y="762.5">Profile values</text>
+<text class="cs" x="556" y="779.5">value index</text>
+<line class="ar" x1="647" y1="765" x2="663" y2="765" marker-end="url(#la)"/>
+<rect class="c b7" x="664" y="732" width="132" height="66" rx="6"/>
+<g class="ic s7" transform="translate(676,754.0) scale(0.917)"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7.5 12l3 3 6-6"/></g>
+<text class="ct" x="706" y="762.5">Review</text>
+<text class="cs" x="706" y="779.5">pending → approved</text>
+<line class="ar" x1="797" y1="765" x2="813" y2="765" marker-end="url(#la)"/>
+<rect class="c b7" x="814" y="732" width="132" height="66" rx="6"/>
+<g class="ic s7" transform="translate(826,754.0) scale(0.917)"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></g>
+<text class="ct" x="856" y="762.5">Embed</text>
+<text class="cs" x="856" y="779.5">1024 dimensions</text>
+<line class="ar" x1="947" y1="765" x2="963" y2="765" marker-end="url(#la)"/>
+<rect class="c b7" x="964" y="732" width="132" height="66" rx="6"/>
+<g class="ic s7" transform="translate(976,754.0) scale(0.917)"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text class="ct" x="1006" y="762.5">Index</text>
+<text class="cs" x="1006" y="779.5">pgvector + FTS</text>
+<rect class="c b8" x="214" y="832" width="204" height="64" rx="6"/>
+<g class="ic s8" transform="translate(226,851.0) scale(1.083)"><rect x="2" y="9" width="20" height="9" rx="1.5"/><path d="M6 9v9M10 9v9M14 9v9M18 9v9M5 5h5v4H5zM11 5h5v4h-5z"/></g>
+<text class="ct" x="260" y="854.5">pmo-* images</text>
+<text class="cs" x="260" y="871.5">one release tag</text>
+<text class="cs" x="260" y="885.5">non-root, health checks</text>
+<line class="ar" x1="419" y1="864" x2="438" y2="864" marker-end="url(#la)"/>
+<rect class="c b8" x="440" y="832" width="204" height="64" rx="6"/>
+<g class="ic s8" transform="translate(452,851.0) scale(1.083)"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h8"/></g>
+<text class="ct" x="486" y="854.5">Docker Compose</text>
+<text class="cs" x="486" y="871.5">core · dev · ai-local</text>
+<text class="cs" x="486" y="885.5">· observability profiles</text>
+<line class="ar" x1="645" y1="864" x2="664" y2="864" marker-end="url(#la)"/>
+<rect class="c b8" x="666" y="832" width="204" height="64" rx="6"/>
+<g class="ic s8" transform="translate(678,851.0) scale(1.083)"><rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01"/></g>
+<text class="ct" x="712" y="854.5">Azure VMs · option A</text>
+<text class="cs" x="712" y="871.5">App Gateway WAF,</text>
+<text class="cs" x="712" y="885.5">NAT egress, PG Flexible</text>
+<!-- <line class="ar" x1="871" y1="864" x2="890" y2="864" marker-end="url(#la)"/> -->
+<!-- <rect class="c b8" x="892" y="832" width="204" height="64" rx="6"/>
+<g class="ic s8" transform="translate(904,851.0) scale(1.083)"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3v6.5M12 14.5V21M3 12h6.5M14.5 12H21M5.6 5.6l4.6 4.6M13.8 13.8l4.6 4.6M5.6 18.4l4.6-4.6M13.8 10.2l4.6-4.6"/></g>
+<text class="ct" x="938" y="854.5">AKS + Helm · option B</text>
+<text class="cs" x="938" y="871.5">same images</text>
+<text class="cs" x="938" y="885.5">Helm chart US-121</text> -->
+<!-- <rect class="c b9" x="214" y="928" width="138" height="50" rx="6"/> -->
+<!-- <g class="ic s9" transform="translate(226,942.0) scale(0.917)"><path d="M2 12h5l2-6 4 12 2-6h7"/></g>
+<text class="ct" x="256" y="950.5">OpenTelemetry</text>
+<text class="cs" x="256" y="967.5">collector, OTLP</text> -->
+<!-- <rect class="c b9" x="362" y="928" width="138" height="50" rx="6"/>
+<g class="ic s9" transform="translate(374,942.0) scale(0.917)"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></g>
+<text class="ct" x="404" y="950.5">Metrics</text>
+<text class="cs" x="404" y="967.5">Prometheus</text>
+<rect class="c b9" x="510" y="928" width="138" height="50" rx="6"/>
+<g class="ic s9" transform="translate(522,942.0) scale(0.917)"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7.3 11l9.4-5M7.3 13l9.4 5"/></g>
+<text class="ct" x="552" y="950.5">Traces</text>
+<text class="cs" x="552" y="967.5">Tempo</text>
+<rect class="c b9" x="658" y="928" width="138" height="50" rx="6"/>
+<g class="ic s9" transform="translate(670,942.0) scale(0.917)"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h8"/></g>
+<text class="ct" x="700" y="950.5">Logs</text>
+<text class="cs" x="700" y="967.5">Loki</text> -->
+<rect class="c b9" x="806" y="928" width="138" height="50" rx="6"/>
+<g class="ic s9" transform="translate(818,942.0) scale(0.917)"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></g>
+<text class="ct" x="848" y="950.5">Dashboards</text>
+<text class="cs" x="848" y="967.5">Grafana :3000</text>
+<rect class="c b9" x="954" y="928" width="138" height="50" rx="6"/>
+<g class="ic s9" transform="translate(966,942.0) scale(0.917)"><ellipse cx="12" cy="7" rx="8" ry="3.5"/><path d="M4 7v5c0 2 3.6 3.5 8 3.5s8-1.5 8-3.5V7M4 12v5c0 2 3.6 3.5 8 3.5s8-1.5 8-3.5v-5"/></g>
+<text class="ct" x="996" y="950.5">LLM usage</text>
+<text class="cs" x="996" y="967.5">tokens, cost</text>
+<line class="ar sm" x1="310" y1="116" x2="310" y2="128" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="720" y1="116" x2="720" y2="128" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="950" y1="216" x2="950" y2="236" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="630" y1="324" x2="630" y2="344" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="655" y1="398" x2="655" y2="408" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="480" y1="484" x2="480" y2="496" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="850" y1="484" x2="850" y2="496" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="530" y1="606" x2="530" y2="618" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="720" y1="606" x2="720" y2="618" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="300" y1="708" x2="300" y2="720" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="1030" y1="708" x2="1030" y2="720" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="650" y1="810" x2="650" y2="822" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar sm" x1="650" y1="906" x2="650" y2="918" marker-end="url(#la)" marker-start="url(#la)"/>
+<rect class="ext" x="1130" y="20" width="260" height="968" rx="6"/>
+<rect class="exh" x="1130" y="20" width="260" height="66" rx="6"/>
+<text class="eht" x="1260.0" y="46" text-anchor="middle">External resources</text>
+<text class="ehs" x="1260.0" y="66" text-anchor="middle">reached only by Keycloak, runner, gateway</text>
+<rect class="c ec b2" x="1144" y="140" width="232" height="72" rx="6"/>
+<g class="ic s2" transform="translate(1156,162.0) scale(1.167)"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2.5"/><path d="M13 10h6M13 14h4"/></g>
+<text class="ct" x="1192" y="166.5">Microsoft Entra ID</text>
+<text class="cs" x="1192" y="183.5">corporate sign-in,</text>
+<text class="cs" x="1192" y="197.5">groups via SCIM</text>
+<line class="ar" x1="1110" y1="176" x2="1142" y2="176" marker-end="url(#la)" marker-start="url(#la)"/>
+<rect class="ez" x="1144" y="352" width="232" height="128" rx="6"/>
+<text class="ezl" x="1156" y="372">SOURCES NETWORK</text>
+<rect class="c ec b4" x="1156" y="384" width="208" height="82" rx="6"/>
+<g class="ic s4" transform="translate(1168,411.0) scale(1.167)"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g>
+<text class="ct" x="1204" y="408.5">Dataverse</text>
+<text class="cs" x="1204" y="425.5">TDS endpoint (SQL, 1433)</text>
+<text class="cs" x="1204" y="439.5">Web API fallback</text>
+<text class="cs" x="1204" y="453.5">read-only identity</text>
+<line class="ar" x1="1094" y1="441" x2="1154" y2="441" marker-end="url(#la)" marker-start="url(#la)"/>
+<rect class="ez" x="1144" y="494" width="232" height="210" rx="6"/>
+<text class="ezl" x="1156" y="514">LLM-EGRESS NETWORK</text>
+<rect class="c ec b5" x="1156" y="526" width="208" height="82" rx="6"/>
+<g class="ic s5" transform="translate(1168,553.0) scale(1.167)"><path d="M7 19a5 5 0 0 1-.6-10A6 6 0 0 1 18 8.5 4.5 4.5 0 0 1 17.5 19z"/></g>
+<text class="ct" x="1204" y="550.5">Azure OpenAI</text>
+<text class="cs" x="1204" y="567.5">AI Foundry deployments</text>
+<text class="cs" x="1204" y="581.5">GPT-4.1 · GPT-4.1-mini</text>
+<text class="cs" x="1204" y="595.5">text-embedding-3-large</text>
+<rect class="c ec b5" x="1156" y="616" width="208" height="78" rx="6"/>
+<g class="ic s5" transform="translate(1168,641.0) scale(1.167)"><rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></g>
+<text class="ct" x="1204" y="638.5">Ollama</text>
+<text class="cs" x="1204" y="655.5">local models on the host</text>
+<text class="cs" x="1204" y="669.5">qwen3:8b planner (dev)</text>
+<text class="cs" x="1204" y="683.5">embeddings</text>
+<line class="ar" x1="1096" y1="560" x2="1154" y2="567" marker-end="url(#la)" marker-start="url(#la)"/>
+<line class="ar" x1="1096" y1="580" x2="1154" y2="650" marker-end="url(#la)" marker-start="url(#la)"/>
+<rect class="c ec b8" x="1144" y="832" width="232" height="64" rx="6"/>
+<g class="ic s8" transform="translate(1156,851.0) scale(1.083)"><path d="M7 19a5 5 0 0 1-.6-10A6 6 0 0 1 18 8.5 4.5 4.5 0 0 1 17.5 19z"/></g>
+<text class="ct" x="1190" y="854.5">Azure platform</text>
+<text class="cs" x="1190" y="871.5">PG Flexible, Redis, Key Vault,</text>
+<text class="cs" x="1190" y="885.5">App Gateway, NAT, ACR</text>
+<rect class="c ec b9" x="1144" y="924" width="232" height="54" rx="6"/>
+<g class="ic s9" transform="translate(1156,939.0) scale(1.000)"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></g>
+<text class="ct" x="1188" y="948.5">Azure Monitor</text>
+<text class="cs" x="1188" y="965.5">Log Analytics, App Insights</text>
+<rect class="xc" x="10" y="1002" width="1380" height="46" rx="6"/>
+<g class="ic s0" transform="translate(36,1013) scale(1.000)"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/></g>
+<text class="xct" x="72" y="1030"><tspan class="xb">Cross-cutting:</tspan> Read-only sources  |  Row scope  |  Field masking  |  Tenant isolation (RLS)  |  Certification before publish  |  No raw rows to the LLM  |  Secrets in OpenBao  |  Audit</text>
+</svg>
+      </div>
+      <figcaption>Cards with a heavier outline are the two egress points inside the stack (connector runner, usage ledger on the gateway). Dataverse is the only source connected today; Ollama runs on the host and is reached at <span class="mono">host.docker.internal:11434</span> by default.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">View 2 · Containers and networks</span>
+      <h2>Two containers reach outside, and only one of them holds source credentials</h2>
+      <p>The proxy is the only published port. The connector runner is the only container on the <span class="mono">sources</span> network, and the LLM gateway is the only one on <span class="mono">llm-egress</span>. Everything else lives on the internal <span class="mono">app</span> network.</p>
+    </header>
+    <figure>
+      <div class="canvas">
+        <svg viewBox="0 0 1200 830" role="img" aria-label="Container diagram: browser reaches an nginx proxy, which routes to the web app, Keycloak and the FastAPI service. The API sends scoped queries to the connector runner, which alone connects to client sources, and LLM requests to the gateway, which alone reaches LLM providers. Postgres with pgvector, Redis, OpenBao, SeaweedFS and a Celery worker sit on the internal app network.">
+          <defs>
+            <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah sec" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="ah thin" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+
+          <!-- zones -->
+          <rect class="z" x="190" y="40" width="200" height="400" rx="6"/><text class="zl" x="204" y="60">edge network</text>
+          <rect class="z" x="410" y="40" width="530" height="770" rx="6"/><text class="zl" x="424" y="60">app network · internal</text>
+          <rect class="z" x="960" y="40" width="220" height="200" rx="6"/><text class="zl" x="974" y="60">sources network</text>
+          <rect class="z" x="960" y="316" width="220" height="190" rx="6"/><text class="zl" x="974" y="336">llm-egress network</text>
+
+          <!-- outside -->
+          <rect class="n ext" x="20" y="194" width="140" height="56" rx="4"/><text class="t" x="32" y="217">Browser</text><text class="s" x="32" y="235">PMO staff, admins</text>
+          <rect class="n ext" x="20" y="334" width="140" height="56" rx="4"/><text class="t" x="32" y="357">Microsoft Entra ID</text><text class="s" x="32" y="375">corporate sign-in</text>
+
+          <!-- edge -->
+          <rect class="n" x="210" y="80" width="160" height="58" rx="4"/><text class="t" x="222" y="103">web</text><text class="s" x="222" y="121">React SPA on nginx</text>
+          <rect class="n key" x="210" y="190" width="160" height="64" rx="4"/><text class="t" x="222" y="213">proxy · nginx 1.27</text><text class="s" x="222" y="231">only host port :8088</text><text class="s" x="222" y="245">TLS at App Gateway on Azure</text>
+          <rect class="n" x="210" y="330" width="160" height="64" rx="4"/><text class="t" x="222" y="353">Keycloak 26</text><text class="s" x="222" y="371">OIDC + PKCE broker</text><text class="s" x="222" y="385">realm per environment</text>
+
+          <!-- API -->
+          <rect class="n key" x="430" y="70" width="300" height="330" rx="4"/>
+          <text class="t" x="444" y="94">api · FastAPI modular monolith</text><text class="sm" x="444" y="112">pmo-api :8000 · SSE for Ask turns</text>
+          <rect class="m" x="444" y="126" width="272" height="40" rx="3"/><text class="t" x="454" y="143">ask</text><text class="s" x="454" y="158">orchestrator, rewrite, planner, clarify, narrator</text>
+          <rect class="m" x="444" y="170" width="272" height="40" rx="3"/><text class="t" x="454" y="187">query</text><text class="s" x="454" y="202">validator, compilers, scope injector, cache</text>
+          <rect class="m" x="444" y="214" width="272" height="40" rx="3"/><text class="t" x="454" y="231">knowledge</text><text class="s" x="454" y="246">hybrid retrieval, value index, gold, curation</text>
+          <rect class="m" x="444" y="258" width="272" height="40" rx="3"/><text class="t" x="454" y="275">model · governance</text><text class="s" x="454" y="290">data model versions, certification, publish</text>
+          <rect class="m" x="444" y="302" width="272" height="40" rx="3"/><text class="t" x="454" y="319">connections · packs · content</text><text class="s" x="454" y="334">introspection, pack mapping, reports, dashboards</text>
+          <rect class="m" x="444" y="346" width="272" height="40" rx="3"/><text class="t" x="454" y="363">identity · audit · outbox</text><text class="s" x="454" y="378">roles, scope and field policies, SCIM, events</text>
+
+          <!-- runner / gateway -->
+          <rect class="n key" x="775" y="70" width="150" height="130" rx="4"/>
+          <text class="t" x="787" y="94">connector-runner</text><text class="sm" x="787" y="112">:8100 · only DB egress</text>
+          <text class="s" x="787" y="134">verifies signed request</text><text class="s" x="787" y="150">SQL / Mongo / Web API</text><text class="s" x="787" y="164">read-only guards</text><text class="s" x="787" y="180">SSH tunnels, key library</text>
+
+          <rect class="n key" x="775" y="300" width="150" height="130" rx="4"/>
+          <text class="t" x="787" y="324">llm-gateway</text><text class="sm" x="787" y="342">:8200 · only LLM egress</text>
+          <text class="s" x="787" y="364">provider allow-list</text><text class="s" x="787" y="380">leak scan, masking</text><text class="s" x="787" y="394">usage ledger (tokens, cost)</text><text class="s" x="787" y="410">no raw rows by default</text>
+
+          <rect class="n" x="775" y="470" width="150" height="60" rx="4"/><text class="t" x="787" y="492">TEI reranker</text><text class="s" x="787" y="508">wired, off by default</text><text class="s" x="787" y="521">(US-197)</text>
+          <text class="sm" x="775" y="548">profile: ai-local</text>
+
+          <!-- data -->
+          <rect class="n" x="430" y="430" width="140" height="65" rx="4"/><text class="t" x="442" y="452">PostgreSQL 16</text><text class="s" x="442" y="469">+ pgvector · tenant RLS</text><text class="s" x="442" y="483">metadata, embeddings</text>
+          <rect class="n" x="590" y="430" width="140" height="65" rx="4"/><text class="t" x="602" y="452">Redis 7.4</text><text class="s" x="602" y="469">Celery broker</text><text class="s" x="602" y="483">scope-keyed result cache</text>
+          <rect class="n" x="430" y="525" width="140" height="65" rx="4"/><text class="t" x="442" y="547">worker + beat</text><text class="s" x="442" y="564">Celery: exports, indexing,</text><text class="s" x="442" y="578">outbox, maintenance</text>
+          <rect class="n" x="590" y="525" width="140" height="65" rx="4" style="stroke: var(--amber)"/><text class="t" x="602" y="547">OpenBao 2.1</text><text class="s" x="602" y="564">source credentials,</text><text class="s" x="602" y="578">LLM keys, SSH keys</text>
+          <rect class="n" x="430" y="620" width="140" height="65" rx="4"/><text class="t" x="442" y="642">SeaweedFS · S3</text><text class="s" x="442" y="659">exports, uploads,</text><text class="s" x="442" y="673">knowledge files</text>
+          <rect class="n ext" x="590" y="620" width="140" height="65" rx="4"/><text class="t" x="602" y="642">migrate · bootstrap</text><text class="s" x="602" y="659">one-shot: Alembic,</text><text class="s" x="602" y="673">tenant and realm seed</text>
+
+          <rect class="n" x="430" y="720" width="495" height="66" rx="4"/>
+          <text class="t" x="442" y="743">Observability · profile: observability</text>
+          <text class="s" x="442" y="762">every service → OTLP → otel-collector → Prometheus (metrics) · Tempo (traces) · Loki (logs) → Grafana :3000</text>
+          <text class="s" x="442" y="777">Azure target: collector exports to Azure Monitor / Log Analytics</text>
+
+          <!-- sources -->
+          <rect class="n ext" x="975" y="134" width="190" height="50" rx="3"/><text class="t" x="987" y="155">Dataverse · TDS / Web API</text><text class="s" x="987" y="172">read-only identity</text>
+
+          <!-- llm providers -->
+          <rect class="n ext" x="975" y="348" width="190" height="50" rx="3"/><text class="t" x="987" y="369">Azure OpenAI (AI Foundry)</text><text class="s" x="987" y="386">GPT-4.1 · 4.1-mini · embeddings</text>
+          <rect class="n ext" x="975" y="410" width="190" height="50" rx="3"/><text class="t" x="987" y="431">Ollama</text><text class="s" x="987" y="448">host :11434 · qwen3:8b, embeddings</text>
+
+          <!-- edges -->
+          <line class="e" x1="160" y1="222" x2="208" y2="222" marker-end="url(#a)"/>
+          <line class="e" x1="290" y1="190" x2="290" y2="140" marker-end="url(#a)"/>
+          <line class="e" x1="290" y1="254" x2="290" y2="328" marker-end="url(#a)"/>
+          <line class="e" x1="370" y1="222" x2="428" y2="222" marker-end="url(#a)"/>
+          <line class="e" x1="210" y1="362" x2="162" y2="362" marker-end="url(#a)"/>
+          <line class="e" x1="730" y1="135" x2="773" y2="135" marker-end="url(#a)"/>
+          <line class="e" x1="925" y1="159" x2="973" y2="159" marker-end="url(#a)"/>
+          <line class="e" x1="730" y1="372" x2="773" y2="372" marker-end="url(#a)"/>
+          <line class="e" x1="925" y1="363" x2="973" y2="373" marker-end="url(#a)"/>
+          <line class="e" x1="925" y1="400" x2="973" y2="430" marker-end="url(#a)"/>
+          <line class="e" x1="500" y1="400" x2="500" y2="428" marker-end="url(#a)"/>
+          <line class="e" x1="660" y1="400" x2="660" y2="428" marker-end="url(#a)"/>
+          <line class="e" x1="500" y1="525" x2="500" y2="497" marker-end="url(#a)"/>
+          <line class="e" x1="570" y1="540" x2="606" y2="497" marker-end="url(#a)"/>
+          <line class="e" x1="500" y1="590" x2="500" y2="618" marker-end="url(#a)"/>
+          <line class="e thin" x1="850" y1="430" x2="850" y2="468" marker-end="url(#at)"/>
+          <path class="e thin" d="M370,384 H400 V462 H428" marker-end="url(#at)"/>
+          <!-- secrets trunk -->
+          <path class="e sec" d="M775,182 H752 V557 H732" marker-end="url(#as)"/>
+          <path class="e sec" d="M775,416 H752"/>
+          <path class="e sec" d="M730,280 H752"/>
+
+          <!-- badges -->
+          <g><circle class="b" cx="184" cy="208" r="9"/><text class="bt" x="184" y="212" text-anchor="middle">1</text></g>
+          <g><circle class="b" cx="304" cy="292" r="9"/><text class="bt" x="304" y="296" text-anchor="middle">2</text></g>
+          <g><circle class="b" cx="186" cy="348" r="9"/><text class="bt" x="186" y="352" text-anchor="middle">3</text></g>
+          <g><circle class="b" cx="399" cy="208" r="9"/><text class="bt" x="399" y="212" text-anchor="middle">4</text></g>
+          <g><circle class="b" cx="752" cy="121" r="9"/><text class="bt" x="752" y="125" text-anchor="middle">5</text></g>
+          <g><circle class="b" cx="949" cy="145" r="9"/><text class="bt" x="949" y="149" text-anchor="middle">6</text></g>
+          <g><circle class="b" cx="752" cy="356" r="9"/><text class="bt" x="752" y="360" text-anchor="middle">7</text></g>
+          <g><circle class="b" cx="949" cy="349" r="9"/><text class="bt" x="949" y="353" text-anchor="middle">8</text></g>
+          <g><circle class="b sec" cx="752" cy="500" r="9"/><text class="bt" x="752" y="504" text-anchor="middle">9</text></g>
+          <g><circle class="b" cx="514" cy="414" r="9"/><text class="bt" x="514" y="418" text-anchor="middle">10</text></g>
+          <g><circle class="b" cx="674" cy="414" r="9"/><text class="bt" x="674" y="418" text-anchor="middle">11</text></g>
+          <g><circle class="b" cx="589" cy="509" r="9"/><text class="bt" x="589" y="513" text-anchor="middle">12</text></g>
+          <g><circle class="b" cx="949" cy="408" r="9"/><text class="bt" x="949" y="412" text-anchor="middle">13</text></g>
+        </svg>
+      </div>
+      <figcaption>Solid arrows are request paths, the amber dashed line is secret reads, grey dotted lines are minor dependencies (Keycloak's own database, the optional reranker). Port numbers come from <span class="mono">deploy/compose/compose.yaml</span>; only the connected source and the two LLMs in use are shown. The runner also has adapters for SQL Server, MySQL, PostgreSQL, MongoDB and files, and the gateway has Anthropic, OpenAI and Gemini providers.</figcaption>
+    </figure>
+    <ol class="keys">
+      <li><b>1</b><span><strong>HTTPS to the proxy.</strong> nginx routes <span class="mono">/</span> to web, <span class="mono">/api</span> to the API and <span class="mono">/auth</span> to Keycloak.</span></li>
+      <li><b>2</b><span><strong>Sign-in.</strong> Authorization code with PKCE; the API validates issuer, audience, signature and expiry against the JWKS.</span></li>
+      <li><b>3</b><span><strong>Federation.</strong> Keycloak brokers Entra ID; pmo maps the immutable Entra object ID, never e-mail, to a user.</span></li>
+      <li><b>4</b><span><strong>API calls.</strong> REST plus Server-Sent Events that stream an Ask turn step by step.</span></li>
+      <li><b>5</b><span><strong>Scoped, signed query.</strong> Compiled SQL or a Mongo pipeline, already scope-injected, signed by the query engine.</span></li>
+      <li><b>6</b><span><strong>Read-only source connection.</strong> Read-only identity plus a per-engine guard; optional SSH tunnel.</span></li>
+      <li><b>7</b><span><strong>LLM request.</strong> Typed prompts with schema, definitions and gold examples; no row data unless a tenant policy allows aggregates.</span></li>
+      <li><b>8</b><span><strong>Provider call.</strong> Only providers on <span class="mono">PMO_LLM_ALLOWED_PROVIDERS</span>; every call lands in the usage ledger.</span></li>
+      <li class="sec"><b>9</b><span><strong>Secrets.</strong> API writes connection credentials; runner and gateway read them with read-only identities. The metadata DB stores only a reference.</span></li>
+      <li><b>10</b><span><strong>Metadata and vectors.</strong> One PostgreSQL with row-level security on <span class="mono">tenant_id</span>; pgvector HNSW for knowledge.</span></li>
+      <li><b>11</b><span><strong>Cache and queue.</strong> Result cache keyed by spec plus the viewer's scope hash; jobs enqueued for the worker.</span></li>
+      <li><b>12</b><span><strong>Background jobs.</strong> Introspection, knowledge indexing, exports rendered in Chromium, pack updates, outbox delivery.</span></li>
+      <li><b>13</b><span><strong>Local models.</strong> Ollama on the host for embeddings and the local planner (qwen3:8b on dev); the reranker inside the stack is wired but off by default.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">View 3 · One Ask turn</span>
+      <h2>The model proposes a spec; code checks it, scopes it and runs it</h2>
+      <p>The language model never writes SQL for Ask. It produces a typed query spec over the approved data model, and only when the deterministic rules could not. Steps tagged <span class="pill ok">LLM</span> call the gateway; the others are plain code.</p>
+    </header>
+    <figure>
+      <div class="canvas">
+        <svg viewBox="0 0 1200 440" role="img" aria-label="Ask pipeline in twelve steps: route intent, rewrite, retrieve, rules plan, link schema, LLM plan, validate spec, answer or clarify, compile and scope, run read-only, mask and check, narrate. Exits: write requests are refused, ambiguous questions get a clarify question, hidden fields are rejected.">
+          <defs>
+            <marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="b2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah sec" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+          <text class="zl" x="20" y="30">Understand the question</text>
+          <text class="zl" x="20" y="250">Answer it safely</text>
+
+          <!-- row 1 -->
+          <g>
+            <rect class="n" x="20" y="44" width="170" height="92" rx="4"/><text class="num" x="32" y="64">01</text><text class="t" x="56" y="64">Route intent</text>
+            <text class="s" x="32" y="86">ask, build report, about</text><text class="s" x="32" y="100">a widget, or write request</text><text class="sm" x="32" y="122">ask/routing.py</text>
+          </g>
+          <g>
+            <rect class="n llm" x="214" y="44" width="170" height="92" rx="4"/><text class="num" x="226" y="64">02</text><text class="t" x="250" y="64">Rewrite</text><text class="tag" x="350" y="64">LLM</text>
+            <text class="s" x="226" y="86">glossary terms, follow-ups;</text><text class="s" x="226" y="100">LLM rewrite only on a miss</text><text class="sm" x="226" y="122">ask/rewrite.py</text>
+          </g>
+          <g>
+            <rect class="n llm" x="408" y="44" width="170" height="92" rx="4"/><text class="num" x="420" y="64">03</text><text class="t" x="444" y="64">Retrieve</text><text class="tag" x="530" y="64">EMBED</text>
+            <text class="s" x="420" y="86">pgvector + full text, value</text><text class="s" x="420" y="100">index, approved items only</text><text class="sm" x="420" y="122">knowledge/retrieval.py</text>
+          </g>
+          <g>
+            <rect class="n" x="602" y="44" width="170" height="92" rx="4"/><text class="num" x="614" y="64">04</text><text class="t" x="638" y="64">Rules plan</text>
+            <text class="s" x="614" y="86">deterministic match on</text><text class="s" x="614" y="100">measures, recipes, glossary</text><text class="sm" x="614" y="122">ask/planner.py · recipes.py</text>
+          </g>
+          <g>
+            <rect class="n" x="796" y="44" width="170" height="92" rx="4"/><text class="num" x="808" y="64">05</text><text class="t" x="832" y="64">Link schema</text>
+            <text class="s" x="808" y="86">candidate measures and</text><text class="s" x="808" y="100">dimensions by meaning</text><text class="sm" x="808" y="122">ask/linking.py</text>
+          </g>
+          <g>
+            <rect class="n llm" x="990" y="44" width="170" height="92" rx="4"/><text class="num" x="1002" y="64">06</text><text class="t" x="1026" y="64">Plan (AG-03)</text><text class="tag" x="1126" y="64">LLM</text>
+            <text class="s" x="1002" y="86">free-hand rule first; LLM</text><text class="s" x="1002" y="100">samples vote → confidence</text><text class="sm" x="1002" y="122">ask/confidence.py</text>
+          </g>
+          <line class="e" x1="190" y1="90" x2="212" y2="90" marker-end="url(#b1)"/>
+          <line class="e" x1="384" y1="90" x2="406" y2="90" marker-end="url(#b1)"/>
+          <line class="e" x1="578" y1="90" x2="600" y2="90" marker-end="url(#b1)"/>
+          <line class="e" x1="772" y1="90" x2="794" y2="90" marker-end="url(#b1)"/>
+          <line class="e" x1="966" y1="90" x2="988" y2="90" marker-end="url(#b1)"/>
+
+          <!-- exits row 1 -->
+          <line class="e sec" x1="105" y1="136" x2="105" y2="168" marker-end="url(#b2)"/>
+          <rect class="exit" x="30" y="170" width="150" height="26" rx="13"/><text class="exitt" x="105" y="187" text-anchor="middle">write → refused, audited</text>
+          <rect class="exit" x="996" y="150" width="158" height="26" rx="13"/><text class="exitt" x="1075" y="167" text-anchor="middle">skipped when rules fit</text>
+
+          <!-- turn to row 2 -->
+          <path class="e" d="M1075,176 V214 H105 V262" marker-end="url(#b1)"/>
+
+          <!-- row 2 -->
+          <g>
+            <rect class="n key" x="20" y="264" width="170" height="92" rx="4"/><text class="num" x="32" y="284">07</text><text class="t" x="56" y="284">Validate spec</text>
+            <text class="s" x="32" y="306">IDs exist in model version,</text><text class="s" x="32" y="320">values grounded, sane</text><text class="sm" x="32" y="342">query/validator.py</text>
+          </g>
+          <g>
+            <rect class="n" x="214" y="264" width="170" height="92" rx="4"/><text class="num" x="226" y="284">08</text><text class="t" x="250" y="284">Answer or clarify</text>
+            <text class="s" x="226" y="306">low confidence → one</text><text class="s" x="226" y="320">question with options</text><text class="sm" x="226" y="342">ask/options.py</text>
+          </g>
+          <g>
+            <rect class="n key" x="408" y="264" width="170" height="92" rx="4"/><text class="num" x="420" y="284">09</text><text class="t" x="444" y="284">Compile and scope</text>
+            <text class="s" x="420" y="306">drop hidden fields, dialect,</text><text class="s" x="420" y="320">inject row scope, sign</text><text class="sm" x="420" y="342">query/scope_injector.py</text>
+          </g>
+          <g>
+            <rect class="n key" x="602" y="264" width="170" height="92" rx="4"/><text class="num" x="614" y="284">10</text><text class="t" x="638" y="284">Run read-only</text>
+            <text class="s" x="614" y="306">cache hit by scope hash,</text><text class="s" x="614" y="320">else runner executes</text><text class="sm" x="614" y="342">query/cache.py · runner</text>
+          </g>
+          <g>
+            <rect class="n" x="796" y="264" width="170" height="92" rx="4"/><text class="num" x="808" y="284">11</text><text class="t" x="832" y="284">Mask and check</text>
+            <text class="s" x="808" y="306">secret columns redacted,</text><text class="s" x="808" y="320">sanity checks on result</text><text class="sm" x="808" y="342">ask/sanity.py</text>
+          </g>
+          <g>
+            <rect class="n llm" x="990" y="264" width="170" height="92" rx="4"/><text class="num" x="1002" y="284">12</text><text class="t" x="1026" y="284">Narrate</text><text class="tag" x="1126" y="284">LLM</text>
+            <text class="s" x="1002" y="306">every number must match</text><text class="s" x="1002" y="320">a computed value; visuals</text><text class="sm" x="1002" y="342">ask/narrator.py · advisor.py</text>
+          </g>
+          <line class="e" x1="190" y1="310" x2="212" y2="310" marker-end="url(#b1)"/>
+          <line class="e" x1="384" y1="310" x2="406" y2="310" marker-end="url(#b1)"/>
+          <line class="e" x1="578" y1="310" x2="600" y2="310" marker-end="url(#b1)"/>
+          <line class="e" x1="772" y1="310" x2="794" y2="310" marker-end="url(#b1)"/>
+          <line class="e" x1="966" y1="310" x2="988" y2="310" marker-end="url(#b1)"/>
+
+          <!-- exits row 2 -->
+          <line class="e sec" x1="105" y1="356" x2="105" y2="388" marker-end="url(#b2)"/>
+          <rect class="exit" x="24" y="390" width="162" height="26" rx="13"/><text class="exitt" x="105" y="407" text-anchor="middle">unsupported → named reason</text>
+          <line class="e sec" x1="299" y1="356" x2="299" y2="388" marker-end="url(#b2)"/>
+          <rect class="exit" x="222" y="390" width="154" height="26" rx="13"/><text class="exitt" x="299" y="407" text-anchor="middle">clarify → option chips</text>
+          <line class="e sec" x1="493" y1="356" x2="493" y2="388" marker-end="url(#b2)"/>
+          <rect class="exit" x="416" y="390" width="154" height="26" rx="13"/><text class="exitt" x="493" y="407" text-anchor="middle">hidden field → rejected</text>
+          <line class="e" x1="1075" y1="356" x2="1075" y2="388" marker-end="url(#b1)"/>
+          <rect class="n key" x="980" y="390" width="190" height="30" rx="15"/><text class="t" x="1075" y="410" text-anchor="middle">answer + chart + confidence</text>
+        </svg>
+      </div>
+      <figcaption>Steps 07, 09 and 10 (blue outline) are the same path every surface uses: dashboards, drill-downs, exports, custom SQL and certification previews. If the narrator's numbers do not match the computed result, Ask falls back to a template sentence.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">View 4 · Governed objects</span>
+      <h2>Widgets store the question, never the numbers</h2>
+      <p>Everything a viewer sees is recomputed from a spec under that viewer's scope. Publishing to a role is blocked until every widget on the dashboard uses certified definitions.</p>
+    </header>
+    <figure>
+      <div class="canvas small">
+        <svg viewBox="0 0 1100 170" role="img" aria-label="Object chain: connection, data model, widget, report, dashboard, published version, with a certification gate before publishing.">
+          <defs><marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+          <rect class="n" x="10" y="30" width="150" height="70" rx="4"/><text class="t" x="22" y="54">Connection</text><text class="s" x="22" y="72">read-only link,</text><text class="s" x="22" y="86">secret in OpenBao</text>
+          <rect class="n" x="190" y="30" width="150" height="70" rx="4"/><text class="t" x="202" y="54">Data model</text><text class="s" x="202" y="72">entities, links, measures;</text><text class="s" x="202" y="86">versioned, approved</text>
+          <rect class="n key" x="370" y="30" width="150" height="70" rx="4"/><text class="t" x="382" y="54">Widget</text><text class="s" x="382" y="72">query spec + visual,</text><text class="s" x="382" y="86">no stored results</text>
+          <rect class="n" x="550" y="30" width="150" height="70" rx="4"/><text class="t" x="562" y="54">Report</text><text class="s" x="562" y="72">12-column grid</text><text class="s" x="562" y="86">of widgets</text>
+          <rect class="n" x="730" y="30" width="150" height="70" rx="4"/><text class="t" x="742" y="54">Dashboard</text><text class="s" x="742" y="72">reports as tabs,</text><text class="s" x="742" y="86">groups in sidebar</text>
+          <rect class="n key" x="940" y="30" width="150" height="70" rx="4"/><text class="t" x="952" y="54">Published version</text><text class="s" x="952" y="72">live for chosen roles,</text><text class="s" x="952" y="86">restorable</text>
+          <line class="e" x1="160" y1="65" x2="188" y2="65" marker-end="url(#c1)"/>
+          <line class="e" x1="340" y1="65" x2="368" y2="65" marker-end="url(#c1)"/>
+          <line class="e" x1="520" y1="65" x2="548" y2="65" marker-end="url(#c1)"/>
+          <line class="e" x1="700" y1="65" x2="728" y2="65" marker-end="url(#c1)"/>
+          <line class="e" x1="880" y1="65" x2="938" y2="65" marker-end="url(#c1)"/>
+          <rect class="exit" x="866" y="112" width="88" height="26" rx="13"/><text class="exitt" x="910" y="129" text-anchor="middle">cert gate</text>
+          <line class="e sec" x1="910" y1="112" x2="910" y2="68"/>
+          <text class="s" x="10" y="150">Definitions carry a state: Personal · Starter · Certified · Custom SQL · Deleted. Admin certifies; AG-09 explains look-alikes but never decides.</text>
+        </svg>
+      </div>
+    </figure>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">Controls</span>
+      <h2>Where each guarantee is enforced</h2>
+    </header>
+    <div class="rules">
+      <div><h3>Row scope</h3><p>Scope policies become predicates on every governed table reference, then the compiled query is re-parsed to assert it is scoped. Cache keys include the scope hash.</p></div>
+      <div><h3>Field policy and masking</h3><p>Hidden fields are dropped from the spec, and custom SQL that names them is rejected. Secret-named columns always return <span class="mono">[REDACTED]</span>.</p></div>
+      <div><h3>Read-only sources</h3><p>Read-only database identity, read-only session, and a per-engine guard in the runner that blocks writes even if the compiler is wrong.</p></div>
+      <div><h3>Tenant isolation</h3><p><span class="mono">tenant_id</span> on every tenant table, enforced by repository code and PostgreSQL row-level security with a transaction-local setting.</p></div>
+      <div><h3>LLM boundary</h3><p>One gateway, an allow-list of providers, pre-send leak scanning, typed outputs validated in code, and a ledger of every call's tokens and cost.</p></div>
+      <div><h3>Audit</h3><p>Append-only events for sign-in, connection changes, approvals, certification, publish, exports, policy denials and refused write requests.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">Deployment</span>
+      <h2>Same images in Compose today and on Azure next</h2>
+      <p>All services ship as <span class="mono">pmo-*</span> images tagged with one release version. Compose profiles switch on what each environment needs.</p>
+    </header>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Profile</th><th>Services</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td>core</td><td>proxy, web, api, connector-runner, llm-gateway, worker, beat, postgres, redis, keycloak, openbao, objectstore, migrate, bootstrap</td><td>Every environment</td></tr>
+          <tr><td>dev</td><td>sample-tpg, sample-mysql, sample-mssql, sample-mongo, dataverse-fake</td><td>Local and CI test sources</td></tr>
+          <tr><td>ai-local</td><td>ollama, reranker</td><td>Embeddings and local models without a hosted provider</td></tr>
+          <tr><td>observability</td><td>otel-collector, prometheus, tempo, loki, grafana</td><td>Metrics, traces and logs</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Component</th><th>Azure target</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Edge</td><td>Application Gateway WAF v2 terminates TLS in front of the nginx proxy</td><td><span class="pill ok">ready</span></td></tr>
+          <tr><td>App services</td><td>Docker on Linux VMs (option A), AKS later (option B)</td><td><span class="pill ok">Compose ready</span> <span class="pill gap">Helm US-121</span></td></tr>
+          <tr><td>Metadata DB</td><td>Azure Database for PostgreSQL Flexible Server 16 with <span class="mono">vector</span>, <span class="mono">pgcrypto</span>, <span class="mono">pg_trgm</span></td><td><span class="pill ok">ready</span></td></tr>
+          <tr><td>Cache and broker</td><td>Azure Cache for Redis, TLS on 6380</td><td><span class="pill ok">ready</span></td></tr>
+          <tr><td>Secrets</td><td>OpenBao container with Key Vault auto-unseal</td><td><span class="pill gap">native adapter US-122</span></td></tr>
+          <tr><td>Object store</td><td>SeaweedFS on Premium SSD now, Blob Storage later</td><td><span class="pill gap">Blob adapter US-122</span></td></tr>
+          <tr><td>LLM</td><td>Azure AI Foundry deployments through the gateway's <span class="mono">azure_openai</span> provider</td><td><span class="pill ok">ready</span></td></tr>
+          <tr><td>Egress</td><td>NAT Gateway with a static IP, allow-listed by client sources</td><td><span class="pill">infra</span></td></tr>
+          <tr><td>Observability</td><td>OTel collector to Azure Monitor and Log Analytics</td><td><span class="pill gap">exporter config US-122</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span>Sources: <span class="mono">deploy/compose/compose.yaml</span>, <span class="mono">services/api/src/pmo_api/ask/orchestrator.py</span>, <span class="mono">project-docs/architecture.md</span>, <span class="mono">project-docs/azure_infra_requirements.md</span>.</span>
+    <span>Agents AG-01 to AG-10 live in the API's ask module and reach models only through the gateway. None of them can execute a query, change a published object or grant access.</span>
+  </footer>
+</div>

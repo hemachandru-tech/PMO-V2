@@ -1,0 +1,331 @@
+/*
+ * Stylesheet entry (US-134). Tailwind and the design system only: the old styles.css was removed in US-148 once every
+ * screen had moved to the new system.
+ */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+@import "./design/tokens.css";
+@import "./design/motion.css";
+@import "./design/reset.css" layer(base);
+/* Sonner's own stylesheet; it is patched not to inject a <style> tag, which the strict CSP blocks. */
+@import "sonner/dist/styles.css" layer(components);
+
+/* `dark:` follows the resolved theme set by ThemeProvider on <html>. Prefer tokens, which switch on their own. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@utility focus-ring {
+  outline: none;
+  box-shadow: var(--tl-focus-ring);
+}
+
+/* Motion presets for tw-animate-css enter/exit animations (design/motion.css, US-147). */
+@utility motion-fast {
+  --tw-duration: var(--tl-motion-fast);
+  --tw-ease: var(--tl-ease-out);
+}
+@utility motion-base {
+  --tw-duration: var(--tl-motion-base);
+  --tw-ease: var(--tl-ease-out);
+}
+@utility motion-panel {
+  --tw-duration: var(--tl-motion-panel);
+  --tw-ease: var(--tl-ease-out);
+}
+
+/*
+ * Observable Plot charts (ENH-018, US-208). Plot puts its defaults in a <style> tag, which the strict CSP blocks; the
+ * tag is removed and its rules live here, with the app's font, muted labels and hairline grid.
+ */
+.tl-plot {
+  --plot-background: var(--tl-surface-raised);
+  display: block;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--tl-ink-muted);
+}
+.tl-plot text,
+.tl-plot tspan {
+  white-space: pre;
+}
+.tl-plot [aria-label$="grid"] {
+  stroke: var(--tl-chart-grid);
+  stroke-opacity: 1;
+}
+.tl-plot [aria-label$="axis tick"] {
+  stroke: var(--tl-chart-axis);
+}
+
+/*
+ * Bar colours from the brand (ENH-019, US-209). The sidebar and the top bar carry `data-nav-place` and `data-nav`;
+ * their backgrounds, hover and current-item colours read the --nav-* variables below, and the brand style also turns
+ * the ink, lines and soft surfaces inside the bar light so buttons and the ask bar stay readable. Every colour is a
+ * palette token, so a new palette recolours the bars. "dark" needs nothing here: the bar is drawn in the dark theme.
+ */
+[data-nav-place] {
+  --nav-hover: var(--tl-surface-raised);
+  --nav-current-bg: var(--tl-accent-soft);
+  --nav-current-ink: var(--tl-accent);
+}
+[data-nav-place="sidebar"] { --nav-bg: var(--tl-surface-sunken); }
+[data-nav-place="topbar"] { --nav-bg: var(--tl-surface-raised); }
+
+[data-nav="tinted"] {
+  --nav-bg: var(--tl-accent-soft);
+  --nav-hover: color-mix(in srgb, var(--tl-accent) 12%, var(--tl-accent-soft));
+  --nav-current-bg: color-mix(in srgb, var(--tl-accent) 22%, var(--tl-accent-soft));
+  --nav-current-ink: var(--tl-accent-strong);
+  --tl-line: color-mix(in srgb, var(--tl-accent) 24%, transparent);
+  --tl-surface: var(--tl-surface-raised);
+  --tl-surface-sunken: color-mix(in srgb, var(--tl-accent) 12%, var(--tl-accent-soft));
+}
+
+/*
+ * Brand: in the light theme the accent's deep shade with its contrast-checked "on accent" text (US-150 checks that
+ * pair); in the dark theme a bright fill would glare, so a deep tint of the accent with the usual light ink. Set on
+ * each theme element, so the nearest theme wins (the Branding preview draws a light bar inside a dark page).
+ */
+[data-theme="light"] {
+  --nav-brand-bg: var(--tl-accent-strong);
+  --nav-brand-on: var(--tl-on-accent);
+}
+[data-theme="dark"] {
+  --nav-brand-bg: color-mix(in srgb, var(--tl-accent) 30%, var(--tl-surface-sunken));
+  --nav-brand-on: var(--tl-ink);
+}
+[data-nav="brand"] {
+  --nav-bg: var(--nav-brand-bg);
+  --nav-hover: color-mix(in srgb, var(--nav-brand-on) 14%, transparent);
+  --nav-current-bg: color-mix(in srgb, var(--nav-brand-on) 22%, transparent);
+  --nav-current-ink: var(--nav-brand-on);
+  --tl-ink: var(--nav-brand-on);
+  --tl-ink-muted: color-mix(in srgb, var(--nav-brand-on) 82%, transparent);
+  --tl-ink-disabled: color-mix(in srgb, var(--nav-brand-on) 62%, transparent);
+  --tl-line: color-mix(in srgb, var(--nav-brand-on) 24%, transparent);
+  --tl-line-strong: color-mix(in srgb, var(--nav-brand-on) 50%, transparent);
+  --tl-surface: color-mix(in srgb, var(--nav-brand-on) 12%, transparent);
+  --tl-surface-raised: color-mix(in srgb, var(--nav-brand-on) 14%, transparent);
+  --tl-surface-sunken: color-mix(in srgb, var(--nav-brand-on) 14%, transparent);
+  --tl-focus-ring: 0 0 0 2px var(--nav-brand-on);
+}
+
+/*
+ * Layouts (ENH-021). Classic is the base look. Executive: the dashboard header sits on a brand band (the same colours
+ * as a brand-coloured bar, US-209, with `data-nav="brand"` turning its text light) and cards float on soft shadows.
+ * Command centre: rounded tiles, figure cards on the accent's soft fill with larger figures. Colours stay palette
+ * tokens, so a new palette or the dark theme carries over.
+ */
+[data-layout="executive"] [data-dash-header] {
+  background: var(--nav-brand-bg);
+  color: var(--tl-ink);
+  margin: -24px -16px 0;
+  padding: 28px 16px 32px;
+}
+@media (min-width: 1024px) {
+  [data-layout="executive"] [data-dash-header] { margin-inline: -24px; padding-inline: 24px; }
+}
+[data-layout="executive"] [data-dash-header] h1 { font-size: 34px; line-height: 42px; letter-spacing: -0.02em; }
+[data-layout="executive"] [data-slot="card"] {
+  border-radius: 16px;
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgb(16 26 35 / 0.06), 0 8px 24px -8px rgb(16 26 35 / 0.14);
+}
+[data-layout="executive"][data-theme="dark"] [data-slot="card"],
+[data-theme="dark"] [data-layout="executive"] [data-slot="card"] { border-color: var(--tl-line); box-shadow: none; }
+[data-layout="executive"] [data-slot="kpi-card"] .text-figure-xl { font-size: 40px; line-height: 44px; }
+
+[data-layout="command"] [data-slot="card"] { border-radius: 18px; }
+[data-layout="command"] [data-slot="kpi-card"] { background: var(--tl-accent-soft); border-color: transparent; padding: 20px; }
+[data-layout="command"] [data-slot="kpi-card"] .text-figure-xl { font-size: 44px; line-height: 48px; letter-spacing: -0.03em; }
+[data-layout="command"] [data-dash-header] h1 { font-size: 30px; line-height: 38px; }
+
+/*
+ * Widget cards by layout (ENH-023, US-222), from boards A, B and C of the EXEC-138 design canvas. Classic (A): 14 px
+ * corners, 15 px titles, small capitals on figure labels. Executive (B): 16 px corners, roomier, 16 px titles, figure
+ * labels in plain words, no rule above the footer. Command centre (C): 18 px tiles, 16 px titles, the footer on a sunken
+ * strip inside the tile. Only shape and spacing change; colours stay the palette's.
+ */
+[data-widget], [data-slot="kpi-card"] { border-radius: 14px; }
+[data-widget-head] { padding: 16px 20px 0; }
+[data-widget-title] { font-size: 15px; line-height: 22px; font-weight: 600; }
+[data-widget-body] { padding: 12px 20px 14px; }
+[data-widget-foot] { padding: 8px 20px; }
+[data-slot="kpi-card"] { padding: 18px 20px; }
+[data-kpi-label] { letter-spacing: 0.06em; }
+
+[data-layout="executive"] [data-widget], [data-layout="executive"] [data-slot="kpi-card"] { border-radius: 16px; }
+[data-layout="executive"] [data-widget-head] { padding: 20px 22px 0; }
+[data-layout="executive"] [data-widget-title] { font-size: 16px; }
+[data-layout="executive"] [data-widget-body] { padding: 14px 22px 18px; }
+[data-layout="executive"] [data-widget-foot] { border-top-color: transparent; padding: 0 22px 16px; }
+[data-layout="executive"] [data-slot="kpi-card"] { padding: 20px 22px; }
+[data-layout="executive"] [data-kpi-label],
+[data-layout="command"] [data-kpi-label] { text-transform: none; font-size: 13px; line-height: 18px; letter-spacing: 0; font-weight: 500; }
+
+[data-layout="command"] [data-widget], [data-layout="command"] [data-slot="kpi-card"] { border-radius: 18px; }
+[data-layout="command"] [data-widget-head] { padding: 20px 20px 0; }
+[data-layout="command"] [data-widget-title] { font-size: 16px; }
+[data-layout="command"] [data-widget-body] { padding: 14px 20px 16px; }
+[data-layout="command"] [data-widget-foot] {
+  border-top-color: transparent;
+  margin: 0 12px 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--tl-surface-sunken);
+}
+
+/*
+ * Card colours (ENH-023, US-223): palette swatches set on the widget. Tints keep the usual ink (the pairs US-150
+ * checks); "brand" fills the card with the brand bar's colours (US-209) and turns its ink light; "dark" draws the card in
+ * the dark theme (`data-theme="dark"` on the card). Brand and dark hold a single figure only, so no chart axis sits on
+ * them. `:root` lifts these above the layout looks (a Command centre figure card is tinted by default).
+ */
+:root [data-slot][data-card="accent"] { background: var(--tl-accent-soft); border-color: color-mix(in srgb, var(--tl-accent) 28%, transparent); }
+:root [data-slot][data-card="neutral"] { background: var(--tl-surface-sunken); border-color: var(--tl-line); }
+:root [data-slot][data-card="good"] { background: var(--tl-status-ok-soft); border-color: color-mix(in srgb, var(--tl-status-ok) 28%, transparent); }
+:root [data-slot][data-card="warning"] { background: var(--tl-status-warn-soft); border-color: color-mix(in srgb, var(--tl-status-warn) 28%, transparent); }
+:root [data-slot][data-card="critical"] { background: var(--tl-status-danger-soft); border-color: color-mix(in srgb, var(--tl-status-danger) 28%, transparent); }
+:root [data-slot][data-card="dark"] { background: var(--tl-surface-raised); border-color: var(--tl-line); color: var(--tl-ink); }
+[data-theme="dark"] [data-slot][data-card="dark"][data-theme="dark"] { background: var(--tl-surface-sunken); }
+:root [data-slot][data-card="brand"] {
+  --tl-ink: var(--nav-brand-on);
+  --tl-ink-muted: color-mix(in srgb, var(--nav-brand-on) 82%, transparent);
+  --tl-line: color-mix(in srgb, var(--nav-brand-on) 24%, transparent);
+  --tl-surface-sunken: color-mix(in srgb, var(--nav-brand-on) 14%, transparent);
+  --tl-accent: var(--nav-brand-on);
+  --tl-focus-ring: 0 0 0 2px var(--nav-brand-on);
+  background: var(--nav-brand-bg);
+  border-color: transparent;
+  color: var(--tl-ink);
+}
+
+/*
+ * Aurora (ENH-027, US-248), from the "Tela Aurora layout" design canvas. The sidebar floats as a rounded card with each
+ * screen's icon on a chip of its own vivid colour; the top bar sits on the page with a pill-shaped ask bar; dashboards
+ * open on a rounded hero band (the brand bar's colours, US-209, with soft glows of the vivid colours) and cards float on
+ * soft shadows. Every colour is a palette or vivid token, so light, dark and a tenant's palette carry over.
+ */
+[data-layout="aurora"] { --au-shadow: 0 1px 2px rgb(16 26 35 / 0.05), 0 10px 30px -12px rgb(16 26 35 / 0.18); }
+[data-layout="aurora"][data-theme="dark"],
+[data-theme="dark"] [data-layout="aurora"] { --au-shadow: 0 0 0 1px var(--tl-line); }
+
+[data-layout="aurora"] [data-shell-aside] { padding: 16px 0 16px 16px; }
+[data-layout="aurora"] [data-shell-aside] [data-nav-place="sidebar"] {
+  border-radius: 22px;
+  box-shadow: var(--au-shadow);
+  padding: 16px 10px;
+}
+[data-layout="aurora"] [data-shell-aside] [data-nav-place="sidebar"][data-nav="standard"] { --nav-bg: var(--tl-surface-raised); }
+[data-layout="aurora"] [data-nav-place="sidebar"] [data-nav-item] { height: 40px; border-radius: 12px; color: var(--tl-ink); font-weight: 500; }
+/* Dashboard groups (US-171): the open dashboard sits on a wash of its group's colour; the guide line takes it too. */
+[data-layout="aurora"] [data-nav-place="sidebar"] [data-nav-sub] { border-radius: 10px; }
+[data-layout="aurora"] [data-nav-place="sidebar"] [data-nav-sub][aria-current="page"],
+[data-layout="aurora"] [data-nav-place="sidebar"] [data-nav-sub][aria-current="page"]:hover {
+  background: color-mix(in srgb, var(--au-tone) 16%, transparent);
+  color: var(--tl-ink);
+  font-weight: 600;
+}
+[data-layout="aurora"] [data-nav-place="sidebar"] [data-nav-tone] > div > ul { border-left-color: color-mix(in srgb, var(--au-tone) 45%, transparent); }
+/* The current screen sits on a wash of its own chip colour, as in the canvas. */
+[data-layout="aurora"] [data-nav-place="sidebar"] [data-nav-item][aria-current="page"],
+[data-layout="aurora"] [data-nav-place="sidebar"] [data-nav-item][aria-current="page"]:hover {
+  background: color-mix(in srgb, var(--au-tone) 16%, transparent);
+  color: var(--tl-ink);
+  font-weight: 600;
+}
+[data-layout="aurora"] [data-nav-icon] {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  color: var(--au-tone);
+  background: color-mix(in srgb, var(--au-tone) 15%, transparent);
+}
+[data-layout="aurora"] [aria-current="page"] [data-nav-icon] { background: var(--au-tone); color: var(--tl-surface-raised); }
+[data-layout="aurora"] [data-nav="brand"] [data-nav-icon],
+[data-layout="aurora"] [data-nav="dark"] [data-nav-icon] { background: color-mix(in srgb, var(--au-tone) 30%, transparent); color: var(--tl-ink); }
+[data-nav-icon="1"], [data-nav-tone="1"] { --au-tone: var(--tl-vivid-1); }
+[data-nav-icon="2"], [data-nav-tone="2"] { --au-tone: var(--tl-vivid-4); }
+[data-nav-icon="3"], [data-nav-tone="3"] { --au-tone: var(--tl-vivid-2); }
+[data-nav-icon="4"], [data-nav-tone="4"] { --au-tone: var(--tl-vivid-3); }
+[data-nav-icon="5"], [data-nav-tone="5"] { --au-tone: var(--tl-vivid-5); }
+[data-nav-icon="6"], [data-nav-tone="6"] { --au-tone: var(--tl-vivid-7); }
+[data-nav-icon="7"], [data-nav-tone="7"] { --au-tone: var(--tl-vivid-8); }
+[data-nav-icon="8"], [data-nav-tone="8"] { --au-tone: var(--tl-vivid-6); }
+
+[data-layout="aurora"] [data-nav-place="topbar"][data-nav="standard"] { --nav-bg: var(--tl-surface); border-bottom-color: transparent; }
+[data-layout="aurora"] [data-ask-bar] { border-radius: 9999px; background: var(--tl-surface-raised); padding-left: 16px; }
+
+[data-layout="aurora"] [data-dash-header] {
+  border-radius: 26px;
+  padding: 28px;
+  color: var(--tl-ink);
+  background:
+    radial-gradient(42% 120% at 92% 0%, color-mix(in srgb, var(--tl-vivid-4) 70%, transparent), transparent 70%),
+    radial-gradient(36% 110% at 4% 100%, color-mix(in srgb, var(--tl-vivid-1) 60%, transparent), transparent 70%),
+    radial-gradient(30% 90% at 60% 110%, color-mix(in srgb, var(--tl-vivid-3) 40%, transparent), transparent 70%),
+    linear-gradient(135deg, color-mix(in srgb, var(--nav-brand-bg) 78%, #000000), var(--nav-brand-bg));
+}
+[data-layout="aurora"] [data-dash-header] h1 { font-size: 34px; line-height: 42px; letter-spacing: -0.02em; }
+
+[data-layout="aurora"] [data-widget], [data-layout="aurora"] [data-slot="kpi-card"] {
+  border-radius: 20px;
+  border-color: transparent;
+  box-shadow: var(--au-shadow);
+}
+[data-layout="aurora"] [data-widget-head] { padding: 20px 22px 0; }
+[data-layout="aurora"] [data-widget-title] { font-size: 16px; }
+[data-layout="aurora"] [data-widget-body] { padding: 14px 22px 18px; }
+[data-layout="aurora"] [data-widget-foot] { border-top-color: transparent; padding: 0 22px 16px; }
+[data-layout="aurora"] [data-slot="kpi-card"] { padding: 20px 22px; }
+[data-layout="aurora"] [data-slot="kpi-card"]:not([data-tone]):not([data-card]) { border-top: 4px solid var(--tl-vivid-1); }
+[data-layout="aurora"] [data-kpi-label] { text-transform: none; font-size: 13px; line-height: 18px; letter-spacing: 0; font-weight: 500; }
+[data-layout="aurora"] [data-slot="kpi-card"] .text-figure-xl { font-size: 38px; line-height: 42px; letter-spacing: -0.03em; }
+/* Figure cards take the vivid colours in turn along the grid. */
+[data-layout="aurora"] :nth-child(4n+2) > [data-slot="kpi-card"]:not([data-tone]):not([data-card]) { border-top-color: var(--tl-vivid-4); }
+[data-layout="aurora"] :nth-child(4n+3) > [data-slot="kpi-card"]:not([data-tone]):not([data-card]) { border-top-color: var(--tl-vivid-5); }
+[data-layout="aurora"] :nth-child(4n+4) > [data-slot="kpi-card"]:not([data-tone]):not([data-card]) { border-top-color: var(--tl-vivid-2); }
+
+/* Ask in Aurora (ENH-027): the question in a gradient bubble, the answer on a floating card with pill actions and
+   chips in the vivid colours, a pill ask box with a round gradient button, and "How this was answered" beside it. */
+[data-layout="aurora"] [data-ask-question] {
+  background: linear-gradient(135deg, var(--tl-accent), color-mix(in srgb, var(--tl-vivid-4) 80%, var(--tl-accent)));
+  color: var(--tl-on-accent);
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 16px;
+}
+/* US-261: the answer is a chat reply (no box); its chart, figure and driver frames float instead. */
+[data-layout="aurora"] [data-ask-answer] h2 { font-size: 20px; line-height: 28px; letter-spacing: -0.01em; }
+[data-layout="aurora"] [data-ask-frame],
+[data-layout="aurora"] [data-ask-answer] section[aria-labelledby]:not(:has([data-ask-chip])) { border-radius: 20px; border-color: transparent; box-shadow: var(--au-shadow); }
+[data-layout="aurora"] [data-ask-answer] [data-slot="input"] { border-radius: 9999px; }
+[data-layout="aurora"] [data-ask-avatar] { background: linear-gradient(135deg, var(--tl-accent), color-mix(in srgb, var(--tl-vivid-4) 80%, var(--tl-accent))); }
+[data-layout="aurora"] [data-ask-chip] { border-color: color-mix(in srgb, var(--au-tone) 45%, transparent); background: color-mix(in srgb, var(--au-tone) 12%, var(--tl-surface-raised)); }
+[data-layout="aurora"] [data-ask-chip]:nth-child(4n+2) { --au-tone: var(--tl-vivid-1); }
+[data-layout="aurora"] [data-ask-chip]:nth-child(4n+3) { --au-tone: var(--tl-vivid-4); }
+[data-layout="aurora"] [data-ask-chip]:nth-child(4n+4) { --au-tone: var(--tl-vivid-5); }
+[data-layout="aurora"] [data-ask-chip]:nth-child(4n+5) { --au-tone: var(--tl-vivid-2); }
+[data-layout="aurora"] [data-ask-composer] { border-color: transparent; box-shadow: var(--au-shadow); }
+[data-layout="aurora"] [data-ask-composer] button[type="submit"] {
+  background: linear-gradient(135deg, var(--tl-accent), color-mix(in srgb, var(--tl-vivid-4) 80%, var(--tl-accent)));
+  color: var(--tl-on-accent);
+}
+[data-layout="aurora"] [data-ask-panel] { border-radius: 20px; background: var(--tl-surface-raised); box-shadow: var(--au-shadow); }
+[data-layout="aurora"] [aria-label="Conversation history"] a[aria-current="page"],
+[data-layout="aurora"] [aria-label="Conversation history"] a { border-radius: 10px; }
+
+/* Ask's "thinking" line (US-261): the words shimmer while a turn streams; still when motion is reduced. */
+.ask-shimmer {
+  background: linear-gradient(90deg, var(--tl-ink-muted) 0%, var(--tl-ink) 50%, var(--tl-ink-muted) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ask-shimmer 1.8s linear infinite;
+}
+@keyframes ask-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .ask-shimmer { animation: none; color: var(--tl-ink-muted); background: none; } }

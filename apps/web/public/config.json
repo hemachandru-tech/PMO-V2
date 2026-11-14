@@ -1,0 +1,5 @@
+{
+  "oidcAuthority": "http://localhost:8080/realms/tela",
+  "oidcClientId": "tela-web",
+  "apiBaseUrl": "http://localhost:8000"
+}

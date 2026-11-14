@@ -1,0 +1,62 @@
+# OpenTelemetry Collector (US-010): traces from the services over OTLP → Tempo; container logs → Loki.
+receivers:
+  otlp:
+    protocols:
+      grpc: { endpoint: 0.0.0.0:4317 }
+  filelog:
+    # Docker json-file logs of the Tela containers (compose x-logging). Needs the host path mounted read-only.
+    include: [/var/lib/docker/containers/*/*-json.log]
+    include_file_path: true
+    operators:
+      - type: json_parser            # docker envelope: {"log": "...", "stream": "...", "time": "..."}
+        id: docker
+        timestamp: { parse_from: attributes.time, layout: '%Y-%m-%dT%H:%M:%S.%LZ' }
+      - type: move
+        from: attributes.log
+        to: body
+      - type: json_parser            # structlog line: service, level, request_id, trace_id, ...
+        id: app
+        parse_from: body
+        if: 'body matches "^\\{"'
+        on_error: send
+      - type: move
+        from: attributes.service
+        to: resource["service.name"]
+        if: 'attributes.service != nil'
+      - type: remove
+        field: attributes.log
+        if: 'attributes.log != nil'
+
+processors:
+  memory_limiter: { check_interval: 2s, limit_mib: 256 }
+  batch: {}
+  # Belt and braces behind tela_common.logging redaction (RULE-021): drop fields that must never be stored.
+  attributes/redact:
+    actions:
+      - { key: authorization, action: delete }
+      - { key: password, action: delete }
+      - { key: prompt, action: delete }
+      - { key: completion, action: delete }
+      - { key: rows, action: delete }
+  resource/logs:
+    attributes:
+      - { key: loki.resource.labels, value: "service.name", action: insert }
+      - { key: loki.attribute.labels, value: "level", action: insert }
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls: { insecure: true }
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
+    logs:
+      receivers: [filelog]
+      processors: [memory_limiter, attributes/redact, resource/logs, batch]
+      exporters: [otlphttp/loki]

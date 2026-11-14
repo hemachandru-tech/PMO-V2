@@ -1,0 +1,85 @@
+# Chat edit instructions with the layout ops a Creator should get on the synthetic TPG fixture (US-244, for the US-246
+# final gate). The canvas is pinned from Ask in this order into one section; each instruction is previewed against it
+# (nothing is applied, so every case starts from the same canvas).
+#
+# Written from the instruction, not from what the rules read today: about half use the rules' phrasings, the rest
+# other words. A preview is right when:
+#   ops      every op is in the preview, on that widget (by title) or filter (by label), with the given values:
+#              resize w / h; move to: top | bottom, or next_to: <title>; set_visual visual; set_limit limit
+#            and the preview has no other op (an op nobody asked for is a confident-wrong edit)
+#   refused  each widget has a refused change (alternative: true → with its one-click alternative, RULE-008)
+#   clarify  the preview asks which widget, offering at least these titles (and changes nothing)
+# Scored by tela_api.content.canvas_gold.score.
+version: 1
+canvas:
+  - {question: "Open projects by region", title: "Open by region", visual: ranked_bar}
+  - {question: "Open projects by current state", title: "Open by state", visual: ranked_bar}
+  - {question: "Open projects by priority", title: "Open by priority", visual: ranked_bar}
+  - {question: "How many open projects?", title: "Open projects", visual: figure}
+  - {question: "How many overdue go-lives are there?", title: "Overdue go-lives", visual: figure}
+cases:
+  # The rules' own phrasings.
+  - id: ce01
+    instruction: make open by region full width
+    expect: {ops: [{op: resize, widget: Open by region, w: 12}]}
+  - id: ce02
+    instruction: move open projects to the top
+    expect: {ops: [{op: move, widget: Open projects, to: top}]}
+  - id: ce03
+    instruction: remove open by priority
+    expect: {ops: [{op: remove, widget: Open by priority}]}
+  - id: ce04
+    instruction: show open by priority as columns
+    expect: {ops: [{op: set_visual, widget: Open by priority, visual: columns}]}
+  - id: ce05
+    instruction: top 5 in open by region
+    expect: {ops: [{op: set_limit, widget: Open by region, limit: 5}]}
+  - id: ce06
+    instruction: add a region filter
+    expect: {ops: [{op: add_filter, widget: Region}]}
+  - id: ce07
+    instruction: make open by region full width and show open by state as trend
+    expect:
+      ops: [{op: resize, widget: Open by region, w: 12}]
+      refused: [{widget: Open by state, alternative: true}]
+  - id: ce08
+    instruction: make the state chart half width; move overdue go-lives to the top
+    expect: {ops: [{op: resize, widget: Open by state, w: 6}, {op: move, widget: Overdue go-lives, to: top}]}
+  - id: ce09
+    instruction: turn the priority breakdown into a pie
+    expect: {ops: [{op: set_visual, widget: Open by priority, visual: donut}]}
+  - id: ce10
+    instruction: put the overdue count first
+    expect: {ops: [{op: move, widget: Overdue go-lives, to: top}]}
+  # Other words.
+  - id: ce11
+    instruction: stretch the regional breakdown across the whole page
+    expect: {ops: [{op: resize, widget: Open by region, w: 12}]}
+  - id: ce12
+    instruction: get rid of the priority chart
+    expect: {ops: [{op: remove, widget: Open by priority}]}
+  - id: ce13
+    instruction: only keep the five biggest regions
+    expect: {ops: [{op: set_limit, widget: Open by region, limit: 5}]}
+  - id: ce14
+    instruction: let people filter the page by priority
+    expect: {ops: [{op: add_filter, widget: Priority}]}
+  - id: ce15
+    instruction: swap the region bars for a donut and cut them to the top 3
+    expect: {ops: [{op: set_visual, widget: Open by region, visual: donut}, {op: set_limit, widget: Open by region, limit: 3}]}
+  - id: ce16
+    instruction: send open by priority to the bottom
+    expect: {ops: [{op: move, widget: Open by priority, to: bottom}]}
+  - id: ce17
+    instruction: place overdue go-lives beside open projects
+    expect: {ops: [{op: move, widget: Overdue go-lives, next_to: Open projects}]}
+  # Refusals and questions: the right answer changes nothing it shouldn't.
+  - id: ce18
+    instruction: show open projects as a trend
+    expect: {ops: [], refused: [{widget: Open projects}]}
+  - id: ce19
+    instruction: drop the budget table
+    expect: {ops: []}
+  - id: ce20
+    instruction: make the open chart wider
+    expect: {clarify: [Open by region, Open by state, Open by priority]}

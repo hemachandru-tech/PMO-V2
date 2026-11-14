@@ -1,0 +1,2409 @@
+version: 0.1.0
+status: draft
+tones: {}
+blueprints:
+- id: cio_portfolio
+  tab: CIO & Portfolio
+  title: CIO and portfolio view
+  dashboard: cio_portfolio
+  section: Executive
+  question: Where do the open projects sit by CIO and portfolio, and what status do their managers give them?
+  population: Open projects.
+  triggers:
+  - cio and portfolio
+  - cio portfolio
+  - portfolio view
+  - by cio and portfolio
+  kpis:
+  - open_projects
+  - in_delivery
+  - on_hold
+  - status_not_set
+  widgets:
+  - title: Reported status by portfolio
+    measure: open_projects
+    breakdowns:
+    - portfolio
+    - reported_status
+    visual: stacked_status
+  - title: Open projects by CIO
+    measure: open_projects
+    breakdowns:
+    - cio
+    visual: ranked_bar
+  table:
+    title: Open projects
+    measure: open_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_customcio
+    - tpg_portfolio
+    - tpg_overallkpiname
+    - tpg_projectstatusname
+    - tpg_lifecyclephase
+    - tpgmea_productdeploydate
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpg_portfolio
+      dir: asc
+    export_name: Open projects by CIO and portfolio
+  footnote: Open projects = Project Created, Active and On Hold. Reported status is the project manager's own; Not set is
+    counted apart and never as Green.
+- id: lifecycle
+  tab: Lifecycle
+  title: Project lifecycle
+  dashboard: lifecycle
+  section: Executive
+  question: How many open projects are in each lifecycle phase, and where are they stuck?
+  population: Open projects by lifecycle phase.
+  triggers:
+  - project lifecycle
+  - lifecycle
+  - phases
+  - by phase
+  kpis:
+  - open_projects
+  - in_delivery
+  - on_hold
+  - overdue_go_lives
+  widgets:
+  - title: Open projects by lifecycle phase
+    measure: open_projects
+    breakdowns:
+    - lifecycle_phase
+    visual: columns
+  - title: On hold by lifecycle phase
+    measure: on_hold
+    breakdowns:
+    - lifecycle_phase
+    visual: columns
+  table:
+    title: Open projects by phase
+    measure: open_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpg_lifecyclephase
+    - tpg_projectstatusname
+    - tpg_progress
+    - tpgmea_productdeploydate
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpg_lifecyclephase
+      dir: asc
+    export_name: Projects by lifecycle phase
+  footnote: Open projects = Project Created, Active and On Hold, in their lifecycle phase order.
+- id: critical_tasks
+  tab: Critical tasks
+  title: Critical tasks
+  dashboard: critical_tasks
+  section: Delivery
+  question: Which unfinished critical-path tasks are late, on the projects that have a plan?
+  population: Tasks of project plans (summary rows left out).
+  triggers:
+  - critical tasks
+  - critical path
+  - critical task
+  - task plan
+  - dependencies
+  kpis:
+  - projects_with_tasks
+  - plan_tasks
+  - critical_open_tasks
+  - critical_tasks_late
+  widgets:
+  - title: Late critical tasks by project
+    measure: critical_tasks_late
+    breakdowns:
+    - task_project
+    visual: ranked_bar
+  - title: Open critical tasks by project
+    measure: critical_open_tasks
+    breakdowns:
+    - task_project
+    visual: ranked_bar
+  table:
+    title: Open critical tasks
+    measure: critical_open_tasks
+    columns:
+    - tpg_project
+    - tpg_subject
+    - tpg_start
+    - tpg_finish
+    - tpg_progress
+    sort:
+      field: tpg_finish
+      dir: asc
+    export_name: Critical tasks
+  footnote: Only projects with a task plan. Open = progress below 100 %; late = finish date before the reporting date. Task
+    dependencies are not drawn as a network.
+- id: raid_summary
+  tab: RAID summary
+  title: RAID summary
+  dashboard: raid_summary
+  section: Delivery
+  question: What risks, issues, actions and decisions are open across the projects?
+  population: Open risks, issues, action items and decisions of every project.
+  triggers:
+  - raid
+  - raid summary
+  - risks and issues
+  - risk register
+  - issue register
+  - open risks
+  - action items
+  kpis:
+  - open_risks
+  - high_exposure_risks
+  - open_issues
+  - overdue_actions
+  - open_decisions
+  widgets:
+  - title: Open risks by category
+    measure: open_risks
+    breakdowns:
+    - risk_category
+    visual: ranked_bar
+  - title: Open issues by priority
+    measure: open_issues
+    breakdowns:
+    - issue_priority
+    visual: columns
+  - title: Open risks by CIO
+    measure: open_risks
+    breakdowns:
+    - cio
+    visual: ranked_bar
+  - title: Overdue action items by project
+    measure: overdue_actions
+    breakdowns:
+    - action_project
+    visual: ranked_bar
+  table:
+    title: Open risks
+    measure: open_risks
+    columns:
+    - tpg_project
+    - tpg_title
+    - tpg_categoryname
+    - tpg_costexposure
+    - tpg_duedate
+    - tpg_assignedto
+    sort:
+      field: tpg_costexposure
+      dir: desc
+    export_name: Open risks
+  footnote: Open = not Closed (risks, issues) or not Completed (actions, decisions); a blank state counts as open. High exposure
+    = likelihood × consequence 15 or more (draft). Cost exposure is what a risk could cost, not money spent.
+- id: cio_regional_demand
+  tab: CIO & regional demand
+  title: CIO and regional demand
+  dashboard: cio_regional_demand
+  section: Pipeline
+  question: Where does the demand come from, by CIO and region?
+  population: Open requests.
+  triggers:
+  - regional demand
+  - cio demand
+  - demand by cio
+  - demand by region
+  - cio and regional
+  kpis:
+  - open_demand
+  - estimated_cost_total
+  - requests_no_budget
+  widgets:
+  - title: Open requests by region
+    measure: open_demand
+    breakdowns:
+    - request_region
+    visual: ranked_bar
+  - title: Open requests by CIO
+    measure: open_demand
+    breakdowns:
+    - request_cio
+    visual: ranked_bar
+  - title: Estimated cost by region
+    measure: estimated_cost_total
+    breakdowns:
+    - request_region
+    visual: ranked_bar
+  footnote: Open requests = New, Active, On Hold and Return to Requester, by the request's own CIO and region (not the project's).
+- id: demand_budget_cost
+  tab: Budget & cost
+  title: Demand budget and cost
+  dashboard: demand_budget_cost
+  section: Pipeline
+  question: How do the requests' estimated costs compare with their approved budgets?
+  population: Requests with an estimate or a budget.
+  triggers:
+  - demand budget
+  - request budget
+  - demand cost
+  - estimated cost
+  - budget and cost
+  kpis:
+  - request_budget_total
+  - estimated_cost_total
+  - requests_no_budget
+  widgets:
+  - title: Estimated cost and budget by budget type
+    measure: request_budget_total
+    extra_measures:
+    - estimated_cost_total
+    breakdowns:
+    - request_budget_type
+    visual: paired_bars
+  table:
+    title: Requests with costs
+    measure: total_requests
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpgmea_budgettypename
+    - tpgmea_approvedbudgetvaluesusd
+    - tpg_requeststatename
+    sort:
+      field: tpgmea_approvedbudgetvaluesusd
+      dir: desc
+    export_name: Demand budget and cost
+  footnote: Estimated cost is the request's own estimate before approval, not money spent.
+- id: demand_effort
+  tab: Demand effort
+  title: Demand effort
+  dashboard: demand_effort
+  section: Pipeline
+  question: How much effort (man-days) does the demand need, and from whom?
+  population: Requests with an effort estimate.
+  triggers:
+  - demand effort
+  - effort
+  - man days
+  - mandays
+  kpis:
+  - effort_internal_md
+  - effort_external_md
+  - effort_saba_md
+  - requests_no_effort_estimate
+  widgets:
+  - title: Effort by CIO
+    measure: effort_internal_md
+    extra_measures:
+    - effort_external_md
+    breakdowns:
+    - request_cio
+    visual: paired_bars
+  - title: Effort by region
+    measure: effort_internal_md
+    extra_measures:
+    - effort_external_md
+    breakdowns:
+    - request_region
+    visual: paired_bars
+  - title: Internal effort by platform
+    measure: effort_internal_md
+    breakdowns:
+    - request_platform
+    visual: ranked_bar
+  - title: Internal effort by priority
+    measure: effort_internal_md
+    breakdowns:
+    - request_priority
+    visual: columns
+  table:
+    title: Requests and effort
+    measure: total_requests
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpgmea_customcio
+    - tpgmea_baplannedefforts
+    - tpgmea_totalinternalmds
+    - tpgmea_totalexternalmds
+    sort:
+      field: tpgmea_totalinternalmds
+      dir: desc
+    export_name: Demand effort
+  footnote: Effort in man-days as estimated on the request; requests without an estimate are counted apart.
+- id: demand_conversion
+  tab: Demand conversion
+  title: Demand conversion
+  dashboard: demand_conversion
+  section: Pipeline
+  question: How many requests become projects, and how fast?
+  population: All requests; converted = linked to a project.
+  triggers:
+  - demand conversion
+  - conversion
+  - converted
+  kpis:
+  - total_requests
+  - converted_requests
+  - conversion_rate
+  - avg_days_to_convert
+  widgets:
+  - title: Conversion rate by quarter raised
+    measure: conversion_rate
+    time:
+      ref: quarter_raised
+      grain: quarter
+    visual: columns
+  - title: Converted requests by region
+    measure: converted_requests
+    breakdowns:
+    - request_region
+    visual: ranked_bar
+  footnote: Converted = a project links to the request. Days to convert = request raised to project created.
+- id: cio_book_at_a_glance
+  title: The book at a glance
+  tab: The book at a glance
+  dashboard: audience_cio
+  question: How big is my book, what colours does it report, and how much has already slipped?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - book at a glance
+  - my book
+  - cio headline
+  - cio summary
+  - colours by cio
+  kpis:
+  - open_projects
+  - reported_green
+  - slipped_projects
+  - overdue_go_lives
+  - no_first_baseline
+  footnote: Open projects (current state Project Created, Active or On Hold). Reported status is the project's own colour;
+    Yellow is shown as Amber. Slip = finish date − first-baselined go-live; the finish date is the actual go-live if live,
+    otherwise the planned go-live, and the reporting date once the planned go-live has passed with no actual go-live.
+- id: cio_the_promise
+  title: The promise
+  tab: The promise
+  dashboard: audience_cio
+  question: Which open projects are later than the go-live they first committed to, and by how much?
+  population: Open projects (current state Project Created, Active or On Hold). Slip only where a first-baselined go-live
+    exists.
+  triggers:
+  - the promise
+  - first baseline
+  - slip against baseline
+  - slipped projects
+  - broken promises
+  kpis:
+  - slipped_projects
+  - slip_days_total
+  - no_first_baseline
+  - no_first_baseline_with_ib_pcr
+  footnote: Slip = finish date − first-baselined go-live; the finish date is the actual go-live if live, otherwise the planned
+    go-live, and the reporting date once the planned go-live has passed with no actual go-live. A project without a first-baselined
+    go-live has no slip value and is counted apart.
+- id: cio_promise_moved
+  title: How the promise moved, and who moved it
+  tab: Who moved the promise
+  dashboard: audience_cio
+  question: How much of the slip was agreed through change requests, by whom, and how much just happened?
+  population: Slipped open projects.
+  triggers:
+  - how the promise moved
+  - who moved the promise
+  - agreed vs silent
+  - silent slip
+  - agreed slip
+  kpis:
+  - slip_days_total
+  - slipped_with_pcr
+  - slipped_no_pcr
+  footnote: Slipped with a PCR = at least one PCR whose change type is not Initial Baseline, any approval status. Splitting
+    slip days into agreed and silent needs a calculator this pack does not have.
+- id: cio_green_really_green
+  title: Is Green really green?
+  tab: Is Green really green?
+  dashboard: audience_cio
+  question: Which projects report Green while their own records say otherwise?
+  population: Open projects reported Green.
+  triggers:
+  - is green really green
+  - false greens
+  - watermelon projects
+  - greens to challenge
+  - hard warnings
+  kpis:
+  - reported_green
+  - green_hard_warning
+  - overdue_go_lives
+  - named_blocker_projects
+  - overdue_action_projects
+  footnote: Hard warning = overdue; a blocker named on a status report in the last 30 days; an overdue action; a late unfinished
+    task flagged critical. Slipped with no PCR is shown on its own. The colour is never changed, only challenged.
+- id: cio_pressure
+  title: Where the pressure concentrates
+  tab: Where the pressure is
+  dashboard: audience_cio
+  question: Which delivery managers carry more trouble than their share of the book?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - where the pressure concentrates
+  - pressure
+  - share of trouble
+  - book vs trouble
+  kpis:
+  - open_projects
+  - trouble_projects
+  - overdue_go_lives
+  - reported_red_pct
+  footnote: Trouble = reported Red, or overdue (Active, planned go-live before the reporting date, no actual go-live). Shares
+    are whole-number percentages of all open projects and of all projects in trouble.
+- id: cio_reliability
+  title: How much of this can I rely on?
+  tab: Can I rely on it?
+  dashboard: audience_cio
+  question: How much of what my book shows is backed by evidence and filled-in data?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - how much can i rely on
+  - evidence coverage
+  - can i trust this
+  - data trust
+  kpis:
+  - status_not_set
+  - no_first_baseline
+  - no_report_60d
+  - missing_stage_date
+  - no_delivery_manager
+  footnote: Read from the fields the figures depend on; the nine evidence checks need a calculator this pack does not have.
+    A gap (no reported status, no first baseline, no report in 60 days, a missing stage date, no delivery manager) means the
+    figure that depends on it cannot be fully relied on.
+- id: cio_three_calls
+  title: Three projects to call about
+  tab: Three calls
+  dashboard: audience_cio
+  question: Which three projects should I call about this week?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - three projects to call about
+  - who should i call
+  - top 3 worst projects
+  - call list
+  kpis:
+  - trouble_projects
+  footnote: Trouble = reported Red, or overdue (Active, planned go-live before the reporting date, no actual go-live). The
+    severity score needs a calculator this pack does not have, so the list ranks projects in trouble.
+- id: pmo_attention_list
+  title: This week's attention list
+  tab: Attention list
+  dashboard: audience_pmo
+  question: Which open projects need the PMO this week, worst first?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - attention list
+  - this week's attention list
+  - watch list
+  - severity list
+  - projects needing attention
+  kpis:
+  - trouble_projects
+  - overdue_go_lives
+  - slipped_no_pcr
+  - named_blocker_projects
+  - no_report_60d
+  footnote: Trouble = reported Red, or overdue (Active, planned go-live before the reporting date, no actual go-live). The
+    severity score needs a calculator this pack does not have, so the list ranks projects in trouble.
+- id: pmo_change_control
+  title: Is change control working?
+  tab: Change control
+  dashboard: audience_pmo
+  question: When projects slip, do they raise a change request?
+  population: Slipped open projects; PCRs of open projects.
+  triggers:
+  - is change control working
+  - change control
+  - pcr discipline
+  - slipped without pcr
+  kpis:
+  - slipped_projects
+  - slipped_with_pcr
+  - slipped_fully_approved_pcr
+  - slipped_no_pcr
+  footnote: A PCR beyond the baseline is any change type other than Initial Baseline, whatever its approval status. Slip =
+    finish date − first-baselined go-live; the finish date is the actual go-live if live, otherwise the planned go-live, and
+    the reporting date once the planned go-live has passed with no actual go-live.
+- id: pmo_reporting
+  title: Are projects telling us what's happening?
+  tab: Reporting
+  dashboard: audience_pmo
+  question: How recently has each open project filed a status report?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - are projects telling us
+  - reporting cadence
+  - report age
+  - days since last report
+  - silent projects
+  kpis:
+  - no_report_60d
+  - status_reports_30d
+  - status_reports_7d
+  - stale_projects
+  footnote: No status report in 60 days = open projects with no report dated in the 60 days up to the reporting date, including
+    those that never reported. Not the same as stale (no edit for 30 days).
+- id: pmo_raid
+  title: Risks, issues and actions
+  tab: RAID
+  dashboard: audience_pmo
+  question: What is open in the risk, issue and action logs of open projects?
+  population: Risks, issues and actions of open projects.
+  triggers:
+  - risks issues and actions
+  - raid
+  - open raid
+  - overdue actions
+  kpis:
+  - open_risks
+  - open_issues
+  - open_actions
+  - overdue_actions
+  - open_actions_no_due_date
+  footnote: Open risk/issue = state Active (trimmed). Open action = not Completed or Deferred; blank counts as open. The chain
+    risk → issue → action is not recorded, and owners are never on the project team in the extract.
+- id: pmo_hygiene
+  title: Governance hygiene
+  tab: Hygiene
+  dashboard: audience_pmo
+  question: Which basic fields are missing on open projects?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - governance hygiene
+  - hygiene
+  - missing fields
+  - data gaps on projects
+  kpis:
+  - no_delivery_manager
+  - no_cio
+  - no_first_baseline
+  - missing_stage_date
+  - on_hold
+  footnote: Open projects (current state Project Created, Active or On Hold). Missing a stage date = any of the six S2–S7
+    planned end dates empty.
+- id: pmo_lifecycle
+  title: Where projects sit in the lifecycle
+  tab: Lifecycle
+  dashboard: audience_pmo
+  question: In which stage, by plan, are the open projects, and what colour do they report there?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - where projects sit in the lifecycle
+  - stage
+  - stages
+  - portfolio storyboard
+  - stage by status
+  kpis:
+  - open_projects
+  - staged_open_projects
+  - missing_stage_date
+  footnote: Read by the project's lifecycle phase. Stage from planned S2–S7 dates needs a calculator this pack does not have.
+- id: pmo_review_pack
+  title: The weekly list, ready for the review pack
+  tab: Review pack
+  dashboard: audience_pmo
+  question: Which ten projects go into this week's review pack?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - weekly list
+  - review pack
+  - top 10 projects
+  - weekly review
+  kpis:
+  - trouble_projects
+  footnote: Trouble = reported Red, or overdue (Active, planned go-live before the reporting date, no actual go-live). The
+    severity score needs a calculator this pack does not have, so the list ranks projects in trouble.
+- id: dm_my_book
+  title: My book today
+  tab: My book
+  dashboard: audience_delivery_manager
+  question: Where does each of my open projects stand today?
+  population: Open projects of the selected delivery manager.
+  triggers:
+  - my book today
+  - my projects
+  - my book
+  - my portfolio
+  kpis:
+  - open_projects
+  - overdue_go_lives
+  - slipped_projects
+  - trouble_projects
+  footnote: Filtered to one delivery manager. Dates are counted from the reporting date.
+- id: dm_coming_up
+  title: Coming up
+  tab: Coming up
+  dashboard: audience_delivery_manager
+  question: Which of my projects go live in the next 30, 60 and 90 days?
+  population: Open projects with no actual go-live.
+  triggers:
+  - coming up
+  - next go-lives
+  - upcoming go-lives
+  - due soon
+  kpis:
+  - go_lives_0_30
+  - go_lives_31_60
+  - go_lives_61_90
+  - go_lives_next_90
+  footnote: 'Planned go-lives only, never stage end dates. Windows: next 30 days, 31–60, 61–90.'
+- id: dm_whats_stuck
+  title: What's stuck
+  tab: What's stuck
+  dashboard: audience_delivery_manager
+  question: Which of my projects are blocked, behind on actions or late on a critical task?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - what's stuck
+  - stuck projects
+  - blocked projects
+  - blockers
+  kpis:
+  - named_blocker_projects
+  - overdue_action_projects
+  - late_critical_task_projects
+  footnote: Stuck = a named blocker on the latest status report, an overdue action, or a late task flagged critical.
+- id: dm_owe_pmo
+  title: What I owe the PMO
+  tab: What I owe
+  dashboard: audience_delivery_manager
+  question: What do I still owe the PMO on my projects?
+  population: Open projects of the selected delivery manager.
+  triggers:
+  - what i owe the pmo
+  - my to do
+  - missing updates
+  - owe the pmo
+  kpis:
+  - no_report_60d
+  - no_first_baseline
+  - open_actions_no_due_date
+  footnote: Owed = no status report in 60 days (or none); no first-baselined go-live; an action with no owner or no due date.
+- id: dm_team
+  title: My team and my work
+  tab: My team
+  dashboard: audience_delivery_manager
+  question: Who is on my projects, and what work is logged?
+  population: Timesheet lines of my open projects.
+  triggers:
+  - my team and my work
+  - my team
+  - team members
+  - who works on my projects
+  kpis:
+  - hours_logged
+  - hours_approved
+  - hours_awaiting_approval
+  - people_logging
+  footnote: Timesheet lines and task assignments mostly point into other projects (2 of 322 lines land on their own project),
+    so hours are read per line, not as effort against the plan.
+- id: dm_changed
+  title: What changed since last week
+  tab: What changed
+  dashboard: audience_delivery_manager
+  question: Which change requests and status reports arrived on my projects this week?
+  population: PCRs and status reports of open projects in the 7 days to the reporting date.
+  triggers:
+  - what changed since last week
+  - what changed
+  - this week
+  - recent changes
+  kpis:
+  - pcrs_last_7d
+  - status_reports_7d
+  footnote: Requested date (PCRs) and report date (status reports) from 7 days before the reporting date up to it. There is
+    no history of field changes, so edits to a project itself are not listed.
+- id: req_pipeline
+  title: The pipeline
+  tab: The pipeline
+  dashboard: audience_request
+  question: Where do requests stand, from New to Approved?
+  population: All requests.
+  triggers:
+  - the pipeline
+  - request pipeline
+  - requests by state
+  - intake pipeline
+  kpis:
+  - total_requests
+  - open_demand
+  - approved_for_delivery
+  - rejected_or_dropped
+  footnote: Open requests = New, Active, On Hold and Return to Requester. The request stage field is empty in the extract,
+    so requests are read by state.
+- id: req_speed
+  title: Speed to approval
+  tab: Speed to approval
+  dashboard: audience_request
+  question: How long does a request take to be approved, become a project and be committed?
+  population: Requests that a project names.
+  triggers:
+  - speed to approval
+  - request lead time
+  - time to approve
+  - darb lead time
+  kpis:
+  - request_to_darb_median
+  - darb_to_project_median
+  - project_to_baseline_median
+  - converted_requests
+  footnote: 'Averages, as a median cannot be computed on Dataverse yet. Request → DARB approval: client request date → DARB
+    approval date. DARB → project: → the project’s created date. Project → commitment: → the first-baselined go-live. Only
+    the 24 projects that name their request are measured.'
+  widgets:
+  - title: Average days per leg
+    measure: request_to_darb_median
+    extra_measures:
+    - darb_to_project_median
+    - project_to_baseline_median
+    visual: columns
+- id: req_conversion
+  title: Does an approved request become a project?
+  tab: Approved to project
+  dashboard: audience_request
+  question: Do approved requests turn into projects?
+  population: Requests in state Approved.
+  triggers:
+  - does an approved request become a project
+  - approved but no project
+  - approved requests
+  - request to project
+  kpis:
+  - approved_for_delivery
+  - approved_named_by_project
+  - approved_no_project
+  footnote: Named by a project = some project's request lookup points to the request; each request counts once. The request's
+    Project Link may connect some of the rest.
+- id: req_shaping_cost
+  title: The cost of shaping requests
+  tab: Shaping cost
+  dashboard: audience_request
+  question: How many hours go into requests before they become projects?
+  population: Request timesheet lines.
+  triggers:
+  - cost of shaping requests
+  - hours on requests
+  - request effort logged
+  - shaping cost
+  kpis:
+  - request_hours
+  - requests_with_hours
+  footnote: Hours = total hours on request timesheet lines. Assumes every team that shapes requests logs its time there.
+- id: req_stuck
+  title: Stuck and sent back
+  tab: Stuck and sent back
+  dashboard: audience_request
+  question: Which open requests are oldest, on hold or sent back?
+  population: Open requests.
+  triggers:
+  - stuck and sent back
+  - returned requests
+  - old requests
+  - oldest requests
+  kpis:
+  - open_demand
+  - oldest_open_request_days
+  - requests_on_hold_over_180
+  footnote: Age = days from the request's created date to the reporting date.
+- id: req_intake_list
+  title: The intake meeting list
+  tab: Intake list
+  dashboard: audience_request
+  question: Which open requests go to the next intake meeting?
+  population: Open requests.
+  triggers:
+  - intake meeting list
+  - intake list
+  - intake meeting
+  kpis:
+  - open_demand
+  - overdue_gates_total
+  footnote: Oldest first. Request priority is filled on few requests ("Not Analysed" on 20).
+- id: data_link_health
+  title: Link health
+  tab: Link health
+  dashboard: audience_data_owner
+  question: Do the records point to each other the way the model expects?
+  population: All projects and requests, with their tasks, timesheets and change requests.
+  triggers:
+  - link health
+  - broken links
+  - links between tables
+  - timesheet links
+  kpis:
+  - total_projects
+  - projects_with_tasks
+  - projects_with_time
+  - projects_with_pcr
+  - approved_no_project
+  footnote: A link counts when the child record names the project or request. Timesheet lines mostly point into other projects
+    (2 of 322 lines land on their own project), so hours are read per line. Approved requests with no project may still be
+    connected through the request’s Project Link.
+- id: data_evidence_coverage
+  title: Evidence coverage
+  tab: Evidence coverage
+  dashboard: audience_data_owner
+  question: How many open projects carry the records the evidence checks rely on?
+  population: Open projects (current state Project Created, Active or On Hold).
+  triggers:
+  - evidence coverage
+  - evidence checks
+  - nine checks
+  kpis:
+  - open_projects
+  - staged_open_projects
+  - no_first_baseline
+  - status_not_set
+  - no_report_60d
+  footnote: 'The nine evidence checks need a calculator this pack does not have, so coverage is read from the fields they
+    rely on: a stage schedule, a first-baselined go-live, a reported status and a status report in the last 60 days.'
+- id: data_model_usage
+  title: What the model is built for, and what is used
+  tab: Model usage
+  dashboard: audience_data_owner
+  question: Which tables of the model hold records, and which are empty?
+  population: Every record in each Dataverse table of the pack.
+  triggers:
+  - what the model is built for
+  - table usage
+  - unused tables
+  - model usage
+  kpis:
+  - tpg_project_count
+  - tpg_projectrequests_count
+  - tpg_projecttask_count
+  - tpg_timesheet_count
+  - tpg_statusreport_count
+  footnote: Counts every record in the table, in any state. A table with 0 records is built into the model but not used.
+- id: data_trend
+  title: Is it getting better?
+  tab: Getting better?
+  dashboard: audience_data_owner
+  question: Are projects keeping their records more up to date?
+  population: Open projects and their status reports and change requests.
+  triggers:
+  - is it getting better
+  - data quality trend
+  kpis:
+  - status_reports_30d
+  - status_reports_7d
+  - no_report_60d
+  - stale_projects
+  - pcrs_last_7d
+  footnote: Each figure is read at the reporting date. A trend appears only by comparing reporting dates; the extract holds
+    no history of field changes.
+- id: data_trust
+  title: What each dashboard can be trusted for today
+  tab: What to trust
+  dashboard: audience_data_owner
+  question: Which figures on each dashboard can be trusted today?
+  population: Open projects (current state Project Created, Active or On Hold) and all projects for budget codes.
+  triggers:
+  - what can be trusted
+  - dashboard trust
+  kpis:
+  - status_not_set
+  - no_first_baseline
+  - no_delivery_manager
+  - missing_stage_date
+  - budget_code_compliance_pct
+  footnote: 'Each gap weakens the figures that read the field: reported status for the colour views, first baseline for slip,
+    delivery manager for the filters, stage dates for the lifecycle, budget code for finance.'
+- id: critical_path
+  title: Critical path
+  tab: Critical path
+  dashboard: critical_path
+  question: Do the task dependencies form a critical path on the projects that have a plan?
+  population: Tasks of project plans (summary rows left out).
+  triggers:
+  - critical path network
+  - task dependency network
+  - dependency chain
+  kpis:
+  - projects_with_tasks
+  - plan_tasks
+  - critical_open_tasks
+  - critical_tasks_late
+  footnote: No project has a dependency between two of its own tasks, so no network can be drawn; is critical is read as the
+    PM sets it. Open = progress below 100 %; late = finish date before the reporting date.
+- id: projects_overview
+  tab: Overview
+  title: Projects overview
+  dashboard: projects
+  section: Overview
+  question: How is the open portfolio doing, and what needs attention first?
+  population: Open projects (Project Created, Active, On Hold).
+  triggers:
+  - projects overview
+  - portfolio overview
+  - portfolio summary
+  - overview
+  kpis:
+  - in_delivery
+  - overdue_go_lives
+  - net_forecast_variance
+  - key_priorities_attention
+  widgets:
+  - title: Budget position by portfolio
+    measure: approved_budget_total
+    extra_measures:
+    - forecast_cost_total
+    breakdowns:
+    - portfolio
+    visual: paired_bars
+  - title: Reported status by region
+    measure: open_projects
+    breakdowns:
+    - region
+    - reported_status
+    visual: stacked_status
+  table:
+    title: Open projects
+    measure: open_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_customcio
+    - tpg_portfolio
+    - tpg_projectstatusname
+    - tpg_lifecyclephase
+    - tpgmea_productdeploydate
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_productdeploydate
+      dir: asc
+    export_name: Open projects
+  footnote: Open projects = Project Created, Active and On Hold. Forecast cost is the project’s Total Forecast, the estimated
+    cost at completion, not money spent; budget totals cover projects with a comparable budget and forecast.
+- id: portfolio_status
+  tab: Portfolio status
+  title: Portfolio status (calculated health)
+  dashboard: portfolio_status
+  section: Executive
+  question: What does Tela's calculated health say about the open projects, next to what managers report?
+  population: Open projects; calculated health from schedule, cost, progress and the issue KPI.
+  triggers:
+  - portfolio status
+  - calculated health
+  - health score
+  - health scores
+  kpis:
+  - avg_health_score
+  - health_green
+  - health_amber
+  - health_red
+  - health_insufficient
+  widgets:
+  - title: Calculated health
+    measure: open_projects
+    breakdowns:
+    - calculated_health
+    visual: donut
+  - title: Reported status
+    measure: open_projects
+    breakdowns:
+    - reported_status
+    visual: donut
+  - title: Schedule KPI by portfolio
+    measure: open_projects
+    breakdowns:
+    - portfolio
+    - schedule_status
+    visual: stacked_status
+  table:
+    title: Open projects and their status
+    measure: open_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpg_portfolio
+    - tpg_overallkpiname
+    - tpg_schedulekpiname
+    - tpg_costkpiname
+    - tpg_issuekpiname
+    - tpg_progress
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_pprojectnumber
+      dir: asc
+    export_name: Portfolio status
+  footnote: 'Calculated health from the schedule, cost and issues KPIs: Green when all three are Green, Red when any is Red,
+    Amber otherwise; a blank KPI is Insufficient data, never Green. Reported status is the project manager’s own and is shown
+    apart. The 0–100 score needs a calculator this pack does not have.'
+- id: strategic_initiatives
+  tab: Strategic initiatives
+  title: Strategic initiatives
+  dashboard: strategic_initiatives
+  section: Executive
+  question: How are the key priority projects doing?
+  population: Open projects flagged as key priority projects.
+  triggers:
+  - strategic initiatives
+  - strategic
+  - key priority
+  - key priorities
+  filters:
+  - ref: key_priority_project
+    op: '='
+    values:
+    - true
+  kpis:
+  - title: Key priority projects
+    measure: open_projects
+  - key_priorities_attention
+  - title: Key priorities overdue
+    measure: overdue_go_lives
+  - title: Key priorities in delivery
+    measure: in_delivery
+  widgets:
+  - title: Reported status of key priorities
+    measure: open_projects
+    breakdowns:
+    - reported_status
+    visual: donut
+  - title: Key priorities by priority
+    measure: open_projects
+    breakdowns:
+    - priority
+    visual: columns
+  table:
+    title: Key priority projects
+    measure: open_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_priorityname
+    - tpg_overallkpiname
+    - tpg_progress
+    - tpgmea_estimatedtcvusd
+    - tpgmea_productdeploydate
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_estimatedtcvusd
+      dir: desc
+    export_name: Key priority projects
+  footnote: Key priority projects that are open (Project Created, Active, On Hold). Needing attention = schedule, cost or
+    issues KPI Red or Amber.
+- id: exco_priorities
+  tab: ExCo priorities
+  title: ExCo priorities
+  dashboard: exco_priorities
+  section: Executive
+  question: What value and exposure do the key priority projects carry for the executive committee?
+  population: Open key priority projects, with their open risks.
+  triggers:
+  - exco priorities
+  - exco
+  - executive committee
+  - high exposure
+  - key priority exposure
+  filters:
+  - ref: key_priority_project
+    op: '='
+    values:
+    - true
+  kpis:
+  - title: Key priority projects
+    measure: open_projects
+  - title: Estimated TCV
+    measure: tcv_open_total
+  - title: Forecast cost
+    measure: forecast_cost_total
+  - key_priorities_attention
+  - title: High-exposure risks
+    measure: high_exposure_risks
+  widgets:
+  - title: Calculated health of key priorities
+    measure: open_projects
+    breakdowns:
+    - calculated_health
+    visual: donut
+  - title: Estimated TCV by region
+    measure: tcv_open_total
+    breakdowns:
+    - region
+    visual: ranked_bar
+  - title: Open risks by project
+    measure: open_risks
+    breakdowns:
+    - risk_project
+    visual: ranked_bar
+  table:
+    title: High-exposure risks on key priorities
+    measure: high_exposure_risks
+    columns:
+    - tpg_project
+    - tpg_title
+    - tpg_categoryname
+    - tpg_costexposure
+    - tpg_duedate
+    - tpg_assignedto
+    sort:
+      field: tpg_project
+      dir: desc
+    export_name: ExCo priority risks
+  footnote: Open key priority projects (Project Created, Active, On Hold). TCV is an estimate of contract value; forecast
+    cost (Total Forecast) is not money spent. High exposure = likelihood × consequence 15 or more (draft threshold).
+- id: delivery_heatmap
+  tab: Delivery heatmap
+  title: Delivery heatmap
+  dashboard: delivery_heatmap
+  section: Executive
+  question: Where do Red and Amber projects concentrate, by region and by portfolio and phase?
+  population: Open projects.
+  triggers:
+  - delivery heatmap
+  - heatmap
+  - heat map
+  - heat grid
+  kpis:
+  - open_projects
+  - reported_red_pct
+  - reported_amber_pct
+  - status_not_set
+  widgets:
+  - title: Region by reported status
+    measure: open_projects
+    breakdowns:
+    - region
+    - reported_status
+    visual: heat_grid
+  - title: Portfolio by lifecycle phase
+    measure: open_projects
+    breakdowns:
+    - portfolio
+    - lifecycle_phase
+    visual: heat_grid
+  table:
+    title: Open projects
+    measure: open_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_regionname
+    - tpg_portfolio
+    - tpg_overallkpiname
+    - tpg_lifecyclephase
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_regionname
+      dir: asc
+    export_name: Delivery heatmap projects
+  footnote: Open projects = Project Created, Active and On Hold. Select a cell to filter the table. Reported Green/Amber/Red
+    % leave Not set out of the denominator.
+- id: regional_portfolio
+  tab: Regional portfolio
+  title: Regional portfolio
+  dashboard: regional_portfolio
+  section: Executive
+  question: How do the regions compare on volume, budget and overdue go-lives?
+  population: Open projects by region.
+  triggers:
+  - regional portfolio
+  - regional view
+  - regional
+  kpis:
+  - open_projects
+  - overdue_go_lives
+  - approved_budget_total
+  - forecast_cost_total
+  widgets:
+  - title: Open projects by region
+    measure: open_projects
+    breakdowns:
+    - region
+    visual: ranked_bar
+  - title: Overdue go-lives by region
+    measure: overdue_go_lives
+    breakdowns:
+    - region
+    visual: ranked_bar
+  - title: Reported status by region
+    measure: open_projects
+    breakdowns:
+    - region
+    - reported_status
+    visual: stacked_status
+  - title: Budget and forecast by region
+    measure: approved_budget_total
+    extra_measures:
+    - forecast_cost_total
+    breakdowns:
+    - region
+    visual: paired_bars
+  footnote: Open projects = Project Created, Active and On Hold. Forecast cost (Total Forecast) is an estimate at completion,
+    not money spent.
+- id: portfolio_health
+  tab: Portfolio health
+  title: Portfolio health
+  dashboard: portfolio_health
+  section: Executive
+  question: Which CIOs and portfolios score lowest on calculated health, and which projects to watch?
+  population: Open projects; calculated health.
+  triggers:
+  - portfolio health
+  - health by cio
+  - health by portfolio
+  - watch list
+  - low score
+  kpis:
+  - avg_health_score
+  - health_red
+  - health_insufficient
+  - key_priorities_attention
+  widgets:
+  - title: Average calculated health by CIO
+    measure: avg_health_score
+    breakdowns:
+    - cio
+    visual: ranked_bar
+  - title: Average calculated health by portfolio
+    measure: avg_health_score
+    breakdowns:
+    - portfolio
+    visual: ranked_bar
+  - title: Calculated health by portfolio
+    measure: open_projects
+    breakdowns:
+    - portfolio
+    - calculated_health
+    visual: heat_grid
+  footnote: Calculated health from the schedule, cost and issues KPIs (all Green = Green, any Red = Red, otherwise Amber).
+    Insufficient data is shown apart, never as Green.
+- id: baselining
+  tab: Baselining
+  title: Baselining compliance
+  dashboard: baselining
+  section: Governance
+  question: Do the projects past Planning have a baseline go-live date?
+  population: Open projects past the Planning phase.
+  triggers:
+  - baselining compliance
+  - baselining
+  - baseline compliance
+  - baselined
+  - baseline
+  kpis:
+  - baselining_in_scope
+  - baselined
+  - baselining_compliance_pct
+  widgets:
+  - title: Baselining compliance
+    measure: baselined
+    extra_measures:
+    - baselining_in_scope
+    visual: meter
+  - title: Past planning and baselined by CIO
+    measure: baselining_in_scope
+    extra_measures:
+    - baselined
+    breakdowns:
+    - cio
+    visual: paired_bars
+  table:
+    title: Projects past planning
+    measure: baselining_in_scope
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_customcio
+    - tpg_lifecyclephase
+    - tpgmea_firstbaselinedpdd
+    - tpgmea_productdeploydate
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_firstbaselinedpdd
+      dir: asc
+    export_name: Baselining compliance
+  footnote: A baseline (first baselined deployment date) is expected once a project passes Planning. Open projects only.
+- id: budget_code
+  tab: Budget code
+  title: Budget code compliance
+  dashboard: budget_code
+  section: Governance
+  question: Does every project carry a budget code?
+  population: All projects, in any state.
+  triggers:
+  - budget code compliance
+  - budget code
+  - budget codes
+  kpis:
+  - total_projects
+  - budget_code_set
+  - budget_code_compliance_pct
+  widgets:
+  - title: Budget code compliance
+    measure: budget_code_set
+    extra_measures:
+    - total_projects
+    visual: meter
+  - title: With a budget code by budget type
+    measure: total_projects
+    extra_measures:
+    - budget_code_set
+    breakdowns:
+    - budget_type
+    visual: paired_bars
+  - title: With a budget code by CIO
+    measure: total_projects
+    extra_measures:
+    - budget_code_set
+    breakdowns:
+    - cio
+    visual: paired_bars
+  table:
+    title: Projects and budget codes
+    measure: total_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_customcio
+    - tpgmea_budgettypename
+    - tpgmea_budgetcode
+    - tpg_projectstatusname
+    sort:
+      field: tpgmea_budgetcode
+      dir: asc
+    export_name: Budget code compliance
+  footnote: Every project in any state should carry a budget code. Blank codes show as Not set.
+- id: pm_assignment
+  tab: PM assignment
+  title: PM assignment compliance
+  dashboard: pm_assignment
+  section: Governance
+  question: Does every project in delivery have a delivery manager?
+  population: Projects in delivery (Active).
+  triggers:
+  - pm assignment
+  - project manager assignment
+  - unassigned
+  - without a pm
+  - no pm
+  kpis:
+  - in_delivery
+  - pm_assigned
+  - pm_assignment_compliance_pct
+  widgets:
+  - title: PM assignment compliance
+    measure: pm_assigned
+    extra_measures:
+    - in_delivery
+    visual: meter
+  - title: In delivery and assigned by lifecycle phase
+    measure: in_delivery
+    extra_measures:
+    - pm_assigned
+    breakdowns:
+    - lifecycle_phase
+    visual: paired_bars
+  - title: In delivery and assigned by CIO
+    measure: in_delivery
+    extra_measures:
+    - pm_assigned
+    breakdowns:
+    - cio
+    visual: paired_bars
+  table:
+    title: Projects in delivery
+    measure: in_delivery
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_customcio
+    - tpg_lifecyclephase
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_pdeliverymanager
+      dir: asc
+    export_name: PM assignment
+  footnote: In delivery = current state Active. A project counts as assigned when it has a delivery manager.
+- id: pcr_compliance
+  tab: PCR compliance
+  title: PCR compliance
+  dashboard: pcr_compliance
+  section: Governance
+  question: How many project change requests are raised, why, and are they approved?
+  population: Project change requests (PCRs) of every project, any approval stage.
+  triggers:
+  - pcr compliance
+  - pcr
+  - pcrs
+  - project change requests
+  - change control
+  kpis:
+  - total_pcrs
+  - pcrs_approved
+  - pcrs_pending
+  - pcrs_golive_change
+  - pcr_additional_cost
+  widgets:
+  - title: PCR approval
+    measure: pcrs_approved
+    extra_measures:
+    - total_pcrs
+    visual: meter
+    note: fully approved
+  - title: PCRs by reason
+    measure: total_pcrs
+    breakdowns:
+    - pcr_reason
+    visual: ranked_bar
+  - title: PCRs by approval stage
+    measure: total_pcrs
+    breakdowns:
+    - pcr_approval
+    visual: columns
+  - title: PCRs by CIO
+    measure: total_pcrs
+    breakdowns:
+    - cio
+    visual: ranked_bar
+  table:
+    title: PCRs
+    measure: total_pcrs
+    columns:
+    - tpgmea_pcrnumber
+    - tpg_project
+    - tpgmea_reasonforpcrname
+    - tpg_changetypename
+    - tpg_approvalname
+    - tpgmea_changeinplannedgolivedate
+    - tpgmea_additionalcostusd
+    - tpg_requesteddate
+    sort:
+      field: tpg_requesteddate
+      dir: desc
+    export_name: PCRs
+  footnote: Every PCR on record, including initial-baseline PCRs. Awaiting approval = not yet requested, in progress, or approved
+    by the RM or delivery manager only. Additional cost is an estimate on the PCR, not money spent.
+- id: on_hold_aging
+  tab: On-hold aging
+  title: On-hold aging
+  dashboard: on_hold_aging
+  section: Governance
+  question: How long have projects been on hold, and why?
+  population: Projects on hold (current state On Hold).
+  triggers:
+  - on hold aging
+  - on-hold aging
+  - on hold
+  - hold aging
+  - held projects
+  kpis:
+  - on_hold
+  - on_hold_over_90
+  - longest_on_hold_days
+  - avg_on_hold_days
+  widgets:
+  - title: Time on hold
+    measure: on_hold
+    breakdowns:
+    - on_hold_aging
+    visual: columns
+  - title: On hold by reason
+    measure: on_hold
+    breakdowns:
+    - hold_reason
+    visual: ranked_bar
+  table:
+    title: Projects on hold
+    measure: on_hold
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_projectputonholddate
+    - tpgmea_projectputonholdreason
+    - tpg_lifecyclephase
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_projectputonholddate
+      dir: asc
+    export_name: Projects on hold
+  footnote: Time on hold counts from the on-hold date to the reporting date. Projects on hold without an on-hold date show
+    as Not set.
+- id: closure_compliance
+  tab: Closure
+  title: Closure compliance
+  dashboard: closure_compliance
+  section: Governance
+  question: Have the completed projects been formally closed?
+  population: Projects in current state Completed.
+  triggers:
+  - closure compliance
+  - closure
+  - project closure
+  - handover
+  - warranty
+  kpis:
+  - completed_projects
+  - closure_approved
+  - closure_compliance_pct
+  - closure_in_approval
+  - closure_overdue
+  widgets:
+  - title: Closure compliance
+    measure: closure_approved
+    extra_measures:
+    - completed_projects
+    visual: meter
+    note: closure approved
+  - title: Completed projects by closure approval
+    measure: completed_projects
+    breakdowns:
+    - closure_approval
+    visual: columns
+  - title: Completed and closed by CIO
+    measure: completed_projects
+    extra_measures:
+    - closure_approved
+    breakdowns:
+    - cio
+    visual: paired_bars
+  table:
+    title: Completed projects
+    measure: completed_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpgmea_customcio
+    - tpgmea_projectimpdate
+    - tpgmea_warrantyandclosurestagedate
+    - tpgmea_closeapprovalstatus
+    - tpgmea_projectclosuredate
+    sort:
+      field: tpgmea_warrantyandclosurestagedate
+      dir: asc
+    export_name: Closure compliance
+  footnote: Completed = current state Completed. Closure is compliant when the closure approval is Approved. Closure overdue
+    = not approved and the warranty and closure stage planned end is before the reporting date (draft rule).
+- id: status_reporting_compliance
+  tab: Status reporting
+  title: Status reporting compliance
+  dashboard: status_reporting_compliance
+  section: Governance
+  question: Do the projects in delivery send status reports, and how recent is the latest one?
+  population: Projects in delivery (Active) and their status reports.
+  triggers:
+  - status reporting
+  - status report compliance
+  - status reports
+  - weekly status
+  kpis:
+  - status_reporting_scope
+  - reported_last_30d
+  - status_reporting_compliance_pct
+  - status_reports_30d
+  - days_since_latest_report
+  widgets:
+  - title: Reported in the last 30 days
+    measure: reported_last_30d
+    extra_measures:
+    - status_reporting_scope
+    visual: meter
+    note: with a status report in the last 30 days
+  - title: Expected and reported by CIO
+    measure: status_reporting_scope
+    extra_measures:
+    - reported_last_30d
+    breakdowns:
+    - cio
+    visual: paired_bars
+  - title: Status reports by month
+    measure: status_reports_total
+    time:
+      ref: status_report_date
+      grain: month
+    visual: columns
+  table:
+    title: Status reports in the last 30 days
+    measure: status_reports_30d
+    columns:
+    - tpg_project
+    - tpg_reportdate
+    - tpg_title
+    - tpg_submittedto
+    sort:
+      field: tpg_reportdate
+      dir: desc
+    export_name: Recent status reports
+  footnote: Projects in delivery = current state Active. Reported = at least one status report dated in the 30 days up to
+    the reporting date (draft rule). A record edit is not a status report.
+- id: upcoming_go_lives
+  tab: Upcoming go-lives
+  title: Upcoming go-lives
+  dashboard: upcoming_go_lives
+  section: Delivery
+  question: Which projects go live in the next 30, 60 and 90 days, and are any at risk?
+  population: Open, undeployed projects with a planned go-live on or after the reporting date.
+  triggers:
+  - upcoming go lives
+  - upcoming
+  - go live horizon
+  - next go lives
+  - due in
+  kpis:
+  - go_lives_0_30
+  - go_lives_31_60
+  - go_lives_61_90
+  - schedule_risk
+  widgets:
+  - title: Go-live horizon
+    measure: open_projects
+    breakdowns:
+    - go_live_horizon
+    visual: columns
+  - title: Go-lives in the next 30 days by portfolio
+    measure: go_lives_0_30
+    breakdowns:
+    - portfolio
+    visual: ranked_bar
+  - title: Go-lives in the next 30 days by project manager
+    measure: go_lives_0_30
+    breakdowns:
+    - project_manager
+    visual: ranked_bar
+  table:
+    title: Go-lives in the next 30 days
+    measure: go_lives_0_30
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpg_portfolio
+    - tpgmea_productdeploydate
+    - tpg_schedulekpiname
+    - tpg_progress
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_productdeploydate
+      dir: asc
+    export_name: Upcoming go-lives
+  footnote: Horizons count from the reporting date by planned deployment date. Schedule risk is the project manager's Red
+    or Amber schedule KPI.
+- id: delayed_projects
+  tab: Delayed projects
+  title: Delayed projects
+  dashboard: delayed_projects
+  section: Delivery
+  question: Which projects are past their planned go-live, by how much, and where?
+  population: Projects in delivery (Active) with a planned go-live before the reporting date and no actual deployment.
+  triggers:
+  - delayed projects
+  - delayed
+  - overdue projects
+  - overdue go lives
+  - overdue
+  - late projects
+  - late
+  - past due
+  - slipped
+  - behind schedule
+  kpis:
+  - overdue_go_lives
+  - overdue_over_90
+  - most_overdue_days
+  - rag_contradictions
+  widgets:
+  - title: Days past planned go-live
+    measure: overdue_go_lives
+    breakdowns:
+    - lateness_bucket
+    visual: columns
+  - title: Delayed by portfolio
+    measure: overdue_go_lives
+    breakdowns:
+    - portfolio
+    visual: ranked_bar
+  - title: Delayed by delivery manager
+    measure: overdue_go_lives
+    breakdowns:
+    - delivery_manager
+    visual: ranked_bar
+  table:
+    title: Delayed projects
+    measure: overdue_go_lives
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpg_portfolio
+    - tpgmea_productdeploydate
+    - tpg_schedulekpiname
+    - tpg_lifecyclephase
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_productdeploydate
+      dir: asc
+    export_name: Delayed projects
+  footnote: 'Overdue = in delivery, planned go-live before the reporting date and not deployed; due on the reporting date
+    is not overdue. On Hold and Project Created are never overdue. RAG contradictions: schedule Green but 15+ days overdue,
+    or Red with go-live 30+ days away.'
+- id: stage_completion
+  tab: Stage completion
+  title: Stage completion
+  dashboard: stage_completion
+  section: Delivery
+  question: Which stages should the open projects have finished by now, by their stage plan?
+  population: Open projects with planned stage end dates.
+  triggers:
+  - stage completion
+  - stages
+  - stage plan
+  - stage ends
+  - bottleneck
+  kpis:
+  - staged_open_projects
+  - planning_end_passed
+  - build_end_passed
+  - implementation_end_passed
+  - warranty_end_passed
+  widgets:
+  - title: Planned stage ends passed
+    measure: planning_end_passed
+    extra_measures:
+    - design_end_passed
+    - build_end_passed
+    - test_end_passed
+    visual: table
+  - title: Build end passed by CIO
+    measure: build_end_passed
+    breakdowns:
+    - cio
+    visual: ranked_bar
+  - title: Implementation end passed by lifecycle phase
+    measure: implementation_end_passed
+    breakdowns:
+    - lifecycle_phase
+    visual: columns
+  table:
+    title: Open projects and their stage plan
+    measure: staged_open_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpg_lifecyclephase
+    - tpgmea_planningstagedate
+    - tpgmea_buildenddate
+    - tpgmea_testenddate
+    - tpgmea_implementationenddate
+    - tpgmea_warrantyandclosurestagedate
+    sort:
+      field: tpgmea_implementationenddate
+      dir: asc
+    export_name: Stage plan
+  footnote: Stage ends are planned dates; the source records no actual stage completion, so a passed planned end means the
+    stage should be finished by the reporting date, not that it is.
+- id: schedule_variance
+  tab: Schedule variance
+  title: Schedule variance
+  dashboard: schedule_variance
+  section: Delivery
+  question: How close to plan did deployed projects go live?
+  population: Deployed projects (actual deployment date recorded).
+  triggers:
+  - schedule variance
+  - deployed on time
+  - deployment variance
+  - on time delivery
+  kpis:
+  - deployed_projects
+  - deployed_on_time
+  - median_schedule_variance
+  - deployed_over_60_late
+  widgets:
+  - title: Schedule variance
+    measure: deployed_projects
+    breakdowns:
+    - schedule_variance_bucket
+    visual: columns
+  - title: Average schedule variance by portfolio
+    measure: median_schedule_variance
+    breakdowns:
+    - portfolio
+    visual: ranked_bar
+  table:
+    title: Deployed projects
+    measure: deployed_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpg_portfolio
+    - tpgmea_productdeploydate
+    - tpgmea_projectimpdate
+    - tpgmea_pdeliverymanager
+    sort:
+      field: tpgmea_projectimpdate
+      dir: desc
+    export_name: Deployed projects
+  footnote: Variance = actual minus planned deployment date, in days; negative is early.
+- id: update_compliance
+  tab: Update compliance
+  title: Update compliance
+  dashboard: update_compliance
+  section: Delivery
+  question: Which projects in delivery have not been updated for 30 days or more?
+  population: Projects in delivery (Active).
+  triggers:
+  - update compliance
+  - stale projects
+  - stale
+  - not updated
+  - freshness
+  kpis:
+  - in_delivery
+  - stale_projects
+  widgets:
+  - title: Stale projects
+    measure: stale_projects
+    extra_measures:
+    - in_delivery
+    visual: meter
+    note: not updated for 30 days or more
+  - title: Stale projects by project manager
+    measure: stale_projects
+    breakdowns:
+    - project_manager
+    visual: ranked_bar
+  table:
+    title: Stale projects
+    measure: stale_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - modifiedon
+    - tpg_lifecyclephase
+    - tpgmea_pdeliverymanager
+    sort:
+      field: modifiedon
+      dir: asc
+    export_name: Stale projects
+  footnote: Stale = in delivery and last modified more than 30 days before the reporting date. A recent edit is not a status
+    report.
+- id: resource_utilisation
+  tab: Resource utilisation
+  title: Resource utilisation
+  dashboard: resource_utilisation
+  section: Delivery
+  question: Where is time being logged, and how much is still waiting for approval?
+  population: Timesheet lines of every project.
+  triggers:
+  - resource utilisation
+  - resource utilization
+  - timesheets
+  - timesheet
+  - logged hours
+  - hours logged
+  kpis:
+  - hours_logged
+  - hours_approved
+  - hours_awaiting_approval
+  - people_logging
+  - projects_with_time
+  widgets:
+  - title: Hours logged by project
+    measure: hours_logged
+    breakdowns:
+    - timesheet_project
+    visual: ranked_bar
+  - title: Hours logged by person
+    measure: hours_logged
+    breakdowns:
+    - timesheet_person
+    visual: ranked_bar
+  - title: Hours by timesheet status
+    measure: hours_all
+    breakdowns:
+    - timesheet_status
+    visual: donut
+  table:
+    title: Timesheet lines
+    measure: hours_all
+    columns:
+    - tpg_project
+    - tpg_submitter
+    - tpg_task
+    - tpg_statusname
+    - tpg_total
+    - createdon
+    sort:
+      field: createdon
+      dir: desc
+    export_name: Timesheets
+  callout:
+    title: Logged time, not utilisation
+    text: The source records no resource capacity (hours per day), so this screen shows hours logged, not a utilisation percentage.
+    level: info
+  footnote: Logged = Approved or Submitted timesheet lines; drafts and rejected lines are left out. No capacity is recorded,
+    so there is no utilisation %.
+- id: capex_budget
+  tab: CAPEX budget vs forecast
+  title: CAPEX budget vs forecast cost
+  dashboard: capex_budget
+  section: Finance
+  question: How does the forecast cost (EAC) of CAPEX projects compare with their approved budget?
+  population: CAPEX projects with a comparable approved budget and forecast.
+  triggers:
+  - capex
+  - budget vs forecast
+  - forecast vs budget
+  - budget and forecast
+  - forecast cost
+  - eac
+  - finance
+  - financial
+  - budget
+  - spend
+  - cost
+  filters:
+  - ref: budget_type
+    op: '='
+    values:
+    - CAPEX
+  kpis:
+  - approved_budget_total
+  - forecast_cost_total
+  - net_forecast_variance
+  - over_budget
+  - forecast_over_budget_15
+  widgets:
+  - title: Approved budget and forecast cost by portfolio
+    measure: approved_budget_total
+    extra_measures:
+    - forecast_cost_total
+    breakdowns:
+    - portfolio
+    visual: paired_bars
+  - title: Forecast vs budget spread
+    measure: total_projects
+    breakdowns:
+    - variance_spread
+    visual: columns
+  - title: Forecast cost by component
+    measure: cost_internal_total
+    extra_measures:
+    - cost_external_total
+    - cost_contingency_total
+    visual: table
+  - title: Hardware and software forecast cost
+    measure: cost_hw_total
+    extra_measures:
+    - cost_sw_total
+    visual: table
+  table:
+    title: CAPEX projects
+    measure: total_projects
+    columns:
+    - tpgmea_pprojectnumber
+    - tpg_subject
+    - tpg_portfolio
+    - tpgmea_approvedbudgetvaluesusd
+    - tpg_totalforecast
+    - tpg_projectstatusname
+    sort:
+      field: tpg_totalforecast
+      dir: desc
+    export_name: CAPEX budget vs forecast
+  callout:
+    title: Forecasts are estimates
+    text: Forecast cost (Total Forecast) is what each project is expected to cost at completion. There are no figures of money
+      actually paid out.
+    level: info
+  footnote: Budget type CAPEX. Forecast cost is the project’s Total Forecast, the estimated cost at completion, not money
+    spent; forecast minus budget is a forecast comparison. Totals cover projects with a budget above 0 and a forecast.
+- id: flow_metrics
+  tab: Flow metrics
+  title: Flow metrics
+  dashboard: flow_metrics
+  section: Flow
+  question: How fast and how predictably does work flow from request to go-live?
+  population: Requests and projects end to end; go-lives over the last 12 months.
+  triggers:
+  - flow metrics
+  - flow
+  - lead time
+  - throughput
+  - north star
+  - wip
+  - predictability
+  kpis:
+  - north_star_on_time_tcv_pct
+  - lead_time_median
+  - throughput_go_lives_month
+  - months_to_clear_wip
+  - slip_vs_baseline_p85
+  widgets:
+  - title: Planned go-lives by month
+    measure: open_projects
+    time:
+      ref: planned_deployment_date
+      grain: month
+    visual: columns
+  - title: Average slip vs first baseline by portfolio
+    measure: slip_vs_baseline_median
+    breakdowns:
+    - portfolio
+    visual: ranked_bar
+  footnote: North Star = share of TCV deployed within 30 days of the first baseline over the last 12 months. Lead time = days
+    from request raised to actual deployment.
+- id: requests_overview
+  tab: Overview
+  title: Requests overview
+  dashboard: requests
+  section: Overview
+  question: What is in the demand pipeline before approval, and what needs a decision?
+  population: All requests; open = New, Active, On Hold and Return to Requester.
+  triggers:
+  - requests overview
+  - request overview
+  - demand overview
+  - pipeline overview
+  - request summary
+  kpis:
+  - open_demand
+  - overdue_gates_total
+  - estimated_cost_total
+  - approved_for_delivery
+  - rejected_or_dropped
+  widgets:
+  - title: Requests by state
+    measure: total_requests
+    breakdowns:
+    - request_state
+    visual: ranked_bar
+  - title: Open requests by CIO
+    measure: open_demand
+    breakdowns:
+    - request_cio
+    visual: ranked_bar
+  table:
+    title: Open requests
+    measure: open_demand
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpg_requeststatename
+    - tpgmea_customcio
+    - tpgmea_regionname
+    - tpg_priorityname
+    - createdon
+    sort:
+      field: createdon
+      dir: asc
+    export_name: Open requests
+  callout:
+    title: No portfolio on requests
+    text: Requests are not assigned to a portfolio until they become projects, so this dashboard has no Portfolio filter.
+      Filter by CIO, region, delivery manager, priority or platform.
+    level: info
+  footnote: Open requests = New, Active, On Hold and Return to Requester. Estimated cost is the request's estimate, not money
+    spent. Requests have no portfolio.
+- id: request_lifecycle
+  tab: Request lifecycle
+  title: Request lifecycle
+  dashboard: request_lifecycle
+  section: Pipeline
+  question: How many requests are in each state of the intake lifecycle?
+  population: All requests by request state.
+  triggers:
+  - request lifecycle
+  - request states
+  - request funnel
+  - intake lifecycle
+  kpis:
+  - open_demand
+  - approved_for_delivery
+  - rejected_or_dropped
+  - total_requests
+  widgets:
+  - title: Requests by state
+    measure: total_requests
+    breakdowns:
+    - request_state
+    visual: columns
+  - title: Open requests by priority
+    measure: open_demand
+    breakdowns:
+    - request_priority
+    visual: columns
+  table:
+    title: Requests
+    measure: total_requests
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpg_requeststatename
+    - tpgmea_customcio
+    - tpg_priorityname
+    - createdon
+    sort:
+      field: createdon
+      dir: desc
+    export_name: Requests
+  footnote: All requests, including closed ones. Open = New, Active, On Hold and Return to Requester.
+- id: discovery_schedule
+  tab: Discovery schedule
+  title: Discovery schedule
+  dashboard: discovery_schedule
+  section: Pipeline
+  question: Did Stage 1 discovery finish on its planned date?
+  population: Requests with a discovery planned and actual end date.
+  triggers:
+  - discovery schedule
+  - discovery
+  - stage 1
+  kpis:
+  - discovery_completed
+  - discovery_late
+  - discovery_early
+  - discovery_on_time
+  widgets:
+  - title: Discovery completed by region
+    measure: discovery_completed
+    breakdowns:
+    - request_region
+    visual: ranked_bar
+  - title: Discovery finished late by CIO
+    measure: discovery_late
+    breakdowns:
+    - request_cio
+    visual: ranked_bar
+  table:
+    title: Completed discoveries
+    measure: discovery_completed
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpgmea_customcio
+    - tpgmea_stage1discoveryplannedenddate
+    - tpgmea_stage1discoveryactualenddate
+    sort:
+      field: tpgmea_stage1discoveryactualenddate
+      dir: desc
+    export_name: Discovery schedule
+  footnote: Late = actual end after the planned end; early = before it. Requests without both dates are not counted.
+- id: request_on_hold_aging
+  tab: On-hold aging
+  title: Request on-hold aging
+  dashboard: request_on_hold_aging
+  section: Pipeline
+  question: How long have requests been on hold, and why?
+  population: Requests in state On Hold.
+  triggers:
+  - request on hold
+  - requests on hold
+  - request hold aging
+  - on hold aging
+  - on hold
+  filters:
+  - ref: request_state
+    op: '='
+    values:
+    - On Hold
+  kpis:
+  - title: Requests on hold
+    measure: total_requests
+  - requests_on_hold_over_180
+  - request_longest_on_hold_days
+  widgets:
+  - title: Request time on hold
+    measure: total_requests
+    breakdowns:
+    - request_on_hold_aging
+    visual: columns
+  - title: Requests on hold by reason
+    measure: total_requests
+    breakdowns:
+    - request_hold_reason
+    visual: ranked_bar
+  table:
+    title: Requests on hold
+    measure: total_requests
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpgmea_onholddate
+    - tpgmea_prreasonoptionname
+    - tpgmea_customcio
+    sort:
+      field: tpgmea_onholddate
+      dir: asc
+    export_name: Requests on hold
+  footnote: Time on hold counts from the on-hold date to the reporting date; without an on-hold date it shows as Not set.
+- id: governance_actions
+  tab: Governance actions
+  title: Governance actions
+  dashboard: governance_actions
+  section: Governance
+  question: Which DOU, DARB and SOW gates are past their planned date?
+  population: Open requests with a gate past its planned date and not signed off.
+  triggers:
+  - governance actions
+  - overdue gates
+  - gates
+  - dou
+  - darb
+  - sow
+  kpis:
+  - overdue_gates_total
+  - overdue_dou
+  - overdue_darb
+  - overdue_sow
+  widgets:
+  - title: Overdue governance actions by CIO
+    measure: overdue_gates_total
+    breakdowns:
+    - request_cio
+    visual: ranked_bar
+  - title: Overdue governance actions by region
+    measure: overdue_gates_total
+    breakdowns:
+    - request_region
+    visual: ranked_bar
+  table:
+    title: Requests with overdue gates
+    measure: overdue_gates_total
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpgmea_customcio
+    - tpgmea_planneddouissuancedate
+    - tpgmea_darbreviewdate
+    - tpgmea_tentativedateofsowissuance
+    sort:
+      field: tpgmea_planneddouissuancedate
+      dir: asc
+    export_name: Overdue governance actions
+  footnote: 'A gate is overdue when its planned date (DARB: review date) is before the reporting date and it is not signed
+    off. Open requests only; DARB-exempt requests are not counted for DARB.'
+- id: request_budget_code
+  tab: Budget code
+  title: Request budget codes
+  dashboard: request_budget_code
+  section: Governance
+  question: Do the open requests carry a budget code?
+  population: Open requests (New, Active, On Hold, Return to Requester).
+  triggers:
+  - request budget code
+  - request budget codes
+  - requests without a budget code
+  - demand budget code
+  kpis:
+  - open_demand
+  - open_requests_with_code
+  - request_budget_code_pct
+  widgets:
+  - title: Request budget code compliance
+    measure: open_requests_with_code
+    extra_measures:
+    - open_demand
+    visual: meter
+    note: with a budget code
+  - title: Open requests and with a code by state
+    measure: open_demand
+    extra_measures:
+    - open_requests_with_code
+    breakdowns:
+    - request_state
+    visual: paired_bars
+  table:
+    title: Open requests and their budget code
+    measure: open_demand
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpg_requeststatename
+    - tpgmea_customcio
+    - tpgmea_budgettypename
+    - tpgmea_budgetcode
+    sort:
+      field: tpgmea_budgetcode
+      dir: asc
+    export_name: Request budget codes
+  footnote: Open requests only. A blank budget code counts as missing.
+- id: request_pm_assignment
+  tab: PM assignment
+  title: Request PM assignment
+  dashboard: request_pm_assignment
+  section: Governance
+  question: Do the open requests have a delivery manager?
+  population: Open requests.
+  triggers:
+  - request pm assignment
+  - request delivery manager
+  - requests without a pm
+  - demand pm assignment
+  kpis:
+  - open_demand
+  - open_requests_with_dm
+  - request_pm_assignment_pct
+  widgets:
+  - title: Request PM assignment
+    measure: open_requests_with_dm
+    extra_measures:
+    - open_demand
+    visual: meter
+    note: with a delivery manager
+  - title: Open requests and assigned by CIO
+    measure: open_demand
+    extra_measures:
+    - open_requests_with_dm
+    breakdowns:
+    - request_cio
+    visual: paired_bars
+  table:
+    title: Open requests and their delivery manager
+    measure: open_demand
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpg_requeststatename
+    - tpgmea_customcio
+    - tpgmea_deliverymanager
+    sort:
+      field: tpgmea_deliverymanager
+      dir: asc
+    export_name: Request PM assignment
+  footnote: Open requests only. Assigned = a delivery manager is recorded on the request.
+- id: request_change_requests
+  tab: Change requests
+  title: Change requests
+  dashboard: request_change_requests
+  section: Governance
+  question: How much of the demand is change to existing projects, and do the change requests name their project?
+  population: All requests; change requests are marked as a CR on the request.
+  triggers:
+  - change requests
+  - change request
+  - crs
+  - new demand vs change
+  kpis:
+  - total_requests
+  - change_request_count
+  - cr_share_pct
+  - crs_with_master_project
+  widgets:
+  - title: New demand and change requests
+    measure: total_requests
+    breakdowns:
+    - request_kind
+    visual: donut
+  - title: Change requests by reason
+    measure: change_request_count
+    breakdowns:
+    - cr_reason
+    visual: ranked_bar
+  table:
+    title: Change requests
+    measure: change_request_count
+    columns:
+    - tpg_projectrequestsid
+    - tpg_title
+    - tpg_requeststatename
+    - tpgmea_masterprojectidforcr
+    - tpgmea_customcio
+    sort:
+      field: tpg_projectrequestsid
+      dir: asc
+    export_name: Change requests
+  footnote: A change request is a request marked as a CR to an existing project; it should name the master project it changes.

@@ -1,0 +1,3 @@
+apiVersion: 1
+providers:
+  - { name: tela, folder: Tela, type: file, disableDeletion: true, options: { path: /var/lib/grafana/dashboards } }
