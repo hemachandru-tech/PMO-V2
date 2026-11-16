@@ -96,4 +96,7 @@ async def test_a_follow_up_carries_the_earlier_question(stack: httpx.AsyncClient
     first_call, follow_up = ag10(fake)
     assert "earlier question" not in first_call["messages"][-1]["content"]
     assert "only in UAE" in follow_up["messages"][-1]["content"]
-    assert "This follows the earlier question: “list of active projects”" in follow_up["messages"][-1]["content"]
+    # The earlier turn comes back with the SQL it ran, so the follow-up keeps its table and filter.
+    note = follow_up["messages"][-1]["content"]
+    assert "EARLIER IN THIS CONVERSATION" in note and "1. Question: list of active projects" in note
+    assert "SQL: SELECT name, region FROM projects WHERE status = 'Active'" in note

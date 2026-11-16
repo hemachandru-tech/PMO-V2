@@ -48,7 +48,7 @@ def make_token(rsa_key: rsa.RSAPrivateKey) -> Callable[..., str]:
         iss: str = ISSUER,
         aud: str = AUDIENCE,
         typ: str = "Bearer",
-        exp_in: int = 300,
+        exp_in: int = 3600,  # an hour: a long test (pack release checks, gold runs) outlives 5 minutes on CI
         kid: str = KID,
         extra: dict[str, Any] | None = None,
     ) -> str:
