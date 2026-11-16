@@ -108,7 +108,7 @@ def connect(admin: Api, source: dict[str, Any]) -> dict[str, str]:
 
 
 @pytest.fixture(scope="module", params=sorted(SOURCES))
-def world(request: pytest.FixtureRequest, apis: dict[str, Api]) -> dict[str, str]:  # noqa: F811
+def world(request: pytest.FixtureRequest, apis: dict[str, Api]) -> dict[str, str]:
     return connect(apis["admin"], SOURCES[request.param])
 
 
@@ -120,13 +120,13 @@ def _run(api: Api, world: dict[str, str], measure: str, **extra: Any) -> Any:
     return resp.json()
 
 
-def test_reference_counts(apis: dict[str, Api], world: dict[str, str]) -> None:  # noqa: F811
+def test_reference_counts(apis: dict[str, Api], world: dict[str, str]) -> None:
     for measure, expected in (("total_projects", 100), ("open_projects", 65), ("in_delivery", 13),
                               ("on_hold", 3), ("project_created", 49)):
         assert _run(apis["admin"], world, measure)["rows"] == [[expected]], measure
 
 
-def test_cio_scope_drill_and_filter_values(apis: dict[str, Api], world: dict[str, str]) -> None:  # noqa: F811
+def test_cio_scope_drill_and_filter_values(apis: dict[str, Api], world: dict[str, str]) -> None:
     mine = sum(1 for p in PROJECTS if p["cio"] == "Nomsa Osei" and p["status"] == "Active")
     result = _run(apis["nomsa"], world, "open_projects")
     assert result["rows"] == [[mine]] and result["scope"]["locked"]

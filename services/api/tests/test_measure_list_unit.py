@@ -69,7 +69,7 @@ def test_open_on_a_sum_of_every_row_is_not_in_the_plan() -> None:
     assert decided.status == "clarify"
 
 
-def test_six_measures_in_one_spec(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> None:  # noqa: F811
+def test_six_measures_in_one_spec(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> None:
     assert MAX_MEASURES == 6
     six = [{"ref": f"measure:{k}"} for k in [*FIVE, "forecast_cost_total"]]
     assert len(spec({"measures": six}).all_measure_refs()) == 6

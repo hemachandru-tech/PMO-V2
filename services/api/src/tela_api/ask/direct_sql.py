@@ -48,7 +48,6 @@ from tela_api.content.sql_context import (
     AG10_ROLE,
     SqlDraftOut,
     context_columns,
-    _terms,
     relevant_tables,
     ruled,
     schema_context,
@@ -80,7 +79,8 @@ PUBLISH_NOTE = "Direct SQL answers carry the Custom SQL badge and can't go on a 
 
 SHAPE_RULES: dict[str, str] = {
     "number": ("Answer with one figure: a single aggregate (count, sum, min, max or average) and no GROUP BY. "
-               "When the question asks for multiple figures (e.g. both count of X and count of Y), select each aggregate as its own column."),
+               "When the question asks for multiple figures (e.g. both count of X and count of Y), select each "
+               "aggregate as its own column."),
     "list_of_records": (f"Answer with a list of records: one row per record, its name or title first and at most 5 "
                         f"other columns the question needs; no aggregates, no GROUP BY, never select *; at most "
                         f"{LIST_LIMIT} rows."),
@@ -427,7 +427,7 @@ def sample_columns(entity: Any, hidden: frozenset[str]) -> list[Any]:
 
 async def sample_rows(run: Any, snap: ModelSnapshot, hidden: frozenset[str], tables: list[str], dialect: str,
                       connection_id: str) -> dict[str, list[str]]:
-    """{"table": ["col | col …", "v | v …" × 5]} for the first short-listed tables. Cached per model version for a
+    """{"table": ["col | col …", "v | v …" (5 rows)]} for the first short-listed tables. Cached per model version for a
     few minutes; a table that can't be read is skipped (samples only ever add to the context)."""
     out: dict[str, list[str]] = {}
     now = time.monotonic()
@@ -882,12 +882,12 @@ async def answer(service: QueryService, gateway: Any, principal: Principal, *, c
                          detail={"code": str(exc.code)})
         # The database's own reason goes back to AG-10 for one repair (a GROUP BY that differs from the SELECT, a
         # function the dialect lacks): the error text was thrown away before and the question failed blind.
-        fixed = await _run_repair(gateway, service, principal, connection_id, snap.model_version_id, shape, question,
-                                  system, sql, exc, run, request_id, turn_id)
-        if fixed is None:
+        run_fixed = await _run_repair(gateway, service, principal, connection_id, snap.model_version_id, shape,
+                                      question, system, sql, exc, run, request_id, turn_id)
+        if run_fixed is None:
             return _refuse(shape, "run_failed", f"The SQL passed the check but could not be run: {exc.message}",
                            sql=sql, repaired=repaired, checks=prepared.checks, conditions=hints, context=context)
-        sql, note, prepared, result = fixed
+        sql, note, prepared, result = run_fixed
         repaired = True
     result["duration_ms"] = int((time.monotonic() - started) * 1000)
     await trace.step("query", f"Ran the SQL: {result['row_count']} rows", agent=AGENT,
@@ -896,12 +896,12 @@ async def answer(service: QueryService, gateway: Any, principal: Principal, *, c
     if matched_nothing(result) and (missing := await missing_values(run, prepared)):
         await trace.step("validate", "No rows: the data doesn't hold some filter values", agent=AGENT,
                          status="failed", detail={"missing": [m.note() for m in missing]})
-        fixed = await _value_repair(gateway, service, principal, connection_id, snap.model_version_id, shape,
-                                    question, system, sql, missing, run, request_id, turn_id)
-        if fixed is None:
+        value_fixed = await _value_repair(gateway, service, principal, connection_id, snap.model_version_id, shape,
+                                          question, system, sql, missing, run, request_id, turn_id)
+        if value_fixed is None:
             notes = [*notes, *(m.note() for m in missing)]
         else:
-            sql, note, prepared, result, fixed_notes = fixed
+            sql, note, prepared, result, fixed_notes = value_fixed
             notes = [*notes, *fixed_notes]
             repaired = True
     async with tenant_tx(principal.tenant_id) as conn:
@@ -972,7 +972,8 @@ async def _value_repair(gateway: Any, service: QueryService, principal: Principa
 def run_error_text(exc: TelaError) -> str:
     """The database's reason for refusing the SQL, as plain text for a repair (no values, no secrets)."""
     details = exc.details if isinstance(exc.details, dict) else {}
-    admin = details.get("admin_detail") if isinstance(details.get("admin_detail"), dict) else {}
+    raw_admin = details.get("admin_detail")
+    admin: dict[str, Any] = raw_admin if isinstance(raw_admin, dict) else {}
     parts = [exc.message]
     for k in ("source_message", "error", "reason", "detail"):
         for v in (details.get(k), admin.get(k)):

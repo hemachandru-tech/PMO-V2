@@ -185,17 +185,6 @@ export function EChart({ spec, columns, rows, onMark, title, still, highlight, b
  * A KPI card's sparkline (US-139): a small line over the points the widget run API returned (never computed here).
  * Decorative for screen readers, which get the same series as text from `label`.
  */
-export const MODERN_CHART_COLORS = [
-  "#2B59FF", // Royal Blue
-  "#38BDF8", // Sky Blue
-  "#F43F5E", // Rose Coral
-  "#10B981", // Emerald
-  "#8B5CF6", // Purple
-  "#F59E0B", // Amber
-  "#6366F1", // Indigo
-  "#EC4899", // Pink
-];
-
 export function Sparkline({ points, label }: { points: { period: string; value: number | null }[]; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { resolved } = useTheme();
@@ -276,6 +265,7 @@ export function toOption(spec: ChartSpec, columns: Column[], rows: unknown[][], 
   const horizontal = spec.type === "ranked_bar";
   const paintPoint = (v: unknown, si: number, i: number) => {
     const t = paint?.point(si, i);
+    if (spec.type === "trend") return v; // line points keep their values; rounded corners are for bars
     const radius = horizontal ? [0, 8, 8, 0] : [8, 8, 0, 0];
     if (v !== null && typeof v === "object") {
       const existing = (v as { itemStyle?: Record<string, unknown> }).itemStyle ?? {};
@@ -314,24 +304,11 @@ export function toOption(spec: ChartSpec, columns: Column[], rows: unknown[][], 
           type: "pie",
           radius: ["55%", "78%"],
           padAngle: 3,
-          itemStyle: {
-            borderRadius: 8,
-            borderColor: "#ffffff",
-            borderWidth: 2,
-          },
           label,
           data: rows.map((r, i) => {
-            const sliceColor = paint && resolve ? resolve(paint.slice(i)) : MODERN_CHART_COLORS[i % MODERN_CHART_COLORS.length];
-            return {
-              name: labels[i],
-              value: r[mi],
-              itemStyle: {
-                color: sliceColor,
-                borderRadius: 8,
-                borderColor: "#ffffff",
-                borderWidth: 2,
-              },
-            };
+            // Without a colour choice the theme's palette (the tenant's) colours the slices; the theme also draws the
+            // rounded slice edges in the surface colour, so dark mode keeps them.
+            return { name: labels[i], value: r[mi], ...(paint && resolve ? { itemStyle: { color: resolve(paint.slice(i)) } } : {}) };
           }),
         },
       ],
@@ -357,19 +334,16 @@ export function toOption(spec: ChartSpec, columns: Column[], rows: unknown[][], 
   const ends = spec.type === "trend" && measureIdx.length > 1;
   const series = measureIdx.map((mi, si) => {
     const isLine = spec.type === "trend";
-    const defaultColor = MODERN_CHART_COLORS[si % MODERN_CHART_COLORS.length];
-    const seriesColor = paint && resolve ? resolve(paint.series(si)) : defaultColor;
+    // The widget's chosen colour, else none here: the theme's palette (the tenant's branding) applies.
+    const seriesColor = paint && resolve ? resolve(paint.series(si)) : undefined;
     return {
       name: columns[mi]?.label,
       type: isLine ? "line" : "bar",
       barMaxWidth: horizontal ? 24 : 32,
       smooth: isLine ? 0.35 : undefined,
       showSymbol: isLine ? false : undefined,
-      lineStyle: isLine ? { width: 3, color: seriesColor } : undefined,
-      itemStyle: {
-        borderRadius: horizontal ? [0, 8, 8, 0] : [8, 8, 0, 0],
-        color: seriesColor,
-      },
+      lineStyle: isLine ? { width: 3, ...(seriesColor ? { color: seriesColor } : {}) } : undefined,
+      ...(seriesColor ? { itemStyle: { borderRadius: horizontal ? [0, 8, 8, 0] : [8, 8, 0, 0], color: seriesColor } } : {}),
       // Ordered buckets: one ramp step per bucket, its value on top, so the colour is never the only signal.
       data: ordinal
         ? rows.map((r, i) => ({

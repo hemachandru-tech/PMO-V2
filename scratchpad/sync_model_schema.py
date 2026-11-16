@@ -9,9 +9,10 @@
 """
 
 import json
-import subprocess
-import pymysql
 import re
+import subprocess
+
+import pymysql
 
 TENANT_ID = "01a1d956-b68d-7232-9e5b-5dafa4f48b0d"
 VERSION_ID = "01a1da62-e4f9-7243-9799-ebcdd1047b7b"
@@ -60,14 +61,14 @@ for ent in entities:
     tbl = source_obj.split(".")[-1]
     my_cursor.execute(f"DESCRIBE {tbl}")
     mysql_cols = my_cursor.fetchall()
-    
+
     existing_fields = {f["source_column"].lower(): f for f in ent.get("fields", [])}
     fields = ent.get("fields", [])
-    
+
     for row in mysql_cols:
         col_name = row[0]
         col_type = row[1]
-        
+
         if col_name.lower() not in existing_fields:
             data_type, sem_type = detect_type(col_type, col_name)
             field_key = re.sub(r"[^a-zA-Z0-9_]", "_", col_name).lower().strip("_")
@@ -77,7 +78,7 @@ for ent in entities:
             while any(f["key"] == field_key for f in fields):
                 field_key = f"{base_key}_{idx}"
                 idx += 1
-                
+
             new_field = {
                 "key": field_key,
                 "label": col_name.replace("_", " ").title(),
@@ -129,7 +130,7 @@ for dim in dimensions:
     ent_key = dim.get("entity")
     current_field = dim.get("field")
     col_map = field_by_entity.get(ent_key, {})
-    
+
     # Check if there is an entity field matching current_field + 'name'
     # Find current source column
     ent_fields = next((e["fields"] for e in entities if e["key"] == ent_key), [])
@@ -185,7 +186,7 @@ with open("/tmp/insert_fields.sql", "w") as f:
             dt = fld["data_type"]
             st = fld.get("semantic_type")
             st_val = f"'{st}'" if st else "NULL"
-            
+
             f.write(f"""INSERT INTO model.model_fields (id, tenant_id, model_entity_id, key, source_column, label, data_type, semantic_type, format, sensitivity, is_queryable)
 VALUES (gen_random_uuid(), '{TENANT_ID}', '{ent_id}', '{fk}', '{sc}', '{lbl}', '{dt}', {st_val}, '{{}}'::jsonb, 'internal', true)
 ON CONFLICT (model_entity_id, key) DO UPDATE SET source_column = EXCLUDED.source_column, label = EXCLUDED.label, data_type = EXCLUDED.data_type, semantic_type = EXCLUDED.semantic_type;

@@ -152,7 +152,9 @@ describe("highlight-and-grey (US-186)", () => {
     // US-188: the highlighted bar also carries its value as a direct label
     expect(opt.series[0]!.data).toMatchObject([{ value: 40, label: { show: true } }, { value: 8, itemStyle: { color: "#999" } }, { value: 3, itemStyle: { color: "#999" } }]);
     const none = toOption({ type: "ranked_bar", x: "region", series: ["open_projects"] }, COLS as never, rows, undefined, { labels: ["Oman"], muted: "#999" }) as { series: { data: unknown[] }[] };
-    expect(none.series[0]!.data).toEqual([40, 8, 3]); // nothing named on the chart: nothing muted
+    // Bars carry rounded corners as objects; nothing named on the chart: nothing muted, plain values.
+    expect(none.series[0]!.data.map((d) => (d !== null && typeof d === "object" ? (d as { value: unknown }).value : d))).toEqual([40, 8, 3]);
+    expect(none.series[0]!.data.some((d) => (d as { itemStyle?: { color?: string } }).itemStyle?.color === "#999")).toBe(false);
     const trend = toOption({ type: "trend", x: "region", series: ["open_projects"] }, COLS as never, rows, undefined, { labels: ["Egypt"], muted: "#999" }) as { series: { data: unknown[] }[] };
     expect(trend.series[0]!.data).toMatchObject([40, 8, { value: 3, symbolSize: 10, label: { show: true } }]);
   });

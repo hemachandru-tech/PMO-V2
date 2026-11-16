@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime
 from typing import Any, Literal
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -29,22 +30,6 @@ from tela_api.ask.executive_storyteller import (
     detect_operational_anomalies,
     generate_executive_briefing,
 )
-from tela_api.content.auto_dashboard import (
-    AutoDashboardPlan,
-    plan_dashboard_from_intent,
-)
-from tela_api.content.state_memory import (
-    DashboardSessionState,
-    apply_cross_filter,
-    clear_cross_filters,
-)
-from tela_api.query.transformation_engine import (
-    PivotedTable,
-    TimeSeriesPoint,
-    calculate_variance_metrics,
-    compute_time_intelligence,
-    pivot_tabular_data,
-)
 from tela_api.brain.delta_rules import (
     DeltaRuleChange,
     delete_delta_rule,
@@ -54,6 +39,15 @@ from tela_api.brain.delta_rules import (
 from tela_api.brain.semantic_brain import (
     BrainIntrospectResult,
     auto_generate_model_snapshot,
+)
+from tela_api.content.auto_dashboard import (
+    AutoDashboardPlan,
+    plan_dashboard_from_intent,
+)
+from tela_api.content.state_memory import (
+    DashboardSessionState,
+    apply_cross_filter,
+    clear_cross_filters,
 )
 from tela_api.query.predictive_engine import (
     CorrelationPair,
@@ -65,6 +59,13 @@ from tela_api.query.predictive_engine import (
     forecast_time_series,
     normalize_multilingual_prompt,
     simulate_what_if_scenario,
+)
+from tela_api.query.transformation_engine import (
+    PivotedTable,
+    TimeSeriesPoint,
+    calculate_variance_metrics,
+    compute_time_intelligence,
+    pivot_tabular_data,
 )
 from tela_query_spec.model import ModelSnapshot
 
@@ -164,14 +165,13 @@ async def generate_dashboard(req: DashboardGenerateRequest) -> AutoDashboardPlan
         )
     try:
         snapshot = ModelSnapshot.model_validate(req.snapshot)
-    except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Invalid ModelSnapshot format: {exc}")
+    except ValueError as exc:  # pydantic.ValidationError is a ValueError
+        raise HTTPException(status_code=422, detail=f"Invalid ModelSnapshot format: {exc}") from exc
 
-    return plan_dashboard_from_intent(
-        intent=req.intent,
-        snapshot=snapshot,
-        title=req.title,
-    )
+    plan = plan_dashboard_from_intent(prompt=req.intent, snapshot=snapshot)
+    if req.title:
+        plan.title = req.title
+    return plan
 
 
 @router.post("/ask/root-cause", response_model=RootCauseResult)
@@ -266,7 +266,7 @@ async def update_cross_filter(req: CrossFilterRequest) -> dict[str, Any]:
             dashboard_id=req.dashboard_id,
             active_filters={},
             active_drill_path=[],
-            last_updated_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            last_updated_at=datetime.datetime.now(datetime.UTC).isoformat(),
         )
     session = apply_cross_filter(
         current_state=session,
@@ -356,7 +356,7 @@ async def retrain_brain_model(req: BrainRetrainRequest) -> BrainIntrospectResult
         dimensions_count=len(snapshot.dimensions),
         links_count=len(snapshot.links),
         entities=[e.key for e in snapshot.entities],
-        retrained_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        retrained_at=datetime.datetime.now(datetime.UTC).isoformat(),
         status="synchronized",
     )
 
@@ -417,7 +417,7 @@ async def run_currency_conversion(req: CurrencyConvertRequest) -> dict[str, Any]
             to_currency=req.to_currency,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/ask/voice-transcribe")

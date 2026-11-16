@@ -72,7 +72,7 @@ describe("Admin → Knowledge → Conditions (US-252)", () => {
     serve(routes);
     renderAt("/admin/knowledge/conditions");
     const table = await screen.findByRole("table", { name: "Named conditions" });
-    expect(screen.getByRole("link", { name: "Conditions" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Rules & Conditions" })).toHaveAttribute("aria-current", "page");
     expect(await within(table).findByText("This condition: 431 rows")).toBeInTheDocument();
     expect(within(table).getByText("Open projects: 420 rows")).toBeInTheDocument();
     expect(within(table).getByText("Status is Active")).toBeInTheDocument();

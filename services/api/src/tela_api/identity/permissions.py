@@ -37,7 +37,7 @@ class Perm(StrEnum):
     BRANDING_MANAGE = "branding.manage"
     ASK_FREEHAND = "ask.freehand"
     DASHBOARDS_GROUP = "dashboards.group"
-    PACKS_AUTHOR = "packs.author"  # author the tenant's packs in Admin › Packs (DEC-26, US-232; migration 0049)
+    PACKS_AUTHOR = "packs.author"  # author the tenant's packs in Admin > Packs (DEC-26, US-232; migration 0049)
 
 
 # Given to one person on one connection by a grant (US-161), never through a role: Admins get them by grant too.

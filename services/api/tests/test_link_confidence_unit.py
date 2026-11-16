@@ -177,8 +177,8 @@ def runner(con: duckdb.DuckDBPyConnection, snap: ModelSnapshot, calls: list[dict
     return go
 
 
-def test_exec139_zero_is_caught_and_replanned(db: duckdb.DuckDBPyConnection,  # noqa: F811
-                                              snapshot: ModelSnapshot) -> None:  # noqa: F811
+def test_exec139_zero_is_caught_and_replanned(db: duckdb.DuckDBPyConnection,
+                                              snapshot: ModelSnapshot) -> None:
     p, linked = _exec139_before()
     assert p.spec is not None
     p.spec["filters"] = [f for f in p.spec["filters"] if f["ref"] != "dimension:current_state"]
@@ -197,7 +197,7 @@ def test_exec139_zero_is_caught_and_replanned(db: duckdb.DuckDBPyConnection,  # 
     assert assumed.status == "ok" and assumed.spec is not None and assumed.spec["filters"] == [UAE]
 
 
-def test_a_true_zero_still_answers(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> None:  # noqa: F811
+def test_a_true_zero_still_answers(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> None:
     spec = {"measure": {"ref": "measure:open_projects"}, "breakdowns": [],
             "filters": [{"ref": "dimension:region", "op": "=", "values": ["KSA"]},
                         {"ref": "dimension:reported_status", "op": "=", "values": ["Red"]}]}

@@ -103,7 +103,7 @@ async def test_report_plan_gate(stack: httpx.AsyncClient, plan_world: World, own
     record("report_plan", {"model": MODEL, **{m: runs[m] for m in runs}})
 
 
-async def test_canvas_edit_gate(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_canvas_edit_gate(stack: httpx.AsyncClient, world: World,
                                 owner_conn: psycopg.Connection, signing_keys: dict[str, Any],
                                 make_token: Callable[..., str], monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(get_settings(), "llm_review_off_agents", [])  # measured with AG-06 back in review

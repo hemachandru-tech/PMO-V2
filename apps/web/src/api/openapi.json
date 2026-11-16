@@ -216,6 +216,88 @@
     "title": "All",
     "type": "object"
    },
+   "AnomalyDetectRequest": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/AnomalyItemInput"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "sensitivity": {
+      "default": 2.0,
+      "title": "Sensitivity",
+      "type": "number"
+     }
+    },
+    "required": [
+     "items"
+    ],
+    "title": "AnomalyDetectRequest",
+    "type": "object"
+   },
+   "AnomalyItem": {
+    "properties": {
+     "deviation_factor": {
+      "title": "Deviation Factor",
+      "type": "number"
+     },
+     "expected_range": {
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "number"
+       }
+      ],
+      "title": "Expected Range",
+      "type": "array"
+     },
+     "explanation": {
+      "title": "Explanation",
+      "type": "string"
+     },
+     "member": {
+      "title": "Member",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "number"
+     }
+    },
+    "required": [
+     "member",
+     "value",
+     "expected_range",
+     "deviation_factor",
+     "explanation"
+    ],
+    "title": "AnomalyItem",
+    "type": "object"
+   },
+   "AnomalyItemInput": {
+    "properties": {
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "number"
+     }
+    },
+    "required": [
+     "label",
+     "value"
+    ],
+    "title": "AnomalyItemInput",
+    "type": "object"
+   },
    "AnswerIn": {
     "properties": {
      "answer": {
@@ -278,6 +360,24 @@
      "any"
     ],
     "title": "Any_",
+    "type": "object"
+   },
+   "ApplyRuleTextRequest": {
+    "properties": {
+     "rule_text": {
+      "title": "Rule Text",
+      "type": "string"
+     },
+     "target_entity": {
+      "default": "projects",
+      "title": "Target Entity",
+      "type": "string"
+     }
+    },
+    "required": [
+     "rule_text"
+    ],
+    "title": "ApplyRuleTextRequest",
     "type": "object"
    },
    "Arith": {
@@ -527,6 +627,48 @@
     "title": "AuthorIn",
     "type": "object"
    },
+   "AutoDashboardPlan": {
+    "properties": {
+     "executive_summary": {
+      "title": "Executive Summary",
+      "type": "string"
+     },
+     "layout_type": {
+      "default": "grid",
+      "title": "Layout Type",
+      "type": "string"
+     },
+     "recommended_filters": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Recommended Filters",
+      "type": "array"
+     },
+     "theme": {
+      "default": "executive",
+      "title": "Theme",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "widgets": {
+      "items": {
+       "$ref": "#/components/schemas/GeneratedWidget"
+      },
+      "title": "Widgets",
+      "type": "array"
+     }
+    },
+    "required": [
+     "title",
+     "executive_summary"
+    ],
+    "title": "AutoDashboardPlan",
+    "type": "object"
+   },
    "Band": {
     "additionalProperties": false,
     "description": "One labelled range of a banded dimension: value > ``above`` and value <= ``upto`` (either side open).",
@@ -745,6 +887,128 @@
      "file"
     ],
     "title": "Body_upload_version_api_v1_connections__connection_id__files_post",
+    "type": "object"
+   },
+   "BrainIntrospectResult": {
+    "properties": {
+     "connection_name": {
+      "title": "Connection Name",
+      "type": "string"
+     },
+     "dimensions_count": {
+      "title": "Dimensions Count",
+      "type": "integer"
+     },
+     "engine": {
+      "title": "Engine",
+      "type": "string"
+     },
+     "entities": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Entities",
+      "type": "array"
+     },
+     "fields_count": {
+      "title": "Fields Count",
+      "type": "integer"
+     },
+     "links_count": {
+      "title": "Links Count",
+      "type": "integer"
+     },
+     "measures_count": {
+      "title": "Measures Count",
+      "type": "integer"
+     },
+     "retrained_at": {
+      "title": "Retrained At",
+      "type": "string"
+     },
+     "status": {
+      "default": "synchronized",
+      "title": "Status",
+      "type": "string"
+     },
+     "tables_count": {
+      "title": "Tables Count",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "connection_name",
+     "engine",
+     "tables_count",
+     "fields_count",
+     "measures_count",
+     "dimensions_count",
+     "links_count",
+     "entities",
+     "retrained_at"
+    ],
+    "title": "BrainIntrospectResult",
+    "type": "object"
+   },
+   "BrainRetrainRequest": {
+    "properties": {
+     "connection_name": {
+      "default": "active_connection",
+      "title": "Connection Name",
+      "type": "string"
+     },
+     "foreign_keys": {
+      "anyOf": [
+       {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Foreign Keys"
+     },
+     "primary_keys": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Primary Keys"
+     },
+     "raw_schema": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "type": "array"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Raw Schema"
+     }
+    },
+    "title": "BrainRetrainRequest",
     "type": "object"
    },
    "BrandingIn": {
@@ -2004,6 +2268,60 @@
     "title": "CopyIn",
     "type": "object"
    },
+   "CorrelationApiRequest": {
+    "properties": {
+     "metric_columns": {
+      "additionalProperties": {
+       "items": {
+        "type": "number"
+       },
+       "type": "array"
+      },
+      "title": "Metric Columns",
+      "type": "object"
+     }
+    },
+    "required": [
+     "metric_columns"
+    ],
+    "title": "CorrelationApiRequest",
+    "type": "object"
+   },
+   "CorrelationPair": {
+    "properties": {
+     "metric_x": {
+      "title": "Metric X",
+      "type": "string"
+     },
+     "metric_y": {
+      "title": "Metric Y",
+      "type": "string"
+     },
+     "pearson_r": {
+      "title": "Pearson R",
+      "type": "number"
+     },
+     "strength": {
+      "enum": [
+       "Strong Positive",
+       "Moderate Positive",
+       "Weak/None",
+       "Moderate Negative",
+       "Strong Negative"
+      ],
+      "title": "Strength",
+      "type": "string"
+     }
+    },
+    "required": [
+     "metric_x",
+     "metric_y",
+     "pearson_r",
+     "strength"
+    ],
+    "title": "CorrelationPair",
+    "type": "object"
+   },
    "CreateIn": {
     "properties": {
      "from_pack_id": {
@@ -2051,6 +2369,93 @@
      "title"
     ],
     "title": "CreateIn",
+    "type": "object"
+   },
+   "CrossFilterRequest": {
+    "properties": {
+     "dashboard_id": {
+      "title": "Dashboard Id",
+      "type": "string"
+     },
+     "dimension_key": {
+      "title": "Dimension Key",
+      "type": "string"
+     },
+     "selected_value": {
+      "title": "Selected Value",
+      "type": "string"
+     },
+     "session_id": {
+      "title": "Session Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session_id",
+     "dashboard_id",
+     "dimension_key",
+     "selected_value"
+    ],
+    "title": "CrossFilterRequest",
+    "type": "object"
+   },
+   "CurrencyConvertRequest": {
+    "properties": {
+     "amount": {
+      "title": "Amount",
+      "type": "number"
+     },
+     "from_currency": {
+      "default": "USD",
+      "title": "From Currency",
+      "type": "string"
+     },
+     "to_currency": {
+      "default": "EUR",
+      "title": "To Currency",
+      "type": "string"
+     }
+    },
+    "required": [
+     "amount"
+    ],
+    "title": "CurrencyConvertRequest",
+    "type": "object"
+   },
+   "DashboardGenerateRequest": {
+    "properties": {
+     "intent": {
+      "title": "Intent",
+      "type": "string"
+     },
+     "snapshot": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Snapshot"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     }
+    },
+    "required": [
+     "intent"
+    ],
+    "title": "DashboardGenerateRequest",
     "type": "object"
    },
    "DashboardGroupIn": {
@@ -2363,6 +2768,75 @@
     "title": "DeclineIn",
     "type": "object"
    },
+   "DeltaRuleChange": {
+    "properties": {
+     "action": {
+      "enum": [
+       "created",
+       "updated",
+       "deleted"
+      ],
+      "title": "Action",
+      "type": "string"
+     },
+     "latency_ms": {
+      "default": 0.0,
+      "title": "Latency Ms",
+      "type": "number"
+     },
+     "new_rule": {
+      "title": "New Rule",
+      "type": "string"
+     },
+     "previous_rule": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Previous Rule"
+     },
+     "rule_key": {
+      "title": "Rule Key",
+      "type": "string"
+     },
+     "rule_type": {
+      "enum": [
+       "measure",
+       "filter_condition",
+       "synonym",
+       "formula"
+      ],
+      "title": "Rule Type",
+      "type": "string"
+     },
+     "target_entity": {
+      "title": "Target Entity",
+      "type": "string"
+     },
+     "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+     },
+     "tokens_consumed": {
+      "default": 0,
+      "title": "Tokens Consumed",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "rule_key",
+     "rule_type",
+     "target_entity",
+     "action",
+     "new_rule"
+    ],
+    "title": "DeltaRuleChange",
+    "type": "object"
+   },
    "Detail": {
     "additionalProperties": false,
     "description": "A detail table (US-158): the records of the measure's population, one row each, with these columns (fields\nof the measure's entity), a default sort and the name its export uses.",
@@ -2530,6 +3004,21 @@
       ],
       "title": "Measures"
      },
+     "rules": {
+      "anyOf": [
+       {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rules"
+     },
      "settings": {
       "anyOf": [
        {
@@ -2689,6 +3178,113 @@
      }
     },
     "title": "EvaluateIn",
+    "type": "object"
+   },
+   "ExecutiveBriefRequest": {
+    "properties": {
+     "findings": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Findings",
+      "type": "array"
+     },
+     "headline_value": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "number"
+       }
+      ],
+      "title": "Headline Value"
+     },
+     "recommendations": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Recommendations"
+     },
+     "source_table": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Table"
+     },
+     "sql_fingerprint": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sql Fingerprint"
+     },
+     "subject": {
+      "title": "Subject",
+      "type": "string"
+     }
+    },
+    "required": [
+     "subject",
+     "headline_value"
+    ],
+    "title": "ExecutiveBriefRequest",
+    "type": "object"
+   },
+   "ExecutiveBriefing": {
+    "properties": {
+     "actionable_recommendation": {
+      "title": "Actionable Recommendation",
+      "type": "string"
+     },
+     "confidence_score": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence Score",
+      "type": "number"
+     },
+     "data_lineage": {
+      "additionalProperties": true,
+      "title": "Data Lineage",
+      "type": "object"
+     },
+     "headline": {
+      "title": "Headline",
+      "type": "string"
+     },
+     "key_findings": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Key Findings",
+      "type": "array"
+     }
+    },
+    "required": [
+     "headline",
+     "key_findings",
+     "actionable_recommendation",
+     "confidence_score",
+     "data_lineage"
+    ],
+    "title": "ExecutiveBriefing",
     "type": "object"
    },
    "ExplainIn": {
@@ -3155,6 +3751,206 @@
     "title": "FilterValuesIn",
     "type": "object"
    },
+   "FollowUpIntent": {
+    "properties": {
+     "added_breakdowns": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Added Breakdowns",
+      "type": "array"
+     },
+     "added_filters": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Added Filters",
+      "type": "object"
+     },
+     "is_follow_up": {
+      "title": "Is Follow Up",
+      "type": "boolean"
+     },
+     "operation": {
+      "title": "Operation",
+      "type": "string"
+     },
+     "resolved_query": {
+      "title": "Resolved Query",
+      "type": "string"
+     }
+    },
+    "required": [
+     "is_follow_up",
+     "operation",
+     "resolved_query"
+    ],
+    "title": "FollowUpIntent",
+    "type": "object"
+   },
+   "FollowUpIntentRequest": {
+    "properties": {
+     "current_prompt": {
+      "title": "Current Prompt",
+      "type": "string"
+     },
+     "previous_filters": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "type": "string"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Previous Filters"
+     },
+     "previous_query": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Previous Query"
+     }
+    },
+    "required": [
+     "current_prompt"
+    ],
+    "title": "FollowUpIntentRequest",
+    "type": "object"
+   },
+   "ForecastApiRequest": {
+    "properties": {
+     "future_steps": {
+      "default": 3,
+      "title": "Future Steps",
+      "type": "integer"
+     },
+     "metric_name": {
+      "default": "Metric",
+      "title": "Metric Name",
+      "type": "string"
+     },
+     "series": {
+      "items": {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      "title": "Series",
+      "type": "array"
+     }
+    },
+    "required": [
+     "series"
+    ],
+    "title": "ForecastApiRequest",
+    "type": "object"
+   },
+   "ForecastPoint": {
+    "properties": {
+     "confidence_lower": {
+      "title": "Confidence Lower",
+      "type": "number"
+     },
+     "confidence_upper": {
+      "title": "Confidence Upper",
+      "type": "number"
+     },
+     "period_index": {
+      "title": "Period Index",
+      "type": "integer"
+     },
+     "predicted_value": {
+      "title": "Predicted Value",
+      "type": "number"
+     },
+     "projected_period": {
+      "title": "Projected Period",
+      "type": "string"
+     }
+    },
+    "required": [
+     "period_index",
+     "projected_period",
+     "predicted_value",
+     "confidence_lower",
+     "confidence_upper"
+    ],
+    "title": "ForecastPoint",
+    "type": "object"
+   },
+   "ForecastResult": {
+    "properties": {
+     "forecast_periods": {
+      "title": "Forecast Periods",
+      "type": "integer"
+     },
+     "historical_count": {
+      "title": "Historical Count",
+      "type": "integer"
+     },
+     "intercept": {
+      "title": "Intercept",
+      "type": "number"
+     },
+     "metric_name": {
+      "title": "Metric Name",
+      "type": "string"
+     },
+     "projections": {
+      "items": {
+       "$ref": "#/components/schemas/ForecastPoint"
+      },
+      "title": "Projections",
+      "type": "array"
+     },
+     "r_squared": {
+      "title": "R Squared",
+      "type": "number"
+     },
+     "slope": {
+      "title": "Slope",
+      "type": "number"
+     },
+     "trend_direction": {
+      "enum": [
+       "increasing",
+       "decreasing",
+       "stable"
+      ],
+      "title": "Trend Direction",
+      "type": "string"
+     }
+    },
+    "required": [
+     "metric_name",
+     "historical_count",
+     "forecast_periods",
+     "slope",
+     "intercept",
+     "r_squared",
+     "trend_direction",
+     "projections"
+    ],
+    "title": "ForecastResult",
+    "type": "object"
+   },
    "FreshnessIn": {
     "description": "Freshness model per connection (US-041; REQ-118; DEC-02).",
     "properties": {
@@ -3233,6 +4029,116 @@
      "turn_id"
     ],
     "title": "FromAnswerIn",
+    "type": "object"
+   },
+   "GenerateIn": {
+    "properties": {
+     "document_ids": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Document Ids",
+      "type": "array"
+     },
+     "objects": {
+      "additionalProperties": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "maxProperties": 500,
+      "minProperties": 1,
+      "title": "Objects",
+      "type": "object"
+     },
+     "reporting_date": {
+      "anyOf": [
+       {
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reporting Date"
+     }
+    },
+    "required": [
+     "objects"
+    ],
+    "title": "GenerateIn",
+    "type": "object"
+   },
+   "GeneratedWidget": {
+    "properties": {
+     "description": {
+      "title": "Description",
+      "type": "string"
+     },
+     "dimension_keys": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Dimension Keys",
+      "type": "array"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "layout": {
+      "$ref": "#/components/schemas/LayoutSlot"
+     },
+     "measure_key": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Measure Key"
+     },
+     "sample_sql": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sample Sql"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "visual_type": {
+      "enum": [
+       "kpi_card",
+       "ranked_bar",
+       "trend_line",
+       "donut",
+       "stacked_bar",
+       "table"
+      ],
+      "title": "Visual Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "visual_type",
+     "layout",
+     "description"
+    ],
+    "title": "GeneratedWidget",
     "type": "object"
    },
    "GoldIn": {
@@ -4273,6 +5179,41 @@
      "h"
     ],
     "title": "LayoutItem",
+    "type": "object"
+   },
+   "LayoutSlot": {
+    "properties": {
+     "h": {
+      "maximum": 12.0,
+      "minimum": 1.0,
+      "title": "H",
+      "type": "integer"
+     },
+     "w": {
+      "maximum": 12.0,
+      "minimum": 1.0,
+      "title": "W",
+      "type": "integer"
+     },
+     "x": {
+      "maximum": 11.0,
+      "minimum": 0.0,
+      "title": "X",
+      "type": "integer"
+     },
+     "y": {
+      "minimum": 0.0,
+      "title": "Y",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "x",
+     "y",
+     "w",
+     "h"
+    ],
+    "title": "LayoutSlot",
     "type": "object"
    },
    "LogoSizeIn": {
@@ -5610,6 +6551,81 @@
     "title": "PinIn",
     "type": "object"
    },
+   "PivotTransformRequest": {
+    "properties": {
+     "agg_func": {
+      "default": "sum",
+      "enum": [
+       "sum",
+       "avg",
+       "count"
+      ],
+      "title": "Agg Func",
+      "type": "string"
+     },
+     "col_idx": {
+      "default": 1,
+      "title": "Col Idx",
+      "type": "integer"
+     },
+     "row_idx": {
+      "default": 0,
+      "title": "Row Idx",
+      "type": "integer"
+     },
+     "rows": {
+      "items": {
+       "items": {},
+       "type": "array"
+      },
+      "title": "Rows",
+      "type": "array"
+     },
+     "val_idx": {
+      "default": 2,
+      "title": "Val Idx",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "rows"
+    ],
+    "title": "PivotTransformRequest",
+    "type": "object"
+   },
+   "PivotedTable": {
+    "properties": {
+     "column_headers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Column Headers",
+      "type": "array"
+     },
+     "matrix": {
+      "items": {
+       "items": {},
+       "type": "array"
+      },
+      "title": "Matrix",
+      "type": "array"
+     },
+     "row_headers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Row Headers",
+      "type": "array"
+     }
+    },
+    "required": [
+     "row_headers",
+     "column_headers",
+     "matrix"
+    ],
+    "title": "PivotedTable",
+    "type": "object"
+   },
    "PlanEditIn": {
     "properties": {
      "instruction": {
@@ -5623,32 +6639,6 @@
      "instruction"
     ],
     "title": "PlanEditIn",
-    "type": "object"
-   },
-   "PlanIn": {
-    "properties": {
-     "connection_id": {
-      "anyOf": [
-       {
-        "type": "string"
-       },
-       {
-        "type": "null"
-       }
-      ],
-      "title": "Connection Id"
-     },
-     "request": {
-      "maxLength": 2000,
-      "minLength": 1,
-      "title": "Request",
-      "type": "string"
-     }
-    },
-    "required": [
-     "request"
-    ],
-    "title": "PlanIn",
     "type": "object"
    },
    "PlanShowIn": {
@@ -5992,6 +6982,31 @@
     "title": "RefineIn",
     "type": "object"
    },
+   "RemoveIn": {
+    "properties": {
+     "report": {
+      "minimum": 0.0,
+      "title": "Report",
+      "type": "integer"
+     },
+     "widget_ref": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Widget Ref"
+     }
+    },
+    "required": [
+     "report"
+    ],
+    "title": "RemoveIn",
+    "type": "object"
+   },
    "RepointIn": {
     "properties": {
      "connection_id": {
@@ -6195,6 +7210,137 @@
      "version"
     ],
     "title": "RollbackIn",
+    "type": "object"
+   },
+   "RootCauseContribution": {
+    "properties": {
+     "current_value": {
+      "title": "Current Value",
+      "type": "number"
+     },
+     "dimension_member": {
+      "title": "Dimension Member",
+      "type": "string"
+     },
+     "direction": {
+      "title": "Direction",
+      "type": "string"
+     },
+     "impact_pct": {
+      "title": "Impact Pct",
+      "type": "number"
+     },
+     "previous_value": {
+      "title": "Previous Value",
+      "type": "number"
+     },
+     "variance": {
+      "title": "Variance",
+      "type": "number"
+     }
+    },
+    "required": [
+     "dimension_member",
+     "previous_value",
+     "current_value",
+     "variance",
+     "impact_pct",
+     "direction"
+    ],
+    "title": "RootCauseContribution",
+    "type": "object"
+   },
+   "RootCauseItem": {
+    "properties": {
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "number"
+     }
+    },
+    "required": [
+     "label",
+     "value"
+    ],
+    "title": "RootCauseItem",
+    "type": "object"
+   },
+   "RootCauseRequest": {
+    "properties": {
+     "baseline_data": {
+      "items": {
+       "$ref": "#/components/schemas/RootCauseItem"
+      },
+      "title": "Baseline Data",
+      "type": "array"
+     },
+     "current_data": {
+      "items": {
+       "$ref": "#/components/schemas/RootCauseItem"
+      },
+      "title": "Current Data",
+      "type": "array"
+     },
+     "metric_name": {
+      "title": "Metric Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "metric_name",
+     "baseline_data",
+     "current_data"
+    ],
+    "title": "RootCauseRequest",
+    "type": "object"
+   },
+   "RootCauseResult": {
+    "properties": {
+     "contributions": {
+      "items": {
+       "$ref": "#/components/schemas/RootCauseContribution"
+      },
+      "title": "Contributions",
+      "type": "array"
+     },
+     "executive_narrative": {
+      "title": "Executive Narrative",
+      "type": "string"
+     },
+     "metric_name": {
+      "title": "Metric Name",
+      "type": "string"
+     },
+     "net_variance": {
+      "title": "Net Variance",
+      "type": "number"
+     },
+     "primary_driver": {
+      "title": "Primary Driver",
+      "type": "string"
+     },
+     "total_current": {
+      "title": "Total Current",
+      "type": "number"
+     },
+     "total_previous": {
+      "title": "Total Previous",
+      "type": "number"
+     }
+    },
+    "required": [
+     "metric_name",
+     "total_previous",
+     "total_current",
+     "net_variance",
+     "primary_driver",
+     "contributions",
+     "executive_narrative"
+    ],
+    "title": "RootCauseResult",
     "type": "object"
    },
    "RuleIn": {
@@ -7228,6 +8374,26 @@
     "title": "SubmitIn",
     "type": "object"
    },
+   "SuggestionsRequest": {
+    "properties": {
+     "query_text": {
+      "title": "Query Text",
+      "type": "string"
+     },
+     "returned_columns": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Returned Columns",
+      "type": "array"
+     }
+    },
+    "required": [
+     "query_text"
+    ],
+    "title": "SuggestionsRequest",
+    "type": "object"
+   },
    "SuitableIn": {
     "properties": {
      "spec": {
@@ -7303,6 +8469,91 @@
      "report_id"
     ],
     "title": "Target",
+    "type": "object"
+   },
+   "TimeSeriesItem": {
+    "properties": {
+     "period": {
+      "title": "Period",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "number"
+     }
+    },
+    "required": [
+     "period",
+     "value"
+    ],
+    "title": "TimeSeriesItem",
+    "type": "object"
+   },
+   "TimeSeriesPoint": {
+    "properties": {
+     "change_abs": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Change Abs"
+     },
+     "change_pct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Change Pct"
+     },
+     "period": {
+      "title": "Period",
+      "type": "string"
+     },
+     "previous_value": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Previous Value"
+     },
+     "value": {
+      "title": "Value",
+      "type": "number"
+     }
+    },
+    "required": [
+     "period",
+     "value"
+    ],
+    "title": "TimeSeriesPoint",
+    "type": "object"
+   },
+   "TimeSeriesTransformRequest": {
+    "properties": {
+     "series": {
+      "items": {
+       "$ref": "#/components/schemas/TimeSeriesItem"
+      },
+      "title": "Series",
+      "type": "array"
+     }
+    },
+    "required": [
+     "series"
+    ],
+    "title": "TimeSeriesTransformRequest",
     "type": "object"
    },
    "TlsIn": {
@@ -7578,6 +8829,24 @@
     "title": "ValueSynonymIn",
     "type": "object"
    },
+   "VarianceTransformRequest": {
+    "properties": {
+     "actual": {
+      "title": "Actual",
+      "type": "number"
+     },
+     "target": {
+      "title": "Target",
+      "type": "number"
+     }
+    },
+    "required": [
+     "actual",
+     "target"
+    ],
+    "title": "VarianceTransformRequest",
+    "type": "object"
+   },
    "VisibilityIn": {
     "properties": {
      "hide_from_roles": {
@@ -7608,6 +8877,131 @@
      }
     },
     "title": "VisibilityIn",
+    "type": "object"
+   },
+   "VoiceTranscribeRequest": {
+    "properties": {
+     "audio_base64": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Audio Base64"
+     },
+     "client_transcript": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Client Transcript"
+     },
+     "mime_type": {
+      "default": "audio/wav",
+      "title": "Mime Type",
+      "type": "string"
+     }
+    },
+    "title": "VoiceTranscribeRequest",
+    "type": "object"
+   },
+   "WhatIfScenarioRequest": {
+    "properties": {
+     "baseline_budget": {
+      "title": "Baseline Budget",
+      "type": "number"
+     },
+     "baseline_duration_months": {
+      "title": "Baseline Duration Months",
+      "type": "number"
+     },
+     "budget_variance_pct": {
+      "default": 0.0,
+      "title": "Budget Variance Pct",
+      "type": "number"
+     },
+     "contingency_rate_pct": {
+      "default": 10.0,
+      "title": "Contingency Rate Pct",
+      "type": "number"
+     },
+     "delay_months": {
+      "default": 0.0,
+      "title": "Delay Months",
+      "type": "number"
+     }
+    },
+    "required": [
+     "baseline_budget",
+     "baseline_duration_months"
+    ],
+    "title": "WhatIfScenarioRequest",
+    "type": "object"
+   },
+   "WhatIfScenarioResult": {
+    "properties": {
+     "cost_impact_abs": {
+      "title": "Cost Impact Abs",
+      "type": "number"
+     },
+     "cost_impact_pct": {
+      "title": "Cost Impact Pct",
+      "type": "number"
+     },
+     "executive_assessment": {
+      "title": "Executive Assessment",
+      "type": "string"
+     },
+     "original_budget": {
+      "title": "Original Budget",
+      "type": "number"
+     },
+     "original_duration": {
+      "title": "Original Duration",
+      "type": "number"
+     },
+     "projected_budget": {
+      "title": "Projected Budget",
+      "type": "number"
+     },
+     "projected_duration": {
+      "title": "Projected Duration",
+      "type": "number"
+     },
+     "recommended_contingency": {
+      "title": "Recommended Contingency",
+      "type": "number"
+     },
+     "risk_level": {
+      "enum": [
+       "Low",
+       "Medium",
+       "High",
+       "Critical"
+      ],
+      "title": "Risk Level",
+      "type": "string"
+     }
+    },
+    "required": [
+     "original_budget",
+     "projected_budget",
+     "original_duration",
+     "projected_duration",
+     "cost_impact_abs",
+     "cost_impact_pct",
+     "recommended_contingency",
+     "risk_level",
+     "executive_assessment"
+    ],
+    "title": "WhatIfScenarioResult",
     "type": "object"
    },
    "WidgetPatch": {
@@ -7859,6 +9253,39 @@
     "title": "RunIn",
     "type": "object"
    },
+   "tela_api__content__dashboard_ai__PlanIn": {
+    "properties": {
+     "connection_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Connection Id"
+     },
+     "min_widgets": {
+      "default": 6,
+      "maximum": 12.0,
+      "minimum": 1.0,
+      "title": "Min Widgets",
+      "type": "integer"
+     },
+     "request": {
+      "maxLength": 8000,
+      "minLength": 1,
+      "title": "Request",
+      "type": "string"
+     }
+    },
+    "required": [
+     "request"
+    ],
+    "title": "PlanIn",
+    "type": "object"
+   },
    "tela_api__content__dashboards__PreviewIn": {
     "properties": {
      "as": {
@@ -7942,6 +9369,32 @@
      }
     },
     "title": "PreviewIn",
+    "type": "object"
+   },
+   "tela_api__content__planner__PlanIn": {
+    "properties": {
+     "connection_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Connection Id"
+     },
+     "request": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Request",
+      "type": "string"
+     }
+    },
+    "required": [
+     "request"
+    ],
+    "title": "PlanIn",
     "type": "object"
    },
    "tela_api__content__reports__LayoutIn": {
@@ -12485,6 +13938,52 @@
     ]
    }
   },
+  "/api/v1/ask/anomalies": {
+   "post": {
+    "description": "Detect statistical outliers and anomalies across metric time-series.",
+    "operationId": "detect_anomalies_api_v1_ask_anomalies_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AnomalyDetectRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/AnomalyItem"
+         },
+         "title": "Response Detect Anomalies Api V1 Ask Anomalies Post",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Detect Anomalies",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
   "/api/v1/ask/conversations": {
    "get": {
     "operationId": "conversations_api_v1_ask_conversations_get",
@@ -12549,6 +14048,48 @@
     "summary": "Conversation",
     "tags": [
      "ask"
+    ]
+   }
+  },
+  "/api/v1/ask/executive-brief": {
+   "post": {
+    "description": "Generate executive data narrative, status assessment, and recommended actions.",
+    "operationId": "get_executive_brief_api_v1_ask_executive_brief_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ExecutiveBriefRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ExecutiveBriefing"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Executive Brief",
+    "tags": [
+     "pmo-v2-intelligence"
     ]
    }
   },
@@ -12654,6 +14195,183 @@
     "summary": "Resolve Feedback",
     "tags": [
      "ask"
+    ]
+   }
+  },
+  "/api/v1/ask/followup-intent": {
+   "post": {
+    "description": "Detect if a user prompt is a conversational drill-down, filter, or root-cause request.",
+    "operationId": "evaluate_followup_intent_api_v1_ask_followup_intent_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/FollowUpIntentRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FollowUpIntent"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Evaluate Followup Intent",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/ask/multilingual-normalize": {
+   "post": {
+    "description": "Normalize multilingual user prompts into English schema tokens.",
+    "operationId": "normalize_prompt_api_v1_ask_multilingual_normalize_post",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "prompt",
+      "required": true,
+      "schema": {
+       "title": "Prompt",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "title": "Response Normalize Prompt Api V1 Ask Multilingual Normalize Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Normalize Prompt",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/ask/root-cause": {
+   "post": {
+    "description": "Perform variance decomposition and root-cause analysis on metric changes.",
+    "operationId": "analyze_root_cause_api_v1_ask_root_cause_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RootCauseRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RootCauseResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Analyze Root Cause",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/ask/suggestions": {
+   "post": {
+    "description": "Provide context-aware follow-up question suggestions.",
+    "operationId": "get_suggestions_api_v1_ask_suggestions_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SuggestionsRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "type": "string"
+         },
+         "title": "Response Get Suggestions Api V1 Ask Suggestions Post",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Suggestions",
+    "tags": [
+     "pmo-v2-intelligence"
     ]
    }
   },
@@ -13127,6 +14845,52 @@
     ]
    }
   },
+  "/api/v1/ask/voice-transcribe": {
+   "post": {
+    "description": "Server-side audio voice endpoint; transcribes or passes audio transcription to search.",
+    "operationId": "transcribe_voice_api_v1_ask_voice_transcribe_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VoiceTranscribeRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "string"
+         },
+         "title": "Response Transcribe Voice Api V1 Ask Voice Transcribe Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Transcribe Voice",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
   "/api/v1/auth/logout": {
    "post": {
     "operationId": "logout_api_v1_auth_logout_post",
@@ -13138,6 +14902,161 @@
     "summary": "Logout",
     "tags": [
      "identity"
+    ]
+   }
+  },
+  "/api/v1/brain/retrain": {
+   "post": {
+    "description": "Dynamically retrain and align the AI brain with the connected database schema.\n100% generic - auto-discovers tables, fields, measures, dimensions, and keys.",
+    "operationId": "retrain_brain_model_api_v1_brain_retrain_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BrainRetrainRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BrainIntrospectResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Retrain Brain Model",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/brain/rules": {
+   "get": {
+    "description": "List all currently active delta business rules and formulas.",
+    "operationId": "list_active_rules_api_v1_brain_rules_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/DeltaRuleChange"
+         },
+         "title": "Response List Active Rules Api V1 Brain Rules Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "List Active Rules",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/brain/rules/apply-text": {
+   "post": {
+    "description": "Surgically parse and apply a delta business rule change from text/documents without full retrain.",
+    "operationId": "apply_delta_rule_text_api_v1_brain_rules_apply_text_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ApplyRuleTextRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DeltaRuleChange"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Apply Delta Rule Text",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/brain/rules/{rule_key}": {
+   "delete": {
+    "description": "Delete or revert an active delta rule override.",
+    "operationId": "remove_rule_api_v1_brain_rules__rule_key__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "rule_key",
+      "required": true,
+      "schema": {
+       "title": "Rule Key",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Remove Rule Api V1 Brain Rules  Rule Key  Delete",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Remove Rule",
+    "tags": [
+     "pmo-v2-intelligence"
     ]
    }
   },
@@ -14328,6 +16247,105 @@
     ]
    }
   },
+  "/api/v1/connections/{connection_id}/model/generate": {
+   "post": {
+    "operationId": "generate_api_v1_connections__connection_id__model_generate_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "connection_id",
+      "required": true,
+      "schema": {
+       "title": "Connection Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GenerateIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Generate Api V1 Connections  Connection Id  Model Generate Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Generate",
+    "tags": [
+     "model-builder"
+    ]
+   }
+  },
+  "/api/v1/connections/{connection_id}/model/selection": {
+   "get": {
+    "description": "Every readable table and column, the columns the current model shows, and the documents for the builder.",
+    "operationId": "selection_api_v1_connections__connection_id__model_selection_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "connection_id",
+      "required": true,
+      "schema": {
+       "title": "Connection Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Selection Api V1 Connections  Connection Id  Model Selection Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Selection",
+    "tags": [
+     "model-builder"
+    ]
+   }
+  },
   "/api/v1/connections/{connection_id}/objects": {
    "get": {
     "operationId": "list_objects_api_v1_connections__connection_id__objects_get",
@@ -15044,6 +17062,335 @@
     ]
    }
   },
+  "/api/v1/dashboards/ai/jobs/{job_id}": {
+   "get": {
+    "operationId": "job_api_v1_dashboards_ai_jobs__job_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Job Api V1 Dashboards Ai Jobs  Job Id  Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Job",
+    "tags": [
+     "dashboards"
+    ]
+   }
+  },
+  "/api/v1/dashboards/ai/jobs/{job_id}/build": {
+   "post": {
+    "description": "Create one draft report per planned page and a dashboard with them as tabs; run every widget once.",
+    "operationId": "build_api_v1_dashboards_ai_jobs__job_id__build_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Build Api V1 Dashboards Ai Jobs  Job Id  Build Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Build",
+    "tags": [
+     "dashboards"
+    ]
+   }
+  },
+  "/api/v1/dashboards/ai/jobs/{job_id}/remove": {
+   "post": {
+    "description": "Take a page or a widget out of the plan before building.",
+    "operationId": "remove_api_v1_dashboards_ai_jobs__job_id__remove_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RemoveIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Remove Api V1 Dashboards Ai Jobs  Job Id  Remove Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Remove",
+    "tags": [
+     "dashboards"
+    ]
+   }
+  },
+  "/api/v1/dashboards/ai/plan": {
+   "post": {
+    "description": "Plan a dashboard from words with the LLM, from the approved model (background job).",
+    "operationId": "start_plan_api_v1_dashboards_ai_plan_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/tela_api__content__dashboard_ai__PlanIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Start Plan Api V1 Dashboards Ai Plan Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Start Plan",
+    "tags": [
+     "dashboards"
+    ]
+   }
+  },
+  "/api/v1/dashboards/generate": {
+   "post": {
+    "description": "Generate dynamic dashboard widgets and grid layout from a natural language prompt.",
+    "operationId": "generate_dashboard_api_v1_dashboards_generate_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DashboardGenerateRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AutoDashboardPlan"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Generate Dashboard",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/dashboards/state/cross-filter": {
+   "post": {
+    "description": "Apply interactive cross-filtering across dashboard widgets.",
+    "operationId": "update_cross_filter_api_v1_dashboards_state_cross_filter_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CrossFilterRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Update Cross Filter Api V1 Dashboards State Cross Filter Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Update Cross Filter",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/dashboards/state/cross-filter/{session_id}": {
+   "delete": {
+    "description": "Clear all active cross-filters for a given dashboard session.",
+    "operationId": "reset_cross_filter_api_v1_dashboards_state_cross_filter__session_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "session_id",
+      "required": true,
+      "schema": {
+       "title": "Session Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "dashboard_id",
+      "required": false,
+      "schema": {
+       "default": "default",
+       "title": "Dashboard Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Reset Cross Filter Api V1 Dashboards State Cross Filter  Session Id  Delete",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Reset Cross Filter",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
   "/api/v1/dashboards/{dashboard_id}": {
    "delete": {
     "operationId": "delete_dashboard_api_v1_dashboards__dashboard_id__delete",
@@ -15225,6 +17572,51 @@
     "summary": "Set Dashboard Groups",
     "tags": [
      "dashboard-groups"
+    ]
+   }
+  },
+  "/api/v1/dashboards/{dashboard_id}/pin-page": {
+   "post": {
+    "description": "Where a chat answer pinned to this dashboard goes: the dashboard's \"Pinned from chat\" page (one of your\nreports), made and put first on the dashboard the first time. Returns its report and section.",
+    "operationId": "pin_page_api_v1_dashboards__dashboard_id__pin_page_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "dashboard_id",
+      "required": true,
+      "schema": {
+       "title": "Dashboard Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Pin Page Api V1 Dashboards  Dashboard Id  Pin Page Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Pin Page",
+    "tags": [
+     "dashboards"
     ]
    }
   },
@@ -18264,6 +20656,50 @@
     ]
    }
   },
+  "/api/v1/model-jobs/{job_id}": {
+   "get": {
+    "operationId": "job_status_api_v1_model_jobs__job_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Job Status Api V1 Model Jobs  Job Id  Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Job Status",
+    "tags": [
+     "model-builder"
+    ]
+   }
+  },
   "/api/v1/models": {
    "get": {
     "operationId": "list_models_api_v1_models_get",
@@ -18917,6 +21353,51 @@
     "summary": "Undo",
     "tags": [
      "model-assistant"
+    ]
+   }
+  },
+  "/api/v1/models/{model_id}/export": {
+   "post": {
+    "description": "Write the model's approved version to the export folder now (``TELA_MODEL_EXPORT_DIR``).",
+    "operationId": "export_model_now_api_v1_models__model_id__export_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "model_id",
+      "required": true,
+      "schema": {
+       "title": "Model Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Export Model Now Api V1 Models  Model Id  Export Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Export Model Now",
+    "tags": [
+     "models"
     ]
    }
   },
@@ -21756,6 +24237,180 @@
     ]
    }
   },
+  "/api/v1/predict/correlation": {
+   "post": {
+    "description": "Calculate Pearson correlation coefficient between all pairs of numeric metrics.",
+    "operationId": "run_correlation_api_v1_predict_correlation_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CorrelationApiRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/CorrelationPair"
+         },
+         "title": "Response Run Correlation Api V1 Predict Correlation Post",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Run Correlation",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/predict/currency-convert": {
+   "post": {
+    "description": "Convert amount across currencies using real-time exchange rates.",
+    "operationId": "run_currency_conversion_api_v1_predict_currency_convert_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CurrencyConvertRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Run Currency Conversion Api V1 Predict Currency Convert Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Run Currency Conversion",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/predict/forecast": {
+   "post": {
+    "description": "Project future metric trendline values and confidence bands.",
+    "operationId": "run_forecast_api_v1_predict_forecast_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ForecastApiRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ForecastResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Run Forecast",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/predict/what-if": {
+   "post": {
+    "description": "Simulate budget, delay, and contingency variations for risk appraisal.",
+    "operationId": "run_what_if_scenario_api_v1_predict_what_if_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/WhatIfScenarioRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/WhatIfScenarioResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Run What If Scenario",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
   "/api/v1/publish-requests": {
    "get": {
     "description": "Govern → Publish requests (US-142): open requests first-in first-out; decided ones newest first.",
@@ -22213,7 +24868,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/PlanIn"
+        "$ref": "#/components/schemas/tela_api__content__planner__PlanIn"
        }
       }
      },
@@ -24142,6 +26797,140 @@
     "summary": "Starter Reports For Me",
     "tags": [
      "starter-content"
+    ]
+   }
+  },
+  "/api/v1/transform/pivot": {
+   "post": {
+    "description": "Pivot relational rows into interactive cross-tabulated matrix format.",
+    "operationId": "transform_pivot_api_v1_transform_pivot_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PivotTransformRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PivotedTable"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Transform Pivot",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/transform/time-series": {
+   "post": {
+    "description": "Compute period-over-period (MoM / QoQ) changes and percentage growths.",
+    "operationId": "transform_time_series_api_v1_transform_time_series_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TimeSeriesTransformRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/TimeSeriesPoint"
+         },
+         "title": "Response Transform Time Series Api V1 Transform Time Series Post",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Transform Time Series",
+    "tags": [
+     "pmo-v2-intelligence"
+    ]
+   }
+  },
+  "/api/v1/transform/variance": {
+   "post": {
+    "description": "Calculate actuals vs budget variance and variance percentage.",
+    "operationId": "transform_variance_api_v1_transform_variance_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VarianceTransformRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "type": "number"
+         },
+         "title": "Response Transform Variance Api V1 Transform Variance Post",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Transform Variance",
+    "tags": [
+     "pmo-v2-intelligence"
     ]
    }
   },

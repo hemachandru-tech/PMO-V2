@@ -87,7 +87,7 @@ describe("Admin → Knowledge → Definitions (US-203)", () => {
     serve(routes);
     renderAt("/admin/knowledge/definitions");
     const table = await screen.findByRole("table", { name: "Business definitions" });
-    expect(screen.getByRole("link", { name: "Definitions" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Glossary & Definitions" })).toHaveAttribute("aria-current", "page");
     expect(await within(table).findByText("Projects where Current state is one of Project Created, Active, On Hold")).toBeInTheDocument();
     expect(within(table).getByText("Rule: Status is Active")).toBeInTheDocument();
     expect(within(table).getByText("Measure 420 · this definition 431")).toBeInTheDocument();

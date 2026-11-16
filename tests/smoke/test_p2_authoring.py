@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(
     not __import__("os").environ.get("TELA_SMOKE"), reason="set TELA_SMOKE=1 with the stack running")
 
 
-def test_plan_build_publish_and_read(apis: dict[str, Api], world: dict[str, str]) -> None:  # noqa: F811
+def test_plan_build_publish_and_read(apis: dict[str, Api], world: dict[str, str]) -> None:
     nomsa, admin = apis["nomsa"], apis["admin"]
     plan = nomsa.call("POST", "/reports/plan", json={
         "request": "Delivery report for my region with overdue go-lives by region and team workload"})

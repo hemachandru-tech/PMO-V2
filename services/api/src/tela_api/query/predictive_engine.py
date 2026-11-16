@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import math
 from typing import Any, Literal
-from pydantic import BaseModel, Field
 
+from pydantic import BaseModel
 
 # --- Forecasting & What-If Models ---
 
@@ -62,7 +62,8 @@ class CorrelationPair(BaseModel):
     metric_x: str
     metric_y: str
     pearson_r: float
-    strength: Literal["Strong Positive", "Moderate Positive", "Weak/None", "Moderate Negative", "Strong Negative"]
+    strength: Literal["Strong Positive", "Moderate Positive", "Weak/None", "Moderate Negative",
+                              "Strong Negative"]
 
 
 # --- Currency Rates Registry ---
@@ -117,7 +118,7 @@ def forecast_time_series(
     mean_x = sum(x_vals) / n
     mean_y = sum(y_vals) / n
 
-    numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(x_vals, y_vals))
+    numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(x_vals, y_vals, strict=True))
     denominator = sum((x - mean_x) ** 2 for x in x_vals)
 
     slope = (numerator / denominator) if denominator != 0 else 0.0
@@ -125,7 +126,7 @@ def forecast_time_series(
 
     # Compute R-squared & standard error
     ss_tot = sum((y - mean_y) ** 2 for y in y_vals)
-    ss_res = sum((y - (slope * x + intercept)) ** 2 for x, y in zip(x_vals, y_vals))
+    ss_res = sum((y - (slope * x + intercept)) ** 2 for x, y in zip(x_vals, y_vals, strict=True))
     r_squared = (1 - (ss_res / ss_tot)) if ss_tot > 0 else 1.0
     r_squared = max(0.0, min(1.0, r_squared))
 
@@ -170,25 +171,27 @@ def simulate_what_if_scenario(req: WhatIfScenarioRequest) -> WhatIfScenarioResul
     """Simulate budget, delay, and contingency variations for risk appraisal."""
     budget_delta = req.baseline_budget * (req.budget_variance_pct / 100.0)
     delay_cost = (req.baseline_budget / max(1.0, req.baseline_duration_months)) * (req.delay_months * 0.35)
-    
+
     projected_budget = req.baseline_budget + budget_delta + delay_cost
     projected_duration = req.baseline_duration_months + req.delay_months
-    
+
     cost_impact_abs = projected_budget - req.baseline_budget
     cost_impact_pct = (cost_impact_abs / req.baseline_budget * 100.0) if req.baseline_budget > 0 else 0.0
-    
+
     contingency_needed = projected_budget * (req.contingency_rate_pct / 100.0)
-    
+
     # Risk categorization
     if cost_impact_pct > 25.0 or req.delay_months >= 3.0:
         risk: Literal["Low", "Medium", "High", "Critical"] = "Critical"
-        narrative = f"Critical risk: Combined budget slip and {req.delay_months}m schedule delay pushes total exposure by {cost_impact_pct:.1f}%."
+        narrative = (f"Critical risk: Combined budget slip and {req.delay_months}m schedule delay pushes total "
+                     f"exposure by {cost_impact_pct:.1f}%.")
     elif cost_impact_pct > 10.0 or req.delay_months >= 1.0:
         risk = "High"
-        narrative = f"High variance: Budget increases by {cost_impact_pct:.1f}%. Immediate executive mitigation is advised."
+        narrative = (f"High variance: Budget increases by {cost_impact_pct:.1f}%. "
+                     "Immediate executive mitigation is advised.")
     elif cost_impact_pct > 0.0:
         risk = "Medium"
-        narrative = f"Moderate variance: Expected slippage is within standard buffer limits."
+        narrative = "Moderate variance: Expected slippage is within standard buffer limits."
     else:
         risk = "Low"
         narrative = "Low risk: Performance is expected to track within baseline tolerances."
@@ -226,7 +229,7 @@ def compute_correlation_matrix(
             m1 = sum(sub1) / n
             m2 = sum(sub2) / n
 
-            num = sum((a - m1) * (b - m2) for a, b in zip(sub1, sub2))
+            num = sum((a - m1) * (b - m2) for a, b in zip(sub1, sub2, strict=True))
             den1 = sum((a - m1) ** 2 for a in sub1)
             den2 = sum((b - m2) ** 2 for b in sub2)
 
@@ -234,7 +237,8 @@ def compute_correlation_matrix(
             r = (num / den) if den != 0 else 0.0
             r = max(-1.0, min(1.0, r))
 
-            strength: Literal["Strong Positive", "Moderate Positive", "Weak/None", "Moderate Negative", "Strong Negative"]
+            strength: Literal["Strong Positive", "Moderate Positive", "Weak/None", "Moderate Negative",
+                              "Strong Negative"]
             if r >= 0.7:
                 strength = "Strong Positive"
             elif r >= 0.3:

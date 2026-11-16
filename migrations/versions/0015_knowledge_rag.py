@@ -1,4 +1,4 @@
-"""Knowledge, retrieval and gold examples (EPIC-03: DATA-042, DATA-043, DATA-044; US-056, US-057, US-100 – US-103).
+"""Knowledge, retrieval and gold examples (EPIC-03: DATA-042, DATA-043, DATA-044; US-056, US-057, US-100 to US-103).
 
 * ``rag.knowledge_documents`` — one approved model version's definitions (auto-approved), or an uploaded
   reference document that waits in ``pending_review`` until an Admin approves it. Only ``approved`` documents

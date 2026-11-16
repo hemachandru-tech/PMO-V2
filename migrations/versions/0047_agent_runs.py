@@ -1,8 +1,8 @@
-"""Agent run log (ENH-024, US-225 – US-229; DEC-25).
+"""Agent run log (ENH-024, US-225 to US-229; DEC-25).
 
 * ``ops.agent_runs`` — one row per run of the agents: an Ask turn, a model assistant proposal, a pack mapping
   suggestion, a certification rephrase, a custom SQL draft, a report plan or a canvas edit. ``agents`` lists the
-  agents (AG-01 – AG-10) that took part; ``outcome`` is ``running`` until it ends.
+  agents (AG-01 to AG-10) that took part; ``outcome`` is ``running`` until it ends.
 * ``ops.agent_steps`` — the run's ordered steps (rule, retrieve, llm_call, validate, retry, fallback, decision,
   query, error, done). An ``llm_call`` step holds the text the gateway sent to the model after masking and the raw
   reply (DEC-25): kept only here, never in logs or ``ops.llm_invocations``, and cleared after the tenant's retention.

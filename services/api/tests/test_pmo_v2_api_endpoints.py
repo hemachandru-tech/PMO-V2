@@ -2,8 +2,9 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from tela_api.main import create_app
+
 from tela_api.core.settings import Settings
+from tela_api.main import create_app
 
 
 @pytest.fixture

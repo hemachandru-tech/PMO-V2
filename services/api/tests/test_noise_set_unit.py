@@ -80,7 +80,7 @@ def test_variants_are_deterministic() -> None:
 
 
 @pytest.fixture(scope="module")
-def results(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> list[dict[str, Any]]:  # noqa: F811
+def results(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> list[dict[str, Any]]:
     return [evaluate(db, snapshot, e, index=REAL_INDEX) for e in NOISE]
 
 

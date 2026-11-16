@@ -61,7 +61,7 @@ describe("chart colours from one helper (US-224)", () => {
     expect([c.point(0, 0), c.point(0, 1)]).toEqual([undefined, "var(--tl-status-danger)"]);
     const option = toOption(spec, COLUMNS, ROWS, undefined, undefined, (t) => `#${t}`) as { series: { itemStyle: { color: string }; data: unknown[] }[] };
     expect(option.series[0]!.itemStyle.color).toBe("#chart-2");
-    expect(option.series[0]!.data).toEqual([40, { value: 35, itemStyle: { color: "#status-danger" } }, 12]);
+    expect(option.series[0]!.data).toMatchObject([{ value: 40 }, { value: 35, itemStyle: { color: "#status-danger" } }, { value: 12 }]);
     const donut = toOption({ ...spec, type: "donut" }, COLUMNS, ROWS, undefined, undefined, (t) => `#${t}`) as { series: { data: { itemStyle: { color: string } }[] }[] };
     expect(donut.series[0]!.data.map((d) => d.itemStyle.color)).toEqual(["#chart-2", "#status-danger", "#chart-6"]);
     // Without a choice the theme decides, exactly as before.

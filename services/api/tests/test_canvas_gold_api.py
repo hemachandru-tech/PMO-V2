@@ -83,7 +83,7 @@ async def test_the_gold_set_has_twenty_scorable_cases() -> None:
         assert set(named) <= titles, case["id"]
 
 
-async def test_gold_rules_baseline_and_a_scripted_review(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_gold_rules_baseline_and_a_scripted_review(stack: httpx.AsyncClient, world: World,
                                                          owner_conn: psycopg.Connection,
                                                          monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(get_settings(), "llm_review_off_agents", [])  # measured with AG-06 back in review

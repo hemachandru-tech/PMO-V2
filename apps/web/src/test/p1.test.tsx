@@ -68,7 +68,7 @@ describe("helpers", () => {
       { name: "n", kind: "measure", label: "N", ref: "", data_type: "integer", format: "integer" }] as const;
     const opt = toOption({ type: "ranked_bar", x: "region", series: ["n"] }, [...cols], [["KSA", 4], ["DPO", 2]]) as { yAxis: { data: string[] }; series: { data: number[] }[] };
     expect(opt.yAxis.data).toEqual(["KSA", "DPO"]);
-    expect(opt.series[0]!.data).toEqual([4, 2]);
+    expect(opt.series[0]!.data.map((d) => (typeof d === "object" ? (d as { value: number }).value : d))).toEqual([4, 2]);
   });
 });
 

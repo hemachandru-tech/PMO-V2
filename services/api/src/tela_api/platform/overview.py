@@ -126,7 +126,8 @@ async def _ai(conn: AsyncConnection, today: datetime, zone: ZoneInfo) -> dict[st
         conn,
         """
         SELECT to_char(created_at AT TIME ZONE :tz, 'YYYY-MM-DD') AS day, model, count(*) AS calls,
-               coalesce(sum(prompt_tokens), 0) AS prompt_tokens, coalesce(sum(completion_tokens), 0) AS completion_tokens,
+               coalesce(sum(prompt_tokens), 0) AS prompt_tokens,
+                   coalesce(sum(completion_tokens), 0) AS completion_tokens,
                count(*) FILTER (WHERE status = 'blocked') AS blocked,
                count(*) FILTER (WHERE status NOT IN ('ok', 'blocked')) AS failed
         FROM ops.llm_invocations WHERE created_at >= :since GROUP BY 1, 2
@@ -170,7 +171,8 @@ async def _jobs(conn: AsyncConnection, now: datetime) -> dict[str, Any]:
         row = await fetch_one(
             conn,
             """
-            SELECT count(*) AS runs, count(*) FILTER (WHERE e.outcome = 'failure') AS failed, max(e.occurred_at) AS last,
+            SELECT count(*) AS runs, count(*) FILTER (WHERE e.outcome = 'failure') AS failed,
+                   max(e.occurred_at) AS last,
               (SELECT json_build_object('at', f.occurred_at, 'label', c.name) FROM ops.audit_events f
                LEFT JOIN conn.connections c ON CAST(c.id AS text) = f.object_id
                WHERE f.action = :a AND f.outcome = 'failure' AND f.occurred_at >= :since ORDER BY f.id DESC LIMIT 1)

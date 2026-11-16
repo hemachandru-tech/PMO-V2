@@ -232,7 +232,7 @@ describe("Gold examples (US-056, US-057)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Evaluate" }));
     expect(await screen.findByRole("button", { name: "Evaluating…" })).toBeDisabled();
     expect(calls.find((c) => c.url.endsWith("/gold-examples/evaluate"))?.body).toEqual({}); // each source's own mode
-    expect(screen.getByRole("link", { name: "Gold examples" })).toHaveAttribute("aria-current", "page");
+    // The page is no longer in the menu (v2 simplified Admin); it still opens by its URL.
   });
 
   it("evaluates one Ask answer mode and says which mode a run measured (US-259)", async () => {

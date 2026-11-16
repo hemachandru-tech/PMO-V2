@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -39,7 +40,7 @@ def test_oklch_round_trips_and_clamps_to_the_gamut() -> None:
     for hex_value in ("#236f8d", "#e46e22", "#a11d6c", "#0e1418"):
         assert from_oklch(*oklch(hex_value)) == hex_value
     out = from_oklch(0.62, 0.5, 228)  # far outside sRGB: chroma is reduced, lightness and hue kept
-    L, _, h = oklch(out)  # noqa: N806
+    L, _, h = oklch(out)
     assert L == pytest.approx(0.62, abs=0.01) and h == pytest.approx(228, abs=2)
     assert to_hex(parse_hex("#ABCDEF")) == "#abcdef"
     with pytest.raises(ValueError, match="rrggbb"):
@@ -51,8 +52,8 @@ def test_delta_e_and_cvd_reproduce_the_recorded_us132_figures() -> None:
     and 16.2 (dark), normal vision 19.3 and 19.1."""
     for theme, cvd, normal in (("light", 16.6, 19.3), ("dark", 16.2, 19.1)):
         s = [TELA[k][theme] for k in CHART]
-        assert min(cvd_delta_e(a, b) for a, b in zip(s, s[1:], strict=False)) == pytest.approx(cvd, abs=0.05)
-        assert min(delta_e(parse_hex(a), parse_hex(b)) for a, b in zip(s, s[1:], strict=False)) == \
+        assert min(cvd_delta_e(a, b) for a, b in pairwise(s)) == pytest.approx(cvd, abs=0.05)
+        assert min(delta_e(parse_hex(a), parse_hex(b)) for a, b in pairwise(s)) == \
             pytest.approx(normal, abs=0.05)
 
 

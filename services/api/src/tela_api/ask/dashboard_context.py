@@ -26,9 +26,9 @@ def _label(ref: str, snap: ModelSnapshot | None) -> str:
     if snap is None:
         return key
     if kind == "measure" and (m := snap.measure(key)):
-        return m.label
+        return str(m.label)
     if kind == "dimension" and (d := snap.dimension(key)):
-        return d.label
+        return str(d.label)
     if kind == "field" and "." in key:
         ent, fld = key.split(".", 1)
         e = snap.entity(ent)

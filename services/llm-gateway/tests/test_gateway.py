@@ -190,7 +190,7 @@ def test_schema_failure_returns_the_answer_and_the_error_for_one_fix() -> None:
     assert ledger.rows[-1].status == "invalid_output"
     client, _ = _client(FakeProvider(text="not json"))
     err = client.post("/generate", json=_body("hi", json_schema=SCHEMA), headers=_auth()).json()["error"]
-    assert err["details"]["error"] == "The answer was not valid JSON."
+    assert err["details"]["error"].startswith("The answer was not valid JSON")  # with the parser's reason
 
 
 def test_an_unsafe_answer_is_never_returned_with_the_error() -> None:
@@ -241,7 +241,7 @@ def test_without_a_schema_the_text_is_returned_as_it_came() -> None:
     ('```\n[1, 2]\n```', "[1, 2]"),
     ('```json\n{"a": 1}```', '{"a": 1}'),
     ('{"a": 1}', '{"a": 1}'),
-    ('Here you go:\n```json\n{"a": 1}\n```', 'Here you go:\n```json\n{"a": 1}\n```'),  # prose is not stripped
+    ('Here you go:\n```json\n{"a": 1}\n```', '{"a": 1}'),  # prose around the fence is dropped (Gemini, v2)
 ])
 def test_unfence(text: str, expected: str) -> None:
     assert unfence(text) == expected

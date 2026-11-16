@@ -106,7 +106,7 @@ def _pieces(sql: str, names: set[str], dialect: str | None) -> list[set[str]]:
     """The column sets of a rule's own AND-parts (one set for a rule with no top-level AND)."""
     probe = sql.replace(f"'{DATE}'", "'2000-01-01'").replace(DATE, "'2000-01-01'")
     try:
-        tree = parse_one(f"SELECT 1 FROM t WHERE {probe}", read=dialect)
+        tree = parse_one(f"SELECT 1 FROM t WHERE {probe}", read=dialect)  # noqa: S608 - parsed only, never run
     except Exception:  # noqa: BLE001
         return [_cols(sql, names)]
     parts = [_columns_of(p) & names for p in _conjuncts(tree.args.get("where"))]

@@ -89,7 +89,7 @@ def lexical_hits(question: str, k: int = 8) -> list[Any]:
     return [SimpleNamespace(kind=c["metadata"]["kind"], metadata=c["metadata"]) for _, c in scored[:k]]
 
 
-def evaluate(db: duckdb.DuckDBPyConnection, snap: ModelSnapshot, e: dict[str, Any],  # noqa: F811
+def evaluate(db: duckdb.DuckDBPyConnection, snap: ModelSnapshot, e: dict[str, Any],
              retrieval: bool = False, index: list[Any] | None = None) -> dict[str, Any]:
     """One example as ``gold.evaluate_one`` records it, on the rules path; ``retrieval`` adds the stand-in's
     measures as meaning (US-192); ``index`` another value index (US-220)."""
@@ -124,12 +124,12 @@ def evaluate(db: duckdb.DuckDBPyConnection, snap: ModelSnapshot, e: dict[str, An
 
 
 @pytest.fixture(scope="module")
-def results(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> list[dict[str, Any]]:  # noqa: F811
+def results(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> list[dict[str, Any]]:
     return [evaluate(db, snapshot, e) for e in [*ORIGINALS, *PARAPHRASES]]
 
 
 @pytest.fixture(scope="module")
-def retrieved(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> list[dict[str, Any]]:  # noqa: F811
+def retrieved(db: duckdb.DuckDBPyConnection, snapshot: ModelSnapshot) -> list[dict[str, Any]]:
     return [evaluate(db, snapshot, e, retrieval=True) for e in [*ORIGINALS, *PARAPHRASES]]
 
 

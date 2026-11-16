@@ -54,6 +54,21 @@ export interface Bucket {
   order?: "desc" | "asc";
 }
 
+export interface BusinessRule {
+  key: string;
+  term: string;
+  meaning?: string;
+  entity?: string | null;
+  sql?: string | null;
+  kind?: "condition" | "expression" | "population" | "display";
+  synonyms?: string[];
+  always?: boolean;
+  origin?: "document" | "inferred" | "admin";
+  cite?: string | null;
+  status?: "ok" | "needs_review" | "off";
+  issue?: string | null;
+}
+
 export interface Calc {
   calc: "add" | "sub" | "mul" | "div";
   left: DaysBetween | Calc | Calculator | number | string;
@@ -210,6 +225,7 @@ export interface ModelField {
   sensitivity?: "public" | "internal" | "confidential" | "personal" | "sensitive";
   is_queryable?: boolean;
   blank_handling?: string | null;
+  values?: string[];
 }
 
 export interface ModelLink {
@@ -364,6 +380,7 @@ export interface ModelSnapshot {
   links?: ModelLink[];
   measures?: Measure[];
   dimensions?: Dimension[];
+  rules?: BusinessRule[];
   settings?: Record<string, string>;
   source_pin?: Record<string, unknown> | null;
 }

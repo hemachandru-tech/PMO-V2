@@ -7,7 +7,7 @@ and intelligent follow-up generation.
 from __future__ import annotations
 
 import re
-from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -46,20 +46,22 @@ def detect_follow_up_intent(
     """Analyze if the prompt continues the conversation or starts a new topic."""
     p_lower = current_prompt.lower().strip()
     prev_filters = dict(previous_filters or {})
-    
+
     # Check for follow-up linguistic markers
-    followup_markers = ["now ", "only ", "what about", "and for", "break down by", "filter by", "why did", "show me just"]
+    followup_markers = ["now ", "only ", "what about", "and for", "break down by", "filter by", "why did",
+                        "show me just"]
     is_marker_present = any(p_lower.startswith(m) or f" {m}" in p_lower for m in followup_markers)
-    
+
     if not previous_query or (not is_marker_present and len(p_lower.split()) > 7):
         return FollowUpIntent(
             is_follow_up=False,
             operation="new_topic",
             resolved_query=current_prompt
         )
-    
+
     # 1. Detect filter operations
-    filter_match = re.search(r"(?:filter by|only|for)\s+([a-zA-Z0-9_]+)\s*=\s*['\"]?([^'\"]+)['\"]?", current_prompt, re.IGNORECASE)
+    filter_match = re.search(r"(?:filter by|only|for)\s+([a-zA-Z0-9_]+)\s*=\s*['\"]?([^'\"]+)['\"]?",
+                             current_prompt, re.IGNORECASE)
     if filter_match:
         dim, val = filter_match.group(1).lower(), filter_match.group(2).strip()
         prev_filters[dim] = val
@@ -69,7 +71,7 @@ def detect_follow_up_intent(
             added_filters={dim: val},
             resolved_query=f"{previous_query} filtered by {dim} = '{val}'"
         )
-    
+
     # 2. Detect breakdown / drill-down operations
     breakdown_match = re.search(r"(?:break down by|by|grouped by)\s+([a-z0-9_]+)", p_lower)
     if breakdown_match:
@@ -80,7 +82,7 @@ def detect_follow_up_intent(
             added_breakdowns=[dim],
             resolved_query=f"{previous_query} broken down by {dim}"
         )
-    
+
     # 3. Detect root cause inquiry
     if any(q in p_lower for q in ["why did", "what caused", "why is", "root cause"]):
         return FollowUpIntent(
@@ -88,7 +90,7 @@ def detect_follow_up_intent(
             operation="root_cause",
             resolved_query=f"Root cause decomposition of {previous_query}"
         )
-    
+
     # Default follow-up chaining
     return FollowUpIntent(
         is_follow_up=True,
@@ -106,11 +108,11 @@ def compute_root_cause(
     base_map = dict(baseline_data)
     curr_map = dict(current_data)
     all_keys = set(base_map.keys()) | set(curr_map.keys())
-    
+
     tot_base = sum(base_map.values())
     tot_curr = sum(curr_map.values())
     net_var = tot_curr - tot_base
-    
+
     contributions: list[RootCauseContribution] = []
     for k in all_keys:
         v0 = base_map.get(k, 0.0)
@@ -126,13 +128,13 @@ def compute_root_cause(
             impact_pct=round(impact, 1),
             direction=direction,
         ))
-    
+
     # Sort by absolute variance impact
     contributions.sort(key=lambda c: -abs(c.variance))
-    
+
     primary = contributions[0] if contributions else None
     primary_name = primary.dimension_member if primary else "None"
-    
+
     narrative = (
         f"{metric_name} changed by {net_var:+,.1f} ({((tot_curr - tot_base) / tot_base * 100):+.1f}%). "
         f"The primary driver was '{primary_name}', contributing {primary.variance:+,.1f} "
@@ -140,7 +142,7 @@ def compute_root_cause(
         if primary and tot_base > 0 else
         f"Net variance for {metric_name} is {net_var:+,.1f}."
     )
-    
+
     return RootCauseResult(
         metric_name=metric_name,
         total_previous=round(tot_base, 2),
@@ -159,7 +161,7 @@ def generate_intelligent_suggestions(
     """Generate 3 contextual, high-value proactive analytics prompts."""
     suggestions: list[str] = []
     q_low = query_text.lower()
-    
+
     if "project" in q_low:
         suggestions.append("Which projects are currently overdue by more than 30 days?")
         suggestions.append("Show project distribution by overall RAG health status.")
@@ -176,5 +178,5 @@ def generate_intelligent_suggestions(
         suggestions.append("Show historical trend over time.")
         suggestions.append("Highlight outliers and anomalous entries in this data.")
         suggestions.append("Export this report as an executive presentation.")
-        
+
     return suggestions[:3]

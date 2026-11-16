@@ -7,7 +7,7 @@ and manages conversational Pin-to-Dashboard workflows.
 from __future__ import annotations
 
 import datetime
-from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -55,7 +55,7 @@ def apply_cross_filter(
             selected_values=[selected_value],
             operator="in"
         )
-    state.last_updated_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    state.last_updated_at = datetime.datetime.now(datetime.UTC).isoformat()
     return state
 
 
@@ -66,5 +66,5 @@ def clear_cross_filters(session_id: str, dashboard_id: str) -> DashboardSessionS
         dashboard_id=dashboard_id,
         active_filters={},
         active_drill_path=[],
-        last_updated_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        last_updated_at=datetime.datetime.now(datetime.UTC).isoformat(),
     )

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime
 from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -38,14 +39,14 @@ def generate_executive_briefing(
     """Generate a clean, high-impact executive summary grounded strictly in data."""
     top_findings = findings[:3] if findings else ["All operations are running within expected thresholds."]
     rec = recommendations[0] if recommendations else "Continue monitoring performance against current baselines."
-    
+
     lineage = {
-        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
         "source_entity": source_table or "Governed Data Model",
         "sql_hash": sql_fingerprint or "verified_deterministic_ast",
         "hallucination_check": "passed_strict_grounding",
     }
-    
+
     return ExecutiveBriefing(
         headline=f"{subject}: {headline_value}",
         key_findings=top_findings,
@@ -62,15 +63,15 @@ def detect_operational_anomalies(
     """Detect statistical outliers using mean and standard deviation boundaries."""
     if len(items) < 4:
         return []
-        
+
     vals = [v for _, v in items]
     mean = sum(vals) / len(vals)
     variance = sum((x - mean) ** 2 for x in vals) / len(vals)
     std_dev = variance ** 0.5
-    
+
     if std_dev == 0:
         return []
-        
+
     anomalies: list[AnomalyItem] = []
     for member, val in items:
         z_score = abs(val - mean) / std_dev
@@ -87,6 +88,6 @@ def detect_operational_anomalies(
                     f"from the group average ({mean:,.1f})."
                 )
             ))
-            
+
     anomalies.sort(key=lambda a: -a.deviation_factor)
     return anomalies[:5]

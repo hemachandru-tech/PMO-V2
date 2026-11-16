@@ -286,8 +286,8 @@ def test_fiscal_year_start_reads_the_model_setting(raw: str, month: str | None) 
 # --------------------------------------------------------------------------- field profile queries
 
 
-def test_field_profile_queries_run_scoped_shapes(db: duckdb.DuckDBPyConnection,  # noqa: F811
-                                                 snapshot: ModelSnapshot) -> None:  # noqa: F811
+def test_field_profile_queries_run_scoped_shapes(db: duckdb.DuckDBPyConnection,
+                                                 snapshot: ModelSnapshot) -> None:
     ent = snapshot.entity("projects")
     assert ent is not None
     region, planned = ent.field("region"), ent.field("planned_deployment_date")

@@ -1,4 +1,4 @@
-"""Tenant branding (ENH-006, US-149 – US-152): names, logos, palettes, logo sizes, history and roll back."""
+"""Tenant branding (ENH-006, US-149 to US-152): names, logos, palettes, logo sizes, history and roll back."""
 
 from __future__ import annotations
 

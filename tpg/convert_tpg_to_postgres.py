@@ -5,12 +5,12 @@ Convert Dataverse TPG Schema + Synthetic Records JSON to PostgreSQL SQL Script.
 
 import json
 import os
-import sys
+
 
 def map_pg_type(table_name, col_name, attr_type):
     if table_name == "systemuser" and col_name == "address1_addressid":
         return "TEXT"  # Synthetic dataset contains mock text in this field
-    
+
     mapping = {
         "Uniqueidentifier": "UUID",
         "Lookup": "UUID",
@@ -36,12 +36,12 @@ def get_column_value(row, col_name, attr):
     # 1. Direct value in row
     if col_name in row and row[col_name] is not None:
         return row[col_name]
-    
+
     # 2. Lookup _<col>_value in row
     lookup_key = f"_{col_name}_value"
     if lookup_key in row and row[lookup_key] is not None:
         return row[lookup_key]
-    
+
     # 3. Formatted display value from parent attributeOf (e.g. tpg_priorityname -> tpg_priority)
     attr_of = attr.get("attributeOf")
     if attr_of:
@@ -50,12 +50,12 @@ def get_column_value(row, col_name, attr):
             val = row.get(f"_{attr_of}_value@OData.Community.Display.V1.FormattedValue")
         if val is not None:
             return val
-            
+
     # 4. Direct formatted display value
     fmt_key = f"{col_name}@OData.Community.Display.V1.FormattedValue"
     if fmt_key in row and row[fmt_key] is not None:
         return row[fmt_key]
-        
+
     return None
 
 def format_sql_value(val, pg_type):
@@ -74,7 +74,7 @@ def format_sql_value(val, pg_type):
             return str(val)
         except (ValueError, TypeError):
             return "NULL"
-    
+
     # Strings, UUIDs, Timestamps, Text
     val_str = str(val).replace("'", "''")
     return f"'{val_str}'"
@@ -119,16 +119,16 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     json_path = os.path.join(here, "TPG Schema + fully synthetic sample records.json")
     output_sql_path = os.path.join(here, "tpg_dataverse_postgresql.sql")
-    
+
     print(f"Loading {json_path}...")
-    with open(json_path, "r", encoding="utf-8") as f:
+    with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
-        
+
     meta = data.get("meta", {})
     tables = data.get("tables", {})
-    
+
     print(f"Loaded metadata. Tables count: {len(tables)}. Generating SQL...")
-    
+
     with open(output_sql_path, "w", encoding="utf-8") as out:
         # Header
         out.write("-- =====================================================================\n")
@@ -139,14 +139,14 @@ def main():
         out.write(f"-- Synthetic Generated: {meta.get('syntheticGenerated', 'N/A')}\n")
         out.write(f"-- Total Tables: {len(tables)}\n")
         out.write("-- =====================================================================\n\n")
-        
+
         out.write("BEGIN;\n\n")
-        
+
         # Schema definition
         out.write("-- 1. Schema setup\n")
         out.write("CREATE SCHEMA IF NOT EXISTS dataverse;\n")
         out.write("SET search_path TO dataverse, public;\n\n")
-        
+
         # OptionSet Reference Table
         out.write("-- =====================================================================\n")
         out.write("-- 2. Reference Table: Dataverse OptionSets / Picklists Metadata\n")
@@ -161,7 +161,7 @@ def main():
         out.write("    option_label TEXT NOT NULL,\n")
         out.write("    PRIMARY KEY (table_name, column_name, option_value)\n")
         out.write(");\n\n")
-        
+
         # Populate OptionSets
         opt_rows = []
         for tname, tdata in tables.items():
@@ -172,7 +172,7 @@ def main():
                     oval = opt.get("value")
                     olabel = opt.get("label", "").replace("'", "''")
                     opt_rows.append(f"('{tname}', '{col_name}', '{kind}', '{oset_name}', {oval}, '{olabel}')")
-                    
+
         if opt_rows:
             batch_size = 100
             for i in range(0, len(opt_rows), batch_size):
@@ -181,7 +181,7 @@ def main():
                 out.write(",\n".join(f"  {r}" for r in batch))
                 out.write(";\n")
         out.write("\n")
-        
+
         # Tables DDL & DML
         for tname, tdata in tables.items():
             primary_id = tdata.get("primaryId")
@@ -189,34 +189,34 @@ def main():
             display_name = tdata.get("displayName", tname).replace("'", "''")
             rows = tdata.get("records", {}).get("rows", [])
             row_count = len(rows)
-            
+
             out.write("-- =====================================================================\n")
             out.write(f"-- Table: {tname} ({display_name}) - {row_count} records\n")
             out.write("-- =====================================================================\n")
             out.write(f"DROP TABLE IF EXISTS \"{tname}\" CASCADE;\n")
             out.write(f"CREATE TABLE \"{tname}\" (\n")
-            
+
             col_defs = []
             col_info_list = []
-            
+
             for attr in attributes:
                 col_name = attr["logicalName"]
                 attr_type = attr.get("type", "String")
                 pg_type = map_pg_type(tname, col_name, attr_type)
-                
+
                 col_info_list.append((col_name, pg_type, attr))
-                
+
                 if col_name == primary_id:
                     col_defs.append(f"    \"{col_name}\" {pg_type} NOT NULL")
                 else:
                     col_defs.append(f"    \"{col_name}\" {pg_type}")
-                    
+
             if primary_id:
                 col_defs.append(f"    CONSTRAINT \"pk_{tname}\" PRIMARY KEY (\"{primary_id}\")")
-                
+
             out.write(",\n".join(col_defs))
             out.write("\n);\n\n")
-            
+
             # Table & Column comments
             out.write(f"COMMENT ON TABLE \"{tname}\" IS 'Dataverse entity {tname} ({display_name})';\n")
             for col_name, pg_type, attr in col_info_list:
@@ -231,12 +231,12 @@ def main():
                     comment_str = " - ".join(comment_parts).replace("'", "''")
                     out.write(f"COMMENT ON COLUMN \"{tname}\".\"{col_name}\" IS '{comment_str}';\n")
             out.write("\n")
-            
+
             # Insert Records
             if rows:
                 col_names = [col_name for col_name, _, _ in col_info_list]
                 cols_sql = ", ".join(f"\"{c}\"" for c in col_names)
-                
+
                 batch_size = 50
                 for b_start in range(0, len(rows), batch_size):
                     batch = rows[b_start:b_start + batch_size]
@@ -250,7 +250,7 @@ def main():
                         row_sqls.append(f"  ({', '.join(vals_sql)})")
                     out.write(",\n".join(row_sqls))
                     out.write(";\n\n")
-                    
+
             # Create indexes on Lookups / Foreign Keys
             lookups = [c for c, pt, a in col_info_list if pt == "UUID" and c != primary_id]
             if lookups:
@@ -280,7 +280,7 @@ def main():
         out.write("-- =====================================================================\n")
         out.write("-- End of Dataverse TPG PostgreSQL Script\n")
         out.write("-- =====================================================================\n")
-        
+
     print(f"Successfully generated {output_sql_path} ({os.path.getsize(output_sql_path) / 1024 / 1024:.2f} MB)")
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(
 NAME = "Credential patch probe (dev)"
 
 
-def test_password_change_is_a_merge_patch_the_runner_can_read(apis: dict[str, Api]) -> None:  # noqa: F811
+def test_password_change_is_a_merge_patch_the_runner_can_read(apis: dict[str, Api]) -> None:
     admin = apis["admin"]
     for c in admin.call("GET", "/connections").json()["items"]:
         if c["name"] == NAME:

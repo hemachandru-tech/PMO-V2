@@ -40,7 +40,7 @@ def explains(fake: FakeGateway) -> list[dict[str, Any]]:
     return [c for c in fake.calls if c["agent"] == "AG-08" and c["task"] == "explain"]
 
 
-async def test_explain_without_knowledge_cites_the_rule_only(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_explain_without_knowledge_cites_the_rule_only(stack: httpx.AsyncClient, world: World,
                                                              owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = explainer(lambda ids: [
@@ -64,7 +64,7 @@ async def test_explain_without_knowledge_cites_the_rule_only(stack: httpx.AsyncC
     assert measure["citations"] == []  # no reference document to list
 
 
-async def test_an_explanation_citing_anything_else_is_dropped(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_an_explanation_citing_anything_else_is_dropped(stack: httpx.AsyncClient, world: World,
                                                               owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = explainer([{"text": "Overdue go-lives are late.", "cites": ["chunk:00000000-0000-4000-8000-00000000dead"]},
@@ -77,7 +77,7 @@ async def test_an_explanation_citing_anything_else_is_dropped(stack: httpx.Async
 
 
 async def test_review_off_makes_no_explain_call_without_knowledge(stack: httpx.AsyncClient,
-                                                                  world: World,  # noqa: F811
+                                                                  world: World,
                                                                   owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world, on=False)
     fake = explainer([{"text": "x", "cites": []}])
@@ -86,7 +86,7 @@ async def test_review_off_makes_no_explain_call_without_knowledge(stack: httpx.A
     assert by_event(events)["narrative"]["source"] == "definition" and explains(fake) == []
 
 
-async def test_narrate_stays_off_with_totals_off(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_narrate_stays_off_with_totals_off(stack: httpx.AsyncClient, world: World,
                                                  owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     owner_conn.execute("UPDATE ops.llm_settings SET allow_aggregates = false WHERE tenant_id = %s", (world.tenant_id,))

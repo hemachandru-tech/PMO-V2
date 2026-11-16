@@ -7,8 +7,8 @@ import pytest
 from test_fields_planner_unit import SNAP, fields, ok, plan_b
 
 from tela_api.ask import confidence, verify
-from tela_api.ask.frame import QuestionFrame, rules_frame
 from tela_api.ask.fields_planner import subjects
+from tela_api.ask.frame import QuestionFrame, rules_frame
 
 LIST_01A1CA5C = "Show the List of open Projects"
 

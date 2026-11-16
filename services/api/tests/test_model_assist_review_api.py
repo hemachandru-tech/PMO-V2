@@ -38,7 +38,7 @@ def sent(fake: FakeGateway) -> list[dict[str, Any]]:
     return [json.loads(c["messages"][1]["content"]) for c in fake.calls if c["agent"] == "AG-04"]
 
 
-async def test_proposals_confirmed_keep_the_rules(stack: httpx.AsyncClient, manual: World,  # noqa: F811
+async def test_proposals_confirmed_keep_the_rules(stack: httpx.AsyncClient, manual: World,
                                                   owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, manual)
     fake = reviewer({"verdict": "confirm", "reason": "the rules' dimensions and measures fit"})
@@ -53,7 +53,7 @@ async def test_proposals_confirmed_keep_the_rules(stack: httpx.AsyncClient, manu
 
 
 async def test_a_correction_is_validated_and_shows_what_it_left_out(stack: httpx.AsyncClient,
-                                                                    manual: World,  # noqa: F811
+                                                                    manual: World,
                                                                     owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, manual)
     fake = reviewer({"verdict": "correct", "replacement": {"ops": [REGION, GHOST], "questions": []},
@@ -110,7 +110,7 @@ async def test_a_different_reading_of_a_correction_asks(stack: httpx.AsyncClient
     assert out["proposal"]["review"]["verdict"] == "fallback" and len(out["proposal"]["ops"]) == 1
 
 
-async def test_review_off_keeps_the_llm_first_path(stack: httpx.AsyncClient, manual: World,  # noqa: F811
+async def test_review_off_keeps_the_llm_first_path(stack: httpx.AsyncClient, manual: World,
                                                    owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, manual, on=False)
     fake = FakeGateway({"AG-04": {"ops": [REGION], "questions": []}})

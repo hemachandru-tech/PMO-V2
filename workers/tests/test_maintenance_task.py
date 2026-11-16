@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
@@ -10,7 +10,7 @@ from tela_worker.tasks import maintenance
 
 
 class FakeApi:
-    calls: list[str] = []
+    calls: ClassVar[list[str]] = []
     fail = False
 
     def post(self, path: str, json: Any = None) -> dict[str, Any]:

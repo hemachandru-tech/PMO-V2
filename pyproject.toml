@@ -50,7 +50,8 @@ dev = [
 [tool.ruff]
 line-length = 120
 target-version = "py312"
-extend-exclude = ["apps/web"]
+# scratchpad/ and tpg/ hold one-off local working scripts, not product code.
+extend-exclude = ["apps/web", "scratchpad", "tpg"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "A", "C4", "RUF"]
@@ -63,7 +64,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header", 
 known-first-party = ["tela_common", "tela_query_spec", "tela_chart_spec", "tela_api", "tela_gateway", "tela_runner", "tela_worker", "migrations"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["S105", "S106", "S108", "E501", "S608"]
+"**/tests/**" = ["S105", "S106", "S108", "E501", "S608", "F811"]
 "tests/**" = ["S105", "S106", "S108", "E501"]
 # Synthetic fixture generators: seeded pseudo-random data and DDL from constant identifiers.
 "packs/*/fixtures/**" = ["S311", "S608"]

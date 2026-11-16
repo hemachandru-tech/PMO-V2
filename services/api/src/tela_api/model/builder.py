@@ -32,7 +32,7 @@ import asyncio
 import json
 import re
 import time
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from fastapi import APIRouter, Depends, Request
@@ -41,17 +41,17 @@ from sqlalchemy import text
 from sqlglot import exp, parse_one
 
 from tela_api.audit import service as audit
+from tela_api.content.sql_context import DIALECT_RULES, sql_name, sql_object
+from tela_api.content.sql_context import _terms as term_words
 from tela_api.core.db import fetch_all, fetch_one, tenant_tx
 from tela_api.identity.deps import require
 from tela_api.identity.permissions import Perm
 from tela_api.identity.principal import Principal
 from tela_api.llm.client import AgentFailed, run_agent
 from tela_api.model.catalog import _label as auto_label
-from tela_api.model.profile import apply_profile, infer_links, profile_entity
 from tela_api.model.catalog import baseline_definition, extend_columns, extend_definition
+from tela_api.model.profile import apply_profile, infer_links, profile_entity
 from tela_api.model.router import _model, _readable_objects, _snapshot_or_issues, ensure_draft, insert_questions
-from tela_api.content.sql_context import DIALECT_RULES, sql_name, sql_object
-from tela_api.content.sql_context import _terms as term_words
 from tela_api.query.compiler import DIALECTS
 from tela_api.query.service import QueryContext
 from tela_common.errors import ErrorCode, TelaError
@@ -122,14 +122,16 @@ DESCRIBE_SYSTEM = (
     "name, the label of a code column, a date in UTC, an amount in a currency, or that it is empty or must not be "
     "used). Also give name_column: the listed column that holds each record's name or title as people refer to it "
     "(follow the document when it says which column a record's name is; empty when unsure). Take meanings from the "
-    "document lines when they are given; otherwise describe only what the column name and type plainly show. Never guess business meaning, never invent values, and return only columns listed. "
+    "document lines when they are given; otherwise describe only what the column name and type plainly show. "
+    "Never guess business meaning, never invent values, and return only columns listed. "
     "Write object and column names exactly as listed.")
 
 RULES_SYSTEM = (
     "You turn an organisation's documented business rules into conditions on its database. Return one rule for each "
     "definition the document gives: a business term or population (what 'open', 'active', 'late' or 'stale' means), "
     "a status grouping, a default scope or exclusion, a calculation, a band, a precedence between sources, or which "
-    "column stands for a term people use (then sql is just that column name). For each rule: term (the words people use); synonyms (other phrasings a "
+    "column stands for a term people use (then sql is just that column name). "
+    "For each rule: term (the words people use); synonyms (other phrasings a "
     "person may ask with, including singular/plural and the phrases the document lists); meaning (one or two "
     "sentences, keeping the document's exact values and exceptions); table (the qualified table it is written on, "
     "exactly as listed, or null when it is not about one table); sql (a SQL boolean condition or expression using "
@@ -211,7 +213,7 @@ def _doc_lines(docs: list[dict[str, Any]]) -> list[tuple[str, str]]:
 def _sections(doc: dict[str, Any]) -> list[tuple[str, str]]:
     """(heading, text) for each markdown section of a document."""
     out: list[tuple[str, str]] = []
-    head, buf = doc["title"], []
+    head, buf = doc["title"], cast(list[str], [])
     for line in doc["text"].splitlines():
         if re.match(r"^#{1,6}\s", line):
             if any(x.strip() for x in buf):
@@ -241,7 +243,7 @@ def _dictionary(section: str, columns: set[str]) -> bool:
 
 def _rule_parts(docs: list[dict[str, Any]], columns: set[str], size: int = RULES_CHARS) -> list[str]:
     """Document text for the rules step, in parts of at most ``size``, column dictionaries left out."""
-    RULES_CHARS = size  # noqa: N806 - the part size of this pass
+    RULES_CHARS = size
     parts: list[str] = []
     buf = ""
     for d in docs:
@@ -369,7 +371,8 @@ async def empty_columns(app: Any, principal: Principal, connection_id: str, vers
         cols = [f["source_column"] for f in e["fields"] if f.get("is_queryable", True)]
         for i in range(0, len(cols), PROFILE_COLUMNS):
             part = cols[i:i + PROFILE_COLUMNS]
-            sql = ("SELECT COUNT(*) AS n, " + ", ".join(f"COUNT({sql_name(c, dialect)}) AS c{j}"
+            sql = ("SELECT COUNT(*) AS n, " + ", ".join(  # noqa: S608 - quoted model identifiers
+                f"COUNT({sql_name(c, dialect)}) AS c{j}"
                                                         for j, c in enumerate(part))
                    + f" FROM {sql_object(e['source_object'], dialect)}")
             try:
@@ -476,9 +479,10 @@ async def describe(gateway: Any, principal: Principal, definition: dict[str, Any
         by_obj = {e["source_object"].lower(): e for e, _ in batch}
         by_bare = {_bare(e["source_object"]).lower(): e for e, _ in batch}
         for t in out.tables:
-            ent = by_obj.get(t.object.lower()) or by_bare.get(_bare(t.object).lower())
-            if ent is None:
+            hit = by_obj.get(t.object.lower()) or by_bare.get(_bare(t.object).lower())
+            if hit is None:
                 continue
+            ent = hit
             if t.description.strip() and not (ent.get("description") or "").strip():
                 ent["description"] = t.description.strip()
             fields = {f["source_column"].lower(): f for f in ent["fields"]}
@@ -529,7 +533,7 @@ def _entity_for(table: str | None, definition: dict[str, Any]) -> dict[str, Any]
     t = table.strip().strip("`\"[]").lower()
     for e in definition["entities"]:
         if t in (e["source_object"].lower(), _bare(e["source_object"]).lower(), e["key"].lower()):
-            return e
+            return cast(dict[str, Any], e)
     return None
 
 
@@ -544,16 +548,17 @@ def normalise_date(sql: str) -> str:
     return sql.replace(f"'{DATA_DATE}'", DATA_DATE).replace(f'"{DATA_DATE}"', DATA_DATE)
 
 
-def check_rule(sql: str, ent: dict[str, Any], catalog_cols: set[str], dialect: str | None) -> tuple[set[str], str | None]:
+def check_rule(sql: str, ent: dict[str, Any], catalog_cols: set[str],
+               dialect: str | None) -> tuple[set[str], str | None]:
     """(columns the rule names, problem or None): the SQL must parse as a condition or expression and name only
     columns the source table has."""
     probe = bind_date(sql, "2000-01-01")
     tree = None
-    for stmt in (f"SELECT 1 FROM t WHERE {probe}", f"SELECT {probe} FROM t"):
+    for stmt in (f"SELECT 1 FROM t WHERE {probe}", f"SELECT {probe} FROM t"):  # noqa: S608 - parsed only, never run
         try:
             tree = parse_one(stmt, read=dialect)
             break
-        except Exception:  # noqa: BLE001 - sqlglot raises several error types
+        except Exception:  # noqa: BLE001, S112 - sqlglot raises several error types; try the next form
             continue
     if tree is None:
         return set(), "The condition is not valid SQL."
@@ -687,7 +692,7 @@ def positive_values(sql: str, dialect: str | None) -> dict[str, set[str]]:
     """Column → text values a rule matches positively (``col = 'x'``, ``col IN ('x', 'y')``, not under NOT, not
     ``<>``/``NOT IN``): those values must exist in the data, or the rule matches nothing."""
     try:
-        tree = parse_one(f"SELECT 1 FROM t WHERE {bind_date(sql, '2000-01-01')}", read=dialect)
+        tree = parse_one(f"SELECT 1 FROM t WHERE {bind_date(sql, '2000-01-01')}", read=dialect)  # noqa: S608 - parsed only
     except Exception:  # noqa: BLE001 - checked earlier; nothing to add here
         return {}
     out: dict[str, set[str]] = {}
@@ -757,7 +762,7 @@ async def check_values(app: Any, principal: Principal, connection_id: str, versi
         if src is None:
             known[(ent_key, col)] = None
             continue
-        sql = (f"SELECT DISTINCT {sql_name(src, dialect)} AS v FROM {sql_object(e['source_object'], dialect)}")
+        sql = (f"SELECT DISTINCT {sql_name(src, dialect)} AS v FROM {sql_object(e['source_object'], dialect)}")  # noqa: S608
         try:
             res = await service.execute_custom(sql, connection_id=connection_id, model_version_id=version_id,
                                                principal=principal, ctx=QueryContext(surface="preview",
@@ -768,7 +773,7 @@ async def check_values(app: Any, principal: Principal, connection_id: str, versi
         except TelaError:
             known[(ent_key, col)] = None  # can't read it: nothing to say
     held = 0
-    for r, pv, nv in per_rule:
+    for r, pv, _nv in per_rule:
         missing = []
         for c, vals in pv.items():
             have = known.get((r["entity"], c))
@@ -905,10 +910,10 @@ async def run_job(app: Any, principal: Principal, connection_id: str, body: Gene
             found = await extract_rules(gateway, principal, definition, docs, all_columns, job, dialect=dialect,
                                         as_of=as_of, size=size, label=f"read {i}, " if docs else "")
             await job.step(f"Checking {len(found)} rules of read {i} against the source columns")
-            got, more = place_rules(found, definition, catalog, "document" if docs else "inferred", dialect)
+            got, wanted = place_rules(found, definition, catalog, "document" if docs else "inferred", dialect)
             await check_values(app, principal, connection_id, approved_version, definition, got, dialect, job)
             passes.append(got)
-            for k, v in more.items():
+            for k, v in wanted.items():
                 needs.setdefault(k, []).extend(c for c in v if c not in needs.get(k, []))
         rules = merge_passes(passes, definition)
         if len(passes) > 1:
@@ -916,17 +921,17 @@ async def run_job(app: Any, principal: Principal, connection_id: str, body: Gene
                            f"({sum(1 for r in rules if r['status'] == 'ok')} checked)")
         settle_populations(rules)
         if needs:  # a column a checked rule is written on must be visible to the model
-            add = {}
-            for ent_key, cols in needs.items():
+            needed_add: dict[str, list[str]] = {}
+            for ent_key, need_cols in needs.items():
                 ent = next(e for e in definition["entities"] if e["key"] == ent_key)
-                have = {f["source_column"].lower(): f for f in ent["fields"]}
-                for c in cols:
-                    if c.lower() in have:
-                        have[c.lower()]["is_queryable"] = True
+                by_col = {f["source_column"].lower(): f for f in ent["fields"]}
+                for c in need_cols:
+                    if c.lower() in by_col:
+                        by_col[c.lower()]["is_queryable"] = True
                     else:
-                        add.setdefault(ent_key, []).append(c)
-            if add:
-                definition, more, _ = extend_columns(definition, add, catalog_rows)
+                        needed_add.setdefault(ent_key, []).append(c)
+            if needed_add:
+                definition, more, _ = extend_columns(definition, needed_add, catalog_rows)
                 questions += [{**q, "blocking": False} for q in more]
         kept = [r for r in definition.get("rules", []) if r.get("origin") == "admin"]
         definition["rules"] = kept + rules
@@ -957,10 +962,12 @@ async def run_job(app: Any, principal: Principal, connection_id: str, body: Gene
                     {"id": draft_id, "t": principal.tenant_id, "m": model_id, "def": json.dumps(stored),
                      "by": principal.user_id})
             else:
-                model = await _model(conn, str(existing["id"]))
-                draft = await ensure_draft(conn, model, principal)
-                model_id, draft_id = str(model["id"]), str(draft["id"])
-                snap, issues = _snapshot_or_issues(definition, model=model, version_id=draft_id)
+                saved = await _model(conn, str(existing["id"])) if existing is not None else None
+                if saved is None:
+                    raise TelaError(ErrorCode.NOT_FOUND, "The model was removed while it was being generated.")
+                draft = await ensure_draft(conn, saved, principal)
+                model_id, draft_id = str(saved["id"]), str(draft["id"])
+                snap, issues = _snapshot_or_issues(definition, model=saved, version_id=draft_id)
                 if snap is None:
                     raise TelaError(ErrorCode.MODEL_INVALID, "The generated model has problems: " + "; ".join(
                         i["issue"] for i in issues[:5]))
@@ -968,7 +975,8 @@ async def run_job(app: Any, principal: Principal, connection_id: str, body: Gene
                                                                "engine"}, by_alias=True)
                 await conn.execute(
                     text("UPDATE model.model_versions SET definition = CAST(:d AS jsonb), "
-                         "draft_revision = draft_revision + 1 WHERE id = :id"), {"d": json.dumps(stored), "id": draft_id})
+                         "draft_revision = draft_revision + 1 WHERE id = :id"),
+                    {"d": json.dumps(stored), "id": draft_id})
             if questions:
                 await insert_questions(conn, principal.tenant_id, draft_id, questions, principal.user_id)
             await audit.record(conn, tenant_id=principal.tenant_id, action="model.generated", object_type="data_model",
@@ -979,7 +987,7 @@ async def run_job(app: Any, principal: Principal, connection_id: str, body: Gene
                                described=described, counts=counts))
     except TelaError as exc:
         await job.fail(exc.message)
-    except Exception as exc:  # noqa: BLE001 - the job reports any failure instead of dying silently
+    except Exception as exc:
         log.exception("model.generate_failed")
         await job.fail(f"The model could not be generated ({type(exc).__name__}).")
 

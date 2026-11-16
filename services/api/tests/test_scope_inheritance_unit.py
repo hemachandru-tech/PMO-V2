@@ -5,7 +5,7 @@ A project's PCRs, status reports, risks … have no CIO or region of their own: 
 that as a semi-join on the project table wrapped in the project's own scope; the independent verifier checks the
 nested reference like any other governed table, and fails closed on tampering.
 """
-# ruff: noqa: F811  (the pack 2.0 fixtures are imported, then requested by name)
+
 
 from __future__ import annotations
 

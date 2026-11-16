@@ -57,8 +57,9 @@ describe("Vivid chart colours (US-249)", () => {
     try {
       const option = toOption(BARS, COLUMNS, ROWS, undefined, { labels: ["UAE"], muted: "#grey" }, (t) => `#${t}`) as
         { series: { data: { itemStyle?: { color: string; opacity?: number } }[] }[] };
-      expect(option.series[0]!.data.map((d) => d.itemStyle)).toEqual([
+      expect(option.series[0]!.data.map((d) => d.itemStyle)).toMatchObject([
         { color: "#vivid-1", opacity: 0.4 }, { color: "#vivid-2" }, { color: "#vivid-3", opacity: 0.4 }]);
+      expect((option.series[0]!.data[1]!.itemStyle as { opacity?: number }).opacity).toBeUndefined();
     } finally {
       applyUserLayout("default");
     }

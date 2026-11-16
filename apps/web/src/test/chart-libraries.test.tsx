@@ -52,17 +52,26 @@ describe("the standard charts as data (ENH-018)", () => {
 
 describe("shadcn/ui Charts on Recharts (US-207)", () => {
   it("draws a bar per row, labels the highlighted one and greys the rest, and names the clicked bar", async () => {
-    const onMark = vi.fn();
-    const { container } = render(<RechartsChart spec={BARS} columns={STATUS} rows={ROWS} onMark={onMark} title="Open projects" highlight={["On Hold"]} />);
+    // Drawn still (as in an export) the value label is there at once; jsdom never finishes Recharts' entry animation.
+    const still = render(<RechartsChart spec={BARS} columns={STATUS} rows={ROWS} title="Open projects" highlight={["On Hold"]} still />);
     const box = screen.getByRole("img", { name: "Open projects" });
     expect(box).toHaveAttribute("data-library", "recharts");
+    const drawn = await waitFor(() => {
+      const found = still.container.querySelectorAll(".recharts-bar-rectangle path");
+      expect(found).toHaveLength(3);
+      return found;
+    });
+    expect([...drawn].map((b) => b.getAttribute("fill"))).toEqual(["var(--tl-chart-other)", "var(--tl-chart-1)", "var(--tl-chart-other)"]);
+    expect(still.container.querySelector(".recharts-label-list")).toHaveTextContent("79");
+    still.unmount();
+
+    const onMark = vi.fn();
+    const { container } = render(<RechartsChart spec={BARS} columns={STATUS} rows={ROWS} onMark={onMark} title="Open projects" highlight={["On Hold"]} />);
     const bars = await waitFor(() => {
       const found = container.querySelectorAll(".recharts-bar-rectangle path");
       expect(found).toHaveLength(3);
       return found;
     });
-    expect([...bars].map((b) => b.getAttribute("fill"))).toEqual(["var(--tl-chart-other)", "var(--tl-chart-1)", "var(--tl-chart-other)"]);
-    expect(container.querySelector(".recharts-label-list")).toHaveTextContent("79");
     fireEvent.click(bars[1]!);
     expect(onMark).toHaveBeenCalledWith({ status: "On Hold" });
   });

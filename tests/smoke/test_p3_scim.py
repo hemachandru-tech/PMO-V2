@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(
     not __import__("os").environ.get("TELA_SMOKE"), reason="set TELA_SMOKE=1 with the stack running")
 
 
-def test_scim_round_trip(apis: dict[str, Api]) -> None:  # noqa: F811
+def test_scim_round_trip(apis: dict[str, Api]) -> None:
     admin = apis["admin"]
     created = admin.call("POST", "/admin/provisioning/token")
     assert created.status_code == 201, created.text

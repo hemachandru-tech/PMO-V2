@@ -4,7 +4,7 @@ any difference fails). The PMO pack's model on the synthetic TPG extract (DuckDB
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 import duckdb
 import pytest
@@ -107,10 +107,10 @@ class _Orch:
 
 
 class _Src:
-    class snap:  # noqa: N801 - stands in for a ModelSnapshot
+    class snap:
         model_version_id = "v1"
 
-    connection = {"id": "c1"}
+    connection: ClassVar[dict[str, str]] = {"id": "c1"}
 
 
 @pytest.mark.parametrize(("counted", "passed"), [(2, True), (3, False)])

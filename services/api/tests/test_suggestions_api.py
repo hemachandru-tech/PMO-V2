@@ -49,7 +49,7 @@ async def test_chart_patterns_are_indexed_with_the_model(stack: httpx.AsyncClien
         "kinds": ["chart_pattern"]})).json()
     assert found["hits"] and all(x["kind"] == "chart_pattern" for x in found["hits"])
     # Ask's own retrieval does not pick chart patterns up.
-    turn_id, events = await ask(stack, world.tokens["creator"], "Forecast cost by portfolio")
+    _turn_id, events = await ask(stack, world.tokens["creator"], "Forecast cost by portfolio")
     refs = set(by_event(events)["retrieval"].get("knowledge_refs") or [])
     patterns = {f"chunk:{r[0]}" for r in owner_conn.execute(
         "SELECT c.id FROM rag.knowledge_chunks c JOIN rag.knowledge_documents d ON d.id = c.document_id "
