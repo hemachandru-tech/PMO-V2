@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     redis_url: str | None = None
     redis_url_file: str | None = None
+    model_export_dir: str | None = None  # approved models are written here as JSON (model/export.py)
 
     # OIDC (Keycloak brokering Entra ID). The issuer is trusted configuration;
     # keys are never fetched from a URL taken from the token (S03 §10).

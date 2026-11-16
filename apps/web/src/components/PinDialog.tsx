@@ -11,6 +11,7 @@ import { VISUAL_NAMES, type PinResult, type Report, type ReportListItem, type Vi
 import type { QuerySpec } from "../api/querySpec";
 import { PinIn } from "../api/schemas";
 import { applyServerError } from "../lib/api-errors";
+import { DashboardPinPick, pinPageOf, type PinPage } from "./DashboardPinPick";
 import { FormAlert } from "./ui/alert";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
@@ -36,7 +37,8 @@ type PinForm = z.infer<typeof pinForm>;
  * Pin an answer to a report (FEAT-021, US-063): only suitable visuals can be chosen; unsuitable ones are greyed
  * out with the reason on hover. The widget stores the question's spec and model version, never the numbers.
  */
-export function PinDialog({ turnId, spec, defaultTitle, defaultVisual, defaultReportId, onClose }: {
+export function PinDialog({ turnId, spec, defaultTitle, defaultVisual, defaultReportId, defaultDashboardId = null, onClose }: {
+  defaultDashboardId?: string | null;
   turnId: string;
   spec: QuerySpec;
   defaultTitle: string;
@@ -57,6 +59,8 @@ export function PinDialog({ turnId, spec, defaultTitle, defaultVisual, defaultRe
   });
   const [error, setError] = useState<ApiError | null>(null);
   const [done, setDone] = useState<PinResult | null>(null);
+  const [dashboardId, setDashboardId] = useState(defaultDashboardId ?? "");
+  const [pinned, setPinned] = useState<PinPage | null>(null);
   const [reportId, follow] = form.watch(["reportId", "follow"]);
   const report = useQuery({
     queryKey: ["report", reportId],
@@ -87,8 +91,14 @@ export function PinDialog({ turnId, spec, defaultTitle, defaultVisual, defaultRe
     setError(null);
     try {
       let target: { report_id: string; section_id?: string } | undefined;
+      let pinnedTo: string | null = null;
       if (freehand) {
         target = undefined;
+      } else if (dashboardId) {
+        const page = await pinPageOf(dashboardId);
+        setPinned(page);
+        pinnedTo = page.dashboard_id;
+        target = { report_id: page.report_id, ...(page.section_id ? { section_id: page.section_id } : {}) };
       } else if (v.reportId === "new") {
         const created = await api<Report>("/api/v1/reports", { method: "POST", body: { title: v.newTitle.trim() || v.title.trim() } });
         target = { report_id: created.id };
@@ -100,6 +110,7 @@ export function PinDialog({ turnId, spec, defaultTitle, defaultVisual, defaultRe
       const out = await api<PinResult>("/api/v1/widgets", { method: "POST", body });
       setDone(out);
       void qc.invalidateQueries({ queryKey: ["reports"] });
+      if (pinnedTo) void qc.invalidateQueries({ queryKey: ["dashboard", pinnedTo] });
       if (out.report) void qc.invalidateQueries({ queryKey: ["report", out.report.id] });
     } catch (e) {
       setError(applyServerError(form, e, { fields: { "target.report_id": "reportId", follow_page_filters: "follow" } }));
@@ -129,7 +140,7 @@ export function PinDialog({ turnId, spec, defaultTitle, defaultVisual, defaultRe
               {freehand && !done.reused
                 ? "Added to your library as Pending certification. An Admin will review the rule, and you'll be notified of the decision."
                 : done.reused ? "This definition was already in your library; it was reused." : "Pinned as a live widget."}
-              {done.report && <> It is on <Link className="text-link underline-offset-4 hover:underline" to={`/reports/${done.report.id}`} onClick={onClose}>{done.report.title}</Link>.</>}
+              {pinned ? <> It is on <Link className="text-link underline-offset-4 hover:underline" to={`/dashboards/${pinned.dashboard_id}/draft`} onClick={onClose}>{pinned.dashboard}</Link>, tab “Pinned from chat”.</> : done.report && <> It is on <Link className="text-link underline-offset-4 hover:underline" to={`/reports/${done.report.id}`} onClick={onClose}>{done.report.title}</Link>.</>}
             </p>
             <DialogFooter><Button onClick={onClose}>Done</Button></DialogFooter>
           </>
@@ -163,7 +174,8 @@ export function PinDialog({ turnId, spec, defaultTitle, defaultVisual, defaultRe
                   <FormMessage />
                 </FormItem>
               )} />
-              {!freehand && <div className="grid gap-4 sm:grid-cols-2">
+              {!freehand && <DashboardPinPick value={dashboardId} onChange={setDashboardId} />}
+              {!freehand && !dashboardId && <div className="grid gap-4 sm:grid-cols-2">
                 <Field control={c} name="reportId" label="Report" render={(f) => (
                   <NativeSelect {...f} onChange={(e) => { f.onChange(e); form.setValue("sectionId", ""); }}>
                     <option value="">Library only</option>

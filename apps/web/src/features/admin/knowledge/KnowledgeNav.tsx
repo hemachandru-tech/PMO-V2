@@ -3,13 +3,9 @@ import { NavLink } from "react-router-dom";
 import { cn } from "../../../lib/utils";
 
 const TABS = [
-  { to: "/admin/knowledge", label: "Documents", end: true },
-  { to: "/admin/knowledge/definitions", label: "Definitions", end: false },
-  { to: "/admin/knowledge/conditions", label: "Conditions", end: false },
-  { to: "/admin/knowledge/gold", label: "Gold examples", end: false },
-  { to: "/admin/knowledge/values", label: "Value synonyms", end: false },
-  { to: "/admin/knowledge/feedback", label: "Flagged answers", end: false },
-  { to: "/admin/knowledge/curation", label: "From misses", end: false },
+  { to: "/admin/knowledge", label: "Documents & Knowledge", end: true },
+  { to: "/admin/knowledge/definitions", label: "Glossary & Definitions", end: false },
+  { to: "/admin/knowledge/conditions", label: "Rules & Conditions", end: false },
 ];
 
 /** Knowledge has seven pages (SCR-13): reference documents, the business definitions read from them (US-203), the

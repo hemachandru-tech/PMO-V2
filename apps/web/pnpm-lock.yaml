@@ -149,6 +149,9 @@ importers:
       '@playwright/test':
         specifier: 1.49.1
         version: 1.49.1
+      '@tailwindcss/oxide-darwin-arm64':
+        specifier: ^4.3.5
+        version: 4.3.5
       '@testing-library/jest-dom':
         specifier: 6.6.3
         version: 6.6.3
@@ -1707,6 +1710,12 @@ packages:
 
   '@tailwindcss/oxide-darwin-arm64@4.3.3':
     resolution: {integrity: sha512-BiaWatpBcERQFDlOjRDpIVXuFK5PJez5SA4JMg6VYZdBYU+qKfV/vqjcIs+IYmtitf1xYQZTwXvU/8y4lfZUGw==}
+    engines: {node: '>= 20'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@tailwindcss/oxide-darwin-arm64@4.3.5':
+    resolution: {integrity: sha512-UPrgTDuUbvmqGMZuCnmI3FKee/tYKzKdp00/kuB4oSGB213VYg8QTdF7lVhnPoBXq/mIfJ+ILoBFqNOboWcMwQ==}
     engines: {node: '>= 20'}
     cpu: [arm64]
     os: [darwin]
@@ -4911,6 +4920,8 @@ snapshots:
 
   '@tailwindcss/oxide-darwin-arm64@4.3.3':
     optional: true
+
+  '@tailwindcss/oxide-darwin-arm64@4.3.5': {}
 
   '@tailwindcss/oxide-darwin-x64@4.3.3':
     optional: true

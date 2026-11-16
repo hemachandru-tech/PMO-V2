@@ -254,7 +254,7 @@ describe("ask (US-140)", () => {
     expect(await within(history).findByRole("link", { name: "Open projects" })).toHaveAttribute("aria-current", "page");
     await userEvent.click(within(history).getByRole("button", { name: "New conversation" }));
     expect(screen.queryByText("How many open projects?")).not.toBeInTheDocument();
-    expect(screen.getByText("Ask about your PMO data")).toBeInTheDocument();
+    expect(screen.getByText("Ask about your data")).toBeInTheDocument();
   });
 
   it("offers what it can answer when it can't, as one-click questions", async () => {

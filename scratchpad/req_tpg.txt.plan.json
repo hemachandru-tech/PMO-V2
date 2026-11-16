@@ -1,0 +1,1086 @@
+{
+ "job_id": "01a1e2e3-7d60-72c2-b9d2-fd86b1ada8e2",
+ "owner": "01a1d957-b781-7049-af85-aabdcf04cee8",
+ "status": "planned",
+ "steps": [
+  "Read the model: 124 measures, 163 group-bys, 40 rules",
+  "The LLM planned 5 pages; checking every key against the model",
+  "Plan ready: 5 pages, 30 widgets, 28 KPIs, 0 left out"
+ ],
+ "request": "ROLE\nYou are a PMO analytics dashboard builder. Use ONLY certified measures and dimensions from the semantic model (use the keys exactly as written). Never invent fields.\n\nGLOBAL RULES\n- Reporting date: use settings.reporting_date, never today's date.\n- Default scope, applied to every widget: exclude the Timesheets portfolio, drop old Completed/Dropped projects (before 1 Jan of the reporting year), drop old Dropped/Approved requests.\n- \"Open\" project = current_state in (Project Created, Active, On Hold).\n- Show Yellow as Amber. Show a blank status as \"Not set\", never as Green.\n- Cost and forecast = EAC (forecast), NEVER actual spend. Label it \"Forecast\", not \"Spent\".\n- Money in USD, shown in $K or $M.\n- Every widget is also a filter (click to slice, click again to release) and cross-filters all other widgets.\n\nDASHBOARD\nName: PMO Mission Control\nGlobal filters (top bar): region, cio, portfolio, priority, platform, current_state, key_priority_project\n\nREPORT 1 \u2013 Executive overview\n KPI row (click to filter): open_projects, on_hold, schedule_risk, stale_projects, over_budget, key_priorities_attention, reported_green_pct, open_risks\n W1 Stacked bar: open_projects, group by region, then reported_status\n W2 Donut: open_projects, group by reported_status (order Green, Amber, Red, Not set)\n W3 Bar: open_projects, group by lifecycle_phase (use the dimension's sort order)\n W4 Bar: open_projects, group by priority (Critical, High, Moderate, Low)\n W5 Table: top 10 projects where key_priority_project = Yes, sorted by calculated_health (worst first)\n\nREPORT 2 \u2013 Delivery and schedule\n KPI: schedule_risk, on_hold_over_90, slip_vs_baseline_median, slip_vs_baseline_p85, longest_on_hold_days\n W1 Column: open_projects, group by lateness_bucket\n W2 Column: open_projects, group by go_live_horizon\n W3 Bar: slip_vs_baseline_avg, group by region\n W4 Bar: schedule_risk, group by cio\n W5 Column: on_hold, group by on_hold_aging, split by hold_reason\n W6 Line: project_starts_month trend, group by planned_deployment_date (month)\n\nREPORT 3 \u2013 Finance (forecast vs budget)\n KPI: approved_budget_total, forecast_cost_total, budget_variance, budget_variance_pct, forecast_over_budget_15, projects_excluded\n W1 Clustered bar: approved_budget_total vs forecast_cost_total, group by cio\n W2 Column: over_budget, group by variance_spread\n W3 Donut: forecast_cost_total, group by budget_type (CAPEX, OPEX)\n W4 Bar: tcv_open_total, group by region\n W5 Table: over-budget projects (forecast > approved budget), sorted by budget_variance desc\n\nREPORT 4 \u2013 Demand pipeline\n KPI: open_demand, overdue_gates_total, overdue_dou, overdue_darb, overdue_sow, requests_on_hold_over_180, oldest_open_request_days\n W1 Funnel/bar: total_requests, group by request_state   (do NOT use intake_gate, it is empty in the data)\n W2 Stacked bar: open_demand, group by request_region, then request_priority\n W3 Column: open_demand, group by request_aging\n W4 Single value: conversion_rate and avg_days_to_convert\n W5 Bar: change_request_count, group by cr_reason\n\nREPORT 5 \u2013 Governance and RAID\n KPI: status_reporting_compliance_pct, baselining_compliance_pct, budget_code_compliance_pct, pm_assignment_compliance_pct, closure_compliance_pct\n W1 Bar: open_risks, group by risk_category\n W2 Bar: high_exposure_risks and overdue_risks, group by risk_project (top 10)\n W3 Column: open_issues, group by issue_priority (Critical, High, Medium, Low)\n W4 Single value: overdue_actions\n W5 Column: pcrs_pending, group by pcr_approval\n W6 Bar: pcrs_golive_change, group by pcr_reason\n\nAVOID (flagged needs_review in the model)\n - \"Warranty / Closure\" population, it matches nothing in the data\n - Any measure or rule using statecodename = 'Open'\n - Status-report rules that need status_reports joined to projects: join via project_id first\n\nOUTPUT\nReturn the plan as: report -> widget -> {chart type, measure key, group-by dimension key, filters}. Then build it and show the preview.\n",
+ "plan": {
+  "title": "PMO Mission Control",
+  "connection_id": "01a1da60-f79e-7093-8592-dc5ee47fb344",
+  "connection": "tpg-mysql",
+  "model_version_id": "01a1dea8-bad1-725f-8165-5dc0632676c8",
+  "model_version": 8,
+  "data_date": "2026-10-25",
+  "min_widgets": 6,
+  "global_filters": [
+   {
+    "key": "region",
+    "ref": "dimension:region",
+    "label": "Region",
+    "reaches_all": true,
+    "shared": true
+   },
+   {
+    "key": "cio",
+    "ref": "dimension:cio",
+    "label": "CIO",
+    "reaches_all": true,
+    "shared": true
+   },
+   {
+    "key": "portfolio",
+    "ref": "dimension:portfolio",
+    "label": "Portfolio",
+    "reaches_all": true,
+    "shared": true
+   },
+   {
+    "key": "priority",
+    "ref": "dimension:priority",
+    "label": "Priority",
+    "reaches_all": true,
+    "shared": true
+   },
+   {
+    "key": "platform",
+    "ref": "dimension:platform",
+    "label": "Platform",
+    "reaches_all": true,
+    "shared": true
+   },
+   {
+    "key": "current_state",
+    "ref": "dimension:current_state",
+    "label": "Current state",
+    "reaches_all": true,
+    "shared": true
+   },
+   {
+    "key": "key_priority_project",
+    "ref": "dimension:key_priority_project",
+    "label": "Key priority project",
+    "reaches_all": true,
+    "shared": true
+   }
+  ],
+  "not_possible": [
+   "Warranty / Closure population matches nothing in the data as flagged by needs_review."
+  ],
+  "dropped": [],
+  "catalogue": {
+   "measures": 124,
+   "group_bys": 163,
+   "rules": 40
+  },
+  "reports": [
+   {
+    "title": "Executive overview",
+    "purpose": "Executive summary of open projects, key priorities, health, and reported status.",
+    "page_filters": [
+     {
+      "ref": "dimension:region",
+      "label": "Region"
+     },
+     {
+      "ref": "dimension:cio",
+      "label": "CIO"
+     },
+     {
+      "ref": "dimension:portfolio",
+      "label": "Portfolio"
+     },
+     {
+      "ref": "dimension:priority",
+      "label": "Priority"
+     },
+     {
+      "ref": "dimension:platform",
+      "label": "Platform"
+     }
+    ],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 6,
+    "kpis": [
+     {
+      "ref": "w1",
+      "title": "open_projects",
+      "visual": "figure",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w2",
+      "title": "on_hold",
+      "visual": "figure",
+      "measure": "on_hold",
+      "measure_label": "Projects on hold",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w3",
+      "title": "schedule_risk",
+      "visual": "figure",
+      "measure": "schedule_risk",
+      "measure_label": "Schedule risk",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w4",
+      "title": "stale_projects",
+      "visual": "figure",
+      "measure": "stale_projects",
+      "measure_label": "Stale projects",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w5",
+      "title": "over_budget",
+      "visual": "figure",
+      "measure": "over_budget",
+      "measure_label": "Over-budget projects",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w6",
+      "title": "key_priorities_attention",
+      "visual": "figure",
+      "measure": "key_priorities_attention",
+      "measure_label": "Key priorities needing attention",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w7",
+      "title": "Open Projects by Region and Reported Status",
+      "visual": "stacked_status",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "region",
+       "reported_status"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How are open projects distributed by region and reported status?"
+     },
+     {
+      "ref": "w8",
+      "title": "Open Projects by Reported Status",
+      "visual": "donut",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "reported_status"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the breakdown of open projects by reported status?"
+     },
+     {
+      "ref": "w9",
+      "title": "Open Projects by Lifecycle Phase",
+      "visual": "columns",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "lifecycle_phase"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How many open projects are in each lifecycle phase?"
+     },
+     {
+      "ref": "w10",
+      "title": "Open Projects by Priority",
+      "visual": "columns",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "priority"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of open projects across priorities?"
+     },
+     {
+      "ref": "w11",
+      "title": "Key Priority Projects by Calculated Health",
+      "visual": "table",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "calculated_health",
+       "project_manager"
+      ],
+      "time": null,
+      "filters": [
+       {
+        "by": "key_priority_project",
+        "op": "=",
+        "values": [
+         "Yes"
+        ]
+       }
+      ],
+      "top": 10,
+      "question": "Which key priority projects have the worst calculated health?"
+     },
+     {
+      "ref": "w12",
+      "title": "Open Projects by Portfolio",
+      "visual": "ranked_bar",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "portfolio"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "Which portfolios have the most open projects?"
+     }
+    ]
+   },
+   {
+    "title": "Delivery and schedule",
+    "purpose": "Schedule adherence, baseline slips, go-live horizons, and delivery pacing.",
+    "page_filters": [
+     {
+      "ref": "dimension:region",
+      "label": "Region"
+     },
+     {
+      "ref": "dimension:cio",
+      "label": "CIO"
+     },
+     {
+      "ref": "dimension:portfolio",
+      "label": "Portfolio"
+     },
+     {
+      "ref": "dimension:priority",
+      "label": "Priority"
+     },
+     {
+      "ref": "dimension:platform",
+      "label": "Platform"
+     }
+    ],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 5,
+    "kpis": [
+     {
+      "ref": "w13",
+      "title": "schedule_risk",
+      "visual": "figure",
+      "measure": "schedule_risk",
+      "measure_label": "Schedule risk",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w14",
+      "title": "on_hold_over_90",
+      "visual": "figure",
+      "measure": "on_hold_over_90",
+      "measure_label": "On hold more than 90 days",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w15",
+      "title": "slip_vs_baseline_median",
+      "visual": "figure",
+      "measure": "slip_vs_baseline_median",
+      "measure_label": "Median slip vs first baseline (days)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w16",
+      "title": "slip_vs_baseline_p85",
+      "visual": "figure",
+      "measure": "slip_vs_baseline_p85",
+      "measure_label": "Slip vs first baseline, 85th percentile (days)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w17",
+      "title": "longest_on_hold_days",
+      "visual": "figure",
+      "measure": "longest_on_hold_days",
+      "measure_label": "Longest on hold (days)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w18",
+      "title": "Open Projects by Days Past Planned Go-Live",
+      "visual": "columns",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "lateness_bucket"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How many open projects fall into each lateness bucket?"
+     },
+     {
+      "ref": "w19",
+      "title": "Open Projects by Go-Live Horizon",
+      "visual": "columns",
+      "measure": "open_projects",
+      "measure_label": "Open projects",
+      "extra_measures": [],
+      "group_by": [
+       "go_live_horizon"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the go-live horizon for open projects?"
+     },
+     {
+      "ref": "w20",
+      "title": "Average Slip vs First Baseline by Region",
+      "visual": "ranked_bar",
+      "measure": "slip_vs_baseline_avg",
+      "measure_label": "Average slip vs first baseline (days)",
+      "extra_measures": [],
+      "group_by": [
+       "region"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the average schedule slip by region?"
+     },
+     {
+      "ref": "w21",
+      "title": "Schedule Risk by CIO",
+      "visual": "ranked_bar",
+      "measure": "schedule_risk",
+      "measure_label": "Schedule risk",
+      "extra_measures": [],
+      "group_by": [
+       "cio"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "Which CIO portfolios carry the highest schedule risk?"
+     },
+     {
+      "ref": "w22",
+      "title": "Projects on Hold by Aging and Reason",
+      "visual": "heat_grid",
+      "measure": "on_hold",
+      "measure_label": "Projects on hold",
+      "extra_measures": [],
+      "group_by": [
+       "on_hold_aging",
+       "hold_reason"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the aging breakdown and reason for projects currently on hold?"
+     },
+     {
+      "ref": "w23",
+      "title": "Project Starts Trend",
+      "visual": "trend",
+      "measure": "project_starts_month",
+      "measure_label": "Project starts per month",
+      "extra_measures": [],
+      "group_by": [],
+      "time": {
+       "by": "planned_deployment_date",
+       "grain": "month"
+      },
+      "filters": [],
+      "top": null,
+      "question": "What is the trend of project starts over time?"
+     }
+    ]
+   },
+   {
+    "title": "Finance (forecast vs budget)",
+    "purpose": "Financial tracking including approved budgets, forecast costs (EAC), variances, and spread.",
+    "page_filters": [
+     {
+      "ref": "dimension:region",
+      "label": "Region"
+     },
+     {
+      "ref": "dimension:cio",
+      "label": "CIO"
+     },
+     {
+      "ref": "dimension:portfolio",
+      "label": "Portfolio"
+     },
+     {
+      "ref": "dimension:priority",
+      "label": "Priority"
+     },
+     {
+      "ref": "dimension:platform",
+      "label": "Platform"
+     }
+    ],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 6,
+    "kpis": [
+     {
+      "ref": "w24",
+      "title": "approved_budget_total",
+      "visual": "figure",
+      "measure": "approved_budget_total",
+      "measure_label": "Approved budget (USD)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w25",
+      "title": "forecast_cost_total",
+      "visual": "figure",
+      "measure": "forecast_cost_total",
+      "measure_label": "Forecast cost (EAC, USD)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w26",
+      "title": "budget_variance",
+      "visual": "figure",
+      "measure": "budget_variance",
+      "measure_label": "Forecast variance (USD)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w27",
+      "title": "budget_variance_pct",
+      "visual": "figure",
+      "measure": "budget_variance_pct",
+      "measure_label": "Forecast variance (%)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w28",
+      "title": "forecast_over_budget_15",
+      "visual": "figure",
+      "measure": "forecast_over_budget_15",
+      "measure_label": "Forecast more than 15 % over budget",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w29",
+      "title": "projects_excluded",
+      "visual": "figure",
+      "measure": "projects_excluded",
+      "measure_label": "Projects excluded from finance totals",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w30",
+      "title": "Approved Budget vs Forecast Cost by CIO",
+      "visual": "paired_bars",
+      "measure": "approved_budget_total",
+      "measure_label": "Approved budget (USD)",
+      "extra_measures": [
+       "forecast_cost_total"
+      ],
+      "group_by": [
+       "cio"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How do approved budgets compare against forecast costs across CIOs?"
+     },
+     {
+      "ref": "w31",
+      "title": "Over-Budget Projects by Variance Spread",
+      "visual": "columns",
+      "measure": "over_budget",
+      "measure_label": "Over-budget projects",
+      "extra_measures": [],
+      "group_by": [
+       "variance_spread"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How are over-budget projects distributed across variance spread categories?"
+     },
+     {
+      "ref": "w32",
+      "title": "Forecast Cost by Budget Type",
+      "visual": "donut",
+      "measure": "forecast_cost_total",
+      "measure_label": "Forecast cost (EAC, USD)",
+      "extra_measures": [],
+      "group_by": [
+       "budget_type"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the forecast cost breakdown between CAPEX and OPEX?"
+     },
+     {
+      "ref": "w33",
+      "title": "Estimated TCV of Open Projects by Region",
+      "visual": "ranked_bar",
+      "measure": "tcv_open_total",
+      "measure_label": "Estimated TCV of open projects",
+      "extra_measures": [],
+      "group_by": [
+       "region"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the total contract value of open projects by region?"
+     },
+     {
+      "ref": "w34",
+      "title": "Over-Budget Projects Ranked by Variance",
+      "visual": "table",
+      "measure": "budget_variance",
+      "measure_label": "Forecast variance (USD)",
+      "extra_measures": [],
+      "group_by": [
+       "cio",
+       "project_manager"
+      ],
+      "time": null,
+      "filters": [
+       {
+        "by": "variance_spread",
+        "op": "in",
+        "values": [
+         "Over by 0\u201315 %",
+         "Over by 15 %+"
+        ]
+       }
+      ],
+      "top": 10,
+      "question": "Which projects are over budget, sorted by budget variance?"
+     },
+     {
+      "ref": "w35",
+      "title": "Forecast Cost by Region",
+      "visual": "ranked_bar",
+      "measure": "forecast_cost_total",
+      "measure_label": "Forecast cost (EAC, USD)",
+      "extra_measures": [],
+      "group_by": [
+       "region"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What are the total forecast costs across different regions?"
+     }
+    ]
+   },
+   {
+    "title": "Demand pipeline",
+    "purpose": "Intake demand pipeline, request states, aging, conversion rates, and change requests.",
+    "page_filters": [
+     {
+      "ref": "dimension:region",
+      "label": "Region"
+     },
+     {
+      "ref": "dimension:cio",
+      "label": "CIO"
+     },
+     {
+      "ref": "dimension:portfolio",
+      "label": "Portfolio"
+     },
+     {
+      "ref": "dimension:priority",
+      "label": "Priority"
+     },
+     {
+      "ref": "dimension:platform",
+      "label": "Platform"
+     }
+    ],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 6,
+    "kpis": [
+     {
+      "ref": "w36",
+      "title": "open_demand",
+      "visual": "figure",
+      "measure": "open_demand",
+      "measure_label": "Open demand requests",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w37",
+      "title": "overdue_gates_total",
+      "visual": "figure",
+      "measure": "overdue_gates_total",
+      "measure_label": "Overdue governance actions",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w38",
+      "title": "overdue_dou",
+      "visual": "figure",
+      "measure": "overdue_dou",
+      "measure_label": "Overdue DOU gates",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w39",
+      "title": "overdue_darb",
+      "visual": "figure",
+      "measure": "overdue_darb",
+      "measure_label": "Overdue DARB gates",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w40",
+      "title": "overdue_sow",
+      "visual": "figure",
+      "measure": "overdue_sow",
+      "measure_label": "Overdue SOW gates",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w41",
+      "title": "requests_on_hold_over_180",
+      "visual": "figure",
+      "measure": "requests_on_hold_over_180",
+      "measure_label": "Requests on hold more than 180 days",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w42",
+      "title": "Requests by Request State",
+      "visual": "ranked_bar",
+      "measure": "total_requests",
+      "measure_label": "Requests",
+      "extra_measures": [],
+      "group_by": [
+       "request_state"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the volume of requests across different request states?"
+     },
+     {
+      "ref": "w43",
+      "title": "Open Demand by Request Region and Priority",
+      "visual": "heat_grid",
+      "measure": "open_demand",
+      "measure_label": "Open demand requests",
+      "extra_measures": [],
+      "group_by": [
+       "request_region",
+       "request_priority"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How is open demand distributed by region and priority?"
+     },
+     {
+      "ref": "w44",
+      "title": "Open Demand by Request Age",
+      "visual": "columns",
+      "measure": "open_demand",
+      "measure_label": "Open demand requests",
+      "extra_measures": [],
+      "group_by": [
+       "request_aging"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the aging profile of open demand requests?"
+     },
+     {
+      "ref": "w45",
+      "title": "Conversion Rate and Days to Convert",
+      "visual": "table",
+      "measure": "conversion_rate",
+      "measure_label": "Conversion rate (%)",
+      "extra_measures": [
+       "avg_days_to_convert"
+      ],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the overall request conversion rate and average time to convert?"
+     },
+     {
+      "ref": "w46",
+      "title": "Change Requests by Reason",
+      "visual": "ranked_bar",
+      "measure": "change_request_count",
+      "measure_label": "Change requests",
+      "extra_measures": [],
+      "group_by": [
+       "cr_reason"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What are the primary reasons for change requests?"
+     },
+     {
+      "ref": "w47",
+      "title": "Open Demand by CIO",
+      "visual": "ranked_bar",
+      "measure": "open_demand",
+      "measure_label": "Open demand requests",
+      "extra_measures": [],
+      "group_by": [
+       "request_cio"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "Which request CIOs have the largest open demand pipeline?"
+     }
+    ]
+   },
+   {
+    "title": "Governance and RAID",
+    "purpose": "Compliance metrics, RAID (Risks, Actions, Issues, Decisions), PCRs, and governance health.",
+    "page_filters": [
+     {
+      "ref": "dimension:region",
+      "label": "Region"
+     },
+     {
+      "ref": "dimension:cio",
+      "label": "CIO"
+     },
+     {
+      "ref": "dimension:portfolio",
+      "label": "Portfolio"
+     },
+     {
+      "ref": "dimension:priority",
+      "label": "Priority"
+     },
+     {
+      "ref": "dimension:platform",
+      "label": "Platform"
+     }
+    ],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 5,
+    "kpis": [
+     {
+      "ref": "w48",
+      "title": "status_reporting_compliance_pct",
+      "visual": "figure",
+      "measure": "status_reporting_compliance_pct",
+      "measure_label": "Status reporting compliance (%)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w49",
+      "title": "baselining_compliance_pct",
+      "visual": "figure",
+      "measure": "baselining_compliance_pct",
+      "measure_label": "Baselining compliance (%)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w50",
+      "title": "budget_code_compliance_pct",
+      "visual": "figure",
+      "measure": "budget_code_compliance_pct",
+      "measure_label": "Budget code compliance (%)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w51",
+      "title": "pm_assignment_compliance_pct",
+      "visual": "figure",
+      "measure": "pm_assignment_compliance_pct",
+      "measure_label": "PM assignment compliance (%)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w52",
+      "title": "closure_compliance_pct",
+      "visual": "figure",
+      "measure": "closure_compliance_pct",
+      "measure_label": "Closure compliance (%)",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w53",
+      "title": "Open Risks by Risk Category",
+      "visual": "ranked_bar",
+      "measure": "open_risks",
+      "measure_label": "Open risks",
+      "extra_measures": [],
+      "group_by": [
+       "risk_category"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What are the most frequent risk categories for open risks?"
+     },
+     {
+      "ref": "w54",
+      "title": "High Exposure and Overdue Risks by Project",
+      "visual": "paired_bars",
+      "measure": "high_exposure_risks",
+      "measure_label": "High-exposure risks",
+      "extra_measures": [
+       "overdue_risks"
+      ],
+      "group_by": [
+       "risk_project"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 10,
+      "question": "Which projects have the highest exposure and overdue risks?"
+     },
+     {
+      "ref": "w55",
+      "title": "Open Issues by Priority",
+      "visual": "columns",
+      "measure": "open_issues",
+      "measure_label": "Open issues",
+      "extra_measures": [],
+      "group_by": [
+       "issue_priority"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the priority distribution of open issues?"
+     },
+     {
+      "ref": "w56",
+      "title": "Overdue Action Items",
+      "visual": "figure",
+      "measure": "overdue_actions",
+      "measure_label": "Overdue action items",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How many action items are currently overdue?"
+     },
+     {
+      "ref": "w57",
+      "title": "PCRs Pending by Approval Stage",
+      "visual": "columns",
+      "measure": "pcrs_pending",
+      "measure_label": "PCRs awaiting approval",
+      "extra_measures": [],
+      "group_by": [
+       "pcr_approval"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "Where are pending PCRs bottlenecked in the approval flow?"
+     },
+     {
+      "ref": "w58",
+      "title": "Go-Live Change PCRs by Reason",
+      "visual": "ranked_bar",
+      "measure": "pcrs_golive_change",
+      "measure_label": "PCRs changing the go-live",
+      "extra_measures": [],
+      "group_by": [
+       "pcr_reason"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What are the common reasons for PCRs that alter the go-live date?"
+     }
+    ]
+   }
+  ]
+ }
+}

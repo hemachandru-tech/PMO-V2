@@ -1,0 +1,30 @@
+{
+  "connection": "ball-report",
+  "connection_id": "01a1df2c-8124-7328-aed7-bc5afed52631",
+  "engine": "mysql",
+  "model_id": "01a1df90-f39f-7345-8ac2-a72455ed0a90",
+  "latest_version": 7,
+  "exported_at": "2026-11-16T05:15:25.744867+00:00",
+  "versions": [
+    {
+      "version": 6,
+      "version_id": "01a1dfa8-95da-7144-b2e5-a747727f2e20",
+      "status": "approved",
+      "approved_at": "2026-11-15T14:42:43.885297+00:00",
+      "file": "v6.json",
+      "entities": 14,
+      "rules": 10,
+      "measures": 14
+    },
+    {
+      "version": 7,
+      "version_id": "01a1e2c8-1192-705a-a226-d2c381e3a6f2",
+      "status": "approved",
+      "approved_at": "2026-11-16T05:15:25.619034+00:00",
+      "file": "v7.json",
+      "entities": 14,
+      "rules": 10,
+      "measures": 14
+    }
+  ]
+}

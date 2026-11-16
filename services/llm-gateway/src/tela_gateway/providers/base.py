@@ -58,11 +58,37 @@ def closed_schema(schema: Any) -> Any:
     return out
 
 
+TRANSIENT = frozenset({429, 500, 502, 503, 504})  # rate limit or a passing provider fault: worth another try
+RETRY_DELAYS_S = (2.0, 5.0)  # waits before the second and third try
+
+
 def unavailable(status: int | None = None) -> TelaError:
     if status in (401, 403):
         return TelaError(ErrorCode.PLANNER_UNAVAILABLE, "The model provider refused the API key.", {"status": status})
     details = {"status": status} if status else {}
+    if status in (400, 404):  # the provider read the request and said no: a wrong model name is the usual cause
+        return TelaError(ErrorCode.PLANNER_UNAVAILABLE, "The model provider rejected the request (HTTP "
+                         f"{status}): check the model name (its id, not its display name).", details)
+    if status == 429:
+        return TelaError(ErrorCode.PLANNER_UNAVAILABLE, "The model provider is rate-limiting this key (HTTP 429).",
+                         details)
     return TelaError(ErrorCode.PLANNER_UNAVAILABLE, "The language model is unavailable.", details)
+
+
+async def with_retries(call: Any, *, delays: tuple[float, ...] = RETRY_DELAYS_S, sleep: Any = None) -> Any:
+    """Run ``call()`` (a coroutine factory); on a transient provider error (rate limit, 5xx) wait and try again,
+    up to ``len(delays)`` more times. Anything else, or the last failure, is raised as it is."""
+    import asyncio
+    pause = sleep or asyncio.sleep
+    for i in range(len(delays) + 1):
+        try:
+            return await call()
+        except TelaError as exc:
+            status = (exc.details or {}).get("status")
+            if exc.code != ErrorCode.PLANNER_UNAVAILABLE or status not in TRANSIENT or i == len(delays):
+                raise
+            await pause(delays[i])
+    raise AssertionError("unreachable")
 
 
 def timed_out() -> TelaError:

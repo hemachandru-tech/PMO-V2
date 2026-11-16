@@ -128,14 +128,15 @@ class GatewayClient:
 
 async def run_agent[T: BaseModel](client: GatewayClient | None, model: type[T], *, tenant_id: str, user_id: str | None,
                     agent: str, task: str, system: str, user: str, turn_id: str | None = None,
-                    known_names: list[str] | None = None, temperature: float | None = None, retries: int = 1) -> T:
+                    known_names: list[str] | None = None, temperature: float | None = None, retries: int = 1,
+                    max_tokens: int = 1500) -> T:
     """Call an agent and return a validated object, or raise AgentFailed. An answer that fails the schema is sent back
     for a fix at most ``retries`` times (0 for a vote sample: the other samples stand in for it)."""
     async with trace.agent_run(tenant_id, user_id, "agent", title=f"{agent} {task}", turn_id=turn_id, agent=agent):
         try:
             return await _run_agent(client, model, tenant_id=tenant_id, user_id=user_id, agent=agent, task=task,
                                     system=system, user=user, turn_id=turn_id, known_names=known_names,
-                                    temperature=temperature, retries=retries)
+                                    temperature=temperature, retries=retries, max_tokens=max_tokens)
         except AgentFailed as exc:
             await trace.step("fallback", f"{agent} gave no usable answer ({exc.code}); the caller falls back",
                              agent=agent, status="failed", detail={"code": exc.code, "task": task})
@@ -150,7 +151,7 @@ def _llm(task: str, out: dict[str, Any]) -> dict[str, Any]:
 async def _run_agent[T: BaseModel](client: GatewayClient | None, model: type[T], *, tenant_id: str,
                                    user_id: str | None, agent: str, task: str, system: str, user: str,
                                    turn_id: str | None, known_names: list[str] | None, temperature: float | None,
-                                   retries: int) -> T:
+                                   retries: int, max_tokens: int = 1500) -> T:
     if client is None:
         raise AgentFailed("planner_unavailable", "No language model is configured.")
     run = trace.current()
@@ -169,7 +170,8 @@ async def _run_agent[T: BaseModel](client: GatewayClient | None, model: type[T],
         try:
             out = await client.generate(tenant_id=tenant_id, user_id=user_id, agent=agent, task=task,
                                         messages=messages, json_schema=schema, turn_id=turn_id,
-                                        known_names=known_names, temperature=temperature, capture=capture)
+                                        known_names=known_names, temperature=temperature, capture=capture,
+                                        max_tokens=max_tokens)
         except TelaError as exc:
             took = int((time.monotonic() - began) * 1000)
             agent_prompts.record(agent=agent, task=task, tuned=tuned, ok=False, reply=exc.message, ms=took,

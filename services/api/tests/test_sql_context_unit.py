@@ -99,5 +99,6 @@ def test_dataverse_text_twins_and_run_together_names_reach_the_model_and_rollup_
 def test_the_dialect_and_the_certified_rules_of_the_listed_tables_come_with_the_tables() -> None:
     """EXEC-148: a draft uses the agreed conditions ("Active") instead of guessing ("Open")."""
     out = schema_context(snapshot(), frozenset(), "Open projects by region", dialect="tsql")
-    assert out.startswith("SQL dialect: tsql\n\nTables:\n")
+    assert out.startswith("SQL dialect: tsql\n" + sql_context.DIALECT_RULES["tsql"] + "\n\n")
+    assert "\n\nTables:\n" in out and sql_context.NAMES_AS_LISTED in out
     assert out.endswith("Certified measures (their rules):\n- Open projects (projects): Active.")

@@ -219,7 +219,7 @@ function PreviewStep({ dashboard: d, roles, onBack, onNext }: { dashboard: Dashb
       </Table>
       <section aria-labelledby="as-person" className="grid gap-2">
         <h3 id="as-person" className="text-body-strong">Preview as a person</h3>
-        <p className="text-small text-ink-muted">Roles like CIO depend on each person. {d.can_publish ? "Pick anyone." : "You can pick people you shared this dashboard with."}</p>
+        <p className="text-small text-ink-muted">Some roles depend on each person. {d.can_publish ? "Pick anyone." : "You can pick people you shared this dashboard with."}</p>
         <div className="max-w-sm"><PeoplePicker label="Person" onPick={setPerson} exclude={person ? [person.id] : []} /></div>
         {person && (
           <div className="grid gap-1 rounded-md bg-surface-sunken p-3" aria-live="polite">

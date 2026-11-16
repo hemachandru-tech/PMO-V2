@@ -174,7 +174,8 @@ export type AskSession = ReturnType<typeof useAskSession>;
  * source, did you mean, closest measures, request free-hand access) or the answer. `onAsk` asks again in the caller's
  * context. Quick refinements show under the latest answer only.
  */
-export function TurnList({ session, onAsk, pinTarget = null }: {
+export function TurnList({ session, onAsk, pinTarget = null, pinDashboard = null }: {
+  pinDashboard?: string | null;
   session: AskSession;
   onAsk: (question: string, connectionId?: string) => void;
   pinTarget?: string | null;
@@ -201,7 +202,7 @@ export function TurnList({ session, onAsk, pinTarget = null }: {
           {t.error && <AssistantMessage><TurnError turn={t} onAsk={onAsk} /></AssistantMessage>}
           {t.complete && (
             <AssistantMessage>
-              <AnswerCard turn={t} pinTarget={pinTarget} latest={t.id === latest} onRefine={(b, l) => void refine(t, b, l)}
+              <AnswerCard turn={t} pinTarget={pinTarget} pinDashboard={pinDashboard} latest={t.id === latest} onRefine={(b, l) => void refine(t, b, l)}
                 onUndo={() => void undo(t.id, t.question)} onFollowUp={(q) => onAsk(q, t.complete?.connection_id ?? undefined)} />
             </AssistantMessage>
           )}
@@ -308,9 +309,10 @@ function NewFieldMenu({ connectionId, columns }: { connectionId: string; columns
   );
 }
 
-function AnswerCard({ turn, pinTarget, latest, onRefine, onUndo, onFollowUp }: {
+function AnswerCard({ turn, pinTarget, pinDashboard = null, latest, onRefine, onUndo, onFollowUp }: {
   turn: Turn;
   pinTarget: string | null;
+  pinDashboard?: string | null;
   latest: boolean;
   onRefine: (body: { instruction?: string; chip_ops?: Record<string, unknown>[] }, label: string) => void;
   onUndo: () => void;
@@ -372,7 +374,7 @@ function AnswerCard({ turn, pinTarget, latest, onRefine, onUndo, onFollowUp }: {
       </article>
     );
   }
-  if (c.ask_mode === "direct_sql") return <DirectSqlAnswer turn={turn} pinTarget={pinTarget} latest={latest} onFollowUp={onFollowUp} />;
+  if (c.ask_mode === "direct_sql") return <DirectSqlAnswer turn={turn} pinTarget={pinTarget} pinDashboard={pinDashboard} latest={latest} onFollowUp={onFollowUp} />;
   const columns = (c.columns ?? []) as Column[];
   const rows = c.rows ?? [];
   const measureRef = c.spec?.measure.ref;
@@ -502,7 +504,7 @@ function AnswerCard({ turn, pinTarget, latest, onRefine, onUndo, onFollowUp }: {
       <DrillSheet target={drill} onClose={() => setDrill(null)} />
       {pinning && c.spec && (
         <PinDialog turnId={turn.id} spec={c.spec} defaultTitle={turn.question.replace(/^Undo: /, "")} defaultVisual={turn.viz?.visual}
-          defaultReportId={pinTarget} onClose={() => setPinning(false)} />
+          defaultReportId={pinTarget} defaultDashboardId={pinDashboard} onClose={() => setPinning(false)} />
       )}
     </article>
   );

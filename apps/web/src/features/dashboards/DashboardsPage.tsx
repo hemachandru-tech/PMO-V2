@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { FolderPlus, LayoutDashboard, Plus } from "lucide-react";
+import { FolderPlus, LayoutDashboard, Plus, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -86,7 +86,12 @@ export function DashboardsPage({ shared = false }: { shared?: boolean }) {
             {shared ? "Dashboards colleagues shared with you. You see them within your own data scope." : "Dashboards you compose from reports, then publish to roles or share."}
           </p>
         </div>
-        {creator && <Button onClick={() => setCreating(true)}><Plus aria-hidden />New dashboard</Button>}
+        {creator && (
+          <div className="flex gap-2">
+            <Button asChild variant="secondary"><Link to="/dashboards/ai"><Sparkles aria-hidden />Plan with AI</Link></Button>
+            <Button onClick={() => setCreating(true)}><Plus aria-hidden />New dashboard</Button>
+          </div>
+        )}
       </div>
       {canGroup ? (
         <Tabs value={params.get("tab") === "groups" ? "groups" : "all"}

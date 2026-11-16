@@ -132,7 +132,7 @@ export function AskPage() {
         </div>
         <div className="sticky bottom-0 z-20 -mx-2 bg-gradient-to-t from-surface from-70% to-transparent px-2 pb-3 pt-6">
           <Composer ref={composer} id="followup" label={empty ? "Ask a question" : "Ask a follow-up"} value={draft} onChange={setDraft} onSubmit={send} submitLabel="Send"
-            placeholder={empty ? "Ask anything about your PMO data…" : "Ask a follow-up, or say how to change the answer"}
+            placeholder={empty ? "Ask anything about your data…" : "Ask a follow-up, or say how to change the answer"}
             footer="Answers use certified measures, in your data scope.">
             {widget && (
               <span role="status" className="inline-flex max-w-full items-center gap-1 rounded-full border border-accent bg-accent-soft py-0.5 pl-2.5 pr-0.5 text-small">
@@ -169,7 +169,7 @@ function Welcome({ onPick }: { onPick: (question: string) => void }) {
       </span>
       <div className="grid gap-1.5">
         {name && <p className="text-body text-ink-muted">Hello, {name}</p>}
-        <h2 className="text-title">Ask about your PMO data</h2>
+        <h2 className="text-title">Ask about your data</h2>
         <p className="max-w-lg text-ink-muted">Get a number, a chart or a breakdown in plain words. Answers use certified measures, in your data scope.</p>
       </div>
       {questions.length > 0 && <ul aria-label="Suggested questions" className="grid w-full gap-2 sm:grid-cols-2">

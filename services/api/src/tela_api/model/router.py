@@ -38,6 +38,7 @@ from tela_api.model.catalog import (
     unmodelled_columns,
     unmodelled_objects,
 )
+from tela_api.model.export import export_model
 from tela_api.model.store import build_snapshot
 from tela_api.query.service import QueryContext, QueryService
 from tela_common.errors import ErrorCode, TelaError
@@ -49,7 +50,7 @@ from tela_query_spec.model import ModelSnapshot
 STORED_AGGS = ("count", "count_distinct", "sum", "avg", "min", "max")
 
 router = APIRouter(prefix="/api/v1", tags=["models"])
-SECTIONS = ("entities", "links", "measures", "dimensions", "settings")
+SECTIONS = ("entities", "links", "measures", "dimensions", "rules", "settings")
 
 
 def _rid(request: Request) -> str | None:
@@ -283,6 +284,7 @@ class DraftPatch(BaseModel):
     links: list[dict[str, Any]] | None = None
     measures: list[dict[str, Any]] | None = None
     dimensions: list[dict[str, Any]] | None = None
+    rules: list[dict[str, Any]] | None = None
     settings: dict[str, Any] | None = None
 
 
@@ -875,5 +877,20 @@ async def approve_draft(model_id: str, body: ApproveIn, request: Request, princi
         starters = await install_starter_dashboards(conn, tenant_id=principal.tenant_id,
                                                     connection_id=str(model["connection_id"]),
                                                     version_id=str(draft["id"]), by=principal.user_id)
+    # The approved model is also written to the export folder as JSON (best-effort, never blocks the approval).
+    async with tenant_tx(principal.tenant_id) as conn:
+        exported = await export_model(conn, model_id, str(draft["id"]))
     return {"model_version_id": str(draft["id"]), "version": version_no, "change_summary": summary, "impact": impact,
-            "starter_dashboards": starters, "checks": {"blocking": blocking}}
+            "starter_dashboards": starters, "checks": {"blocking": blocking}, "exported": exported}
+
+
+@router.post("/models/{model_id}/export")
+async def export_model_now(model_id: str, principal: Principal = Depends(require(Perm.MODEL_EDIT))) -> dict[str, Any]:
+    """Write the model's approved version to the export folder now (``TELA_MODEL_EXPORT_DIR``)."""
+    async with tenant_tx(principal.tenant_id) as conn:
+        await _model(conn, model_id)
+        out = await export_model(conn, model_id)
+    if out is None:
+        raise TelaError(ErrorCode.PRECONDITION_FAILED, "Model export is off (set TELA_MODEL_EXPORT_DIR) or the model "
+                        "has no approved version.")
+    return out

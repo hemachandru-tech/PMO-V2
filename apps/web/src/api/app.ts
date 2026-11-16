@@ -377,6 +377,26 @@ export interface TurnComplete {
   conditions?: { term: string; sql: string | null; rule: string | null }[];
   /** Direct SQL with no rows: the filter values the data doesn't hold, and some it does (run 01a1ce59). */
   value_notes?: string[];
+  /** Direct SQL: what the answer relied on — data date, tables, the model's business rules, session memory. */
+  context?: AnswerContext;
+}
+
+export interface AnswerContext {
+  data_date?: string;
+  data_date_set?: boolean;
+  model_version?: number | null;
+  tables?: string[];
+  rules?: { term: string; sql: string | null; always: boolean; origin: string; cite: string | null }[];
+  rules_in_model?: number;
+  prompt_chars?: number;
+  previous_question?: string | null;
+  follow_up?: string;
+  turns_in_conversation?: number;
+  /** Asked on a dashboard: which one, how many of its widgets were read and the widget asked about. */
+  /** Tables whose 5 sample rows the model saw; earlier turns (with their SQL) a follow-up was read with. */
+  samples?: string[];
+  earlier_turns?: number;
+  dashboard?: { dashboard: string; widgets: number; page_filters: number; about_widget: string | null } | null;
 }
 
 export interface FieldsCondition {

@@ -1,0 +1,1 @@
+Build a dashboard that shows how the data flows: an overview page, then one page per main area of the data (deliveries and their metrics, players and sessions, callbacks, users and their activity). Each page: KPIs on top, then trends over time, splits by status/type, and rankings.

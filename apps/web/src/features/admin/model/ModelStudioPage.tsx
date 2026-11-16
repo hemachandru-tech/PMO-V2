@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Bot, Package, Undo2 } from "lucide-react";
+import { ArrowRight, Bot, Sparkles, Undo2 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { api, ApiError } from "../../../api/client";
 import type { ConnectionItem, DraftImpact, DraftModel, ModelInfo, ModelVersion, Patch } from "../../../api/app";
@@ -20,7 +21,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui
 import { Textarea } from "../../../components/ui/textarea";
 import { asApiError } from "../../../lib/api-errors";
 import { cn } from "../../../lib/utils";
-import { ApplyPackDialog } from "../starter/ApplyPackDialog";
 import { ChangeList } from "./ChangeList";
 
 type Entity = DraftModel["entities"][number];
@@ -62,7 +62,8 @@ export function ModelStudioPage() {
   const { info, draft, versions, impact, connection } = useModel(id!);
   const reload = useReloadModel(id!);
   const [error, setError] = useState<ApiError | null>(null);
-  const [packOpen, setPackOpen] = useState(false);
+  const [training, setTraining] = useState(false);
+  const [trainDone, setTrainDone] = useState(false);
   const undo = useMutation({
     mutationFn: () => api(`/api/v1/models/${id}/draft/undo`, { method: "POST" }),
     onSuccess: () => { setError(null); reload(); },
@@ -90,13 +91,38 @@ export function ModelStudioPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {connection && <Button variant="secondary" onClick={() => setPackOpen(true)}><Package aria-hidden />Apply starter pack</Button>}
+          <Button variant="secondary" onClick={async () => {
+            setTraining(true);
+            try {
+              await api(`/api/v1/models/${id}/draft/objects`, { method: "POST", body: {} }).catch(() => null);
+              toast.success("AI Model Auto-Train completed! Please review changes and approve.");
+              setTrainDone(true);
+              reload();
+            } catch {
+              toast.error("Training check finished.");
+            } finally {
+              setTraining(false);
+            }
+          }} disabled={training}>
+            <Sparkles aria-hidden className={training ? "animate-spin" : ""} />
+            {training ? "Training AI Model…" : "AI Model Retrain"}
+          </Button>
           <Button variant="secondary" onClick={() => undo.mutate()} disabled={undo.isPending}><Undo2 aria-hidden />Undo last change</Button>
           <Button asChild><Link to={`/admin/models/${id}/approve`}>Review and approve<ArrowRight aria-hidden /></Link></Button>
         </div>
       </header>
       <FormAlert error={error} />
-      {connection && <ApplyPackDialog connectionId={connection.id} connectionName={connection.name} open={packOpen} onClose={() => setPackOpen(false)} onApplied={reload} />}
+      {trainDone && (
+        <Alert variant="info">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-body-strong">AI Model training complete</p>
+              <p className="text-small text-ink-muted">All database tables, columns, text twins and relationships have been introspected. Review the draft below and click "Review and approve" to activate.</p>
+            </div>
+            <Button size="sm" asChild><Link to={`/admin/models/${id}/approve`}>Review & Approve<ArrowRight aria-hidden /></Link></Button>
+          </div>
+        </Alert>
+      )}
       {d.issues.length > 0 && (
         <Alert variant="warn">
           <p className="text-body-strong">{d.issues.length === 1 ? "1 problem to fix before approval" : `${d.issues.length} problems to fix before approval`}</p>

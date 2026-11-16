@@ -56,21 +56,6 @@ MAX_HEADLINE = 4
 MAX_BLUEPRINT_HEADLINE = 5  # the catalogue's KPI strip has 4 or 5 figures
 MAX_WIDGETS = 24
 
-# Words that point at a starter report theme (report key suffix → trigger words).
-THEMES = {
-    "overview": {"overview", "summary", "portfolio", "health", "status"},
-    "executive": {"executive", "leadership", "board", "exec", "management", "cio"},
-    "governance": {"governance", "quality", "rag", "stale", "hygiene", "compliance"},
-    "delivery": {"delivery", "schedule", "go", "golive", "golives", "deployment", "deployments", "overdue", "dates"},
-    "finance": {"finance", "financial", "budget", "budgets", "cost", "costs", "spend", "forecast", "money",
-                "exposure", "variance"},
-    "flow": {"flow", "lifecycle", "phase", "phases", "pipeline", "hold"},
-    "pipeline": {"pipeline", "requests", "intake"},
-    "demand": {"demand"},
-    "commercial": {"commercial", "deal", "deals", "revenue"},
-}
-
-
 def _sse(event: str, data: dict[str, Any]) -> str:
     return f"event: {event}\ndata: {json.dumps(data, default=str)}\n\n"
 
@@ -191,21 +176,32 @@ class Planner:
         return figures, section, gaps
 
     def theme_sections(self, request: str) -> list[dict[str, Any]]:
+        """The pack's starter reports the request names. Nothing here knows a domain: a report is picked when the
+        request shares a word with the report's own name, section, tab or widget titles, and when the request names
+        a dashboard of the pack (its key's first part, e.g. "requests"), only that dashboard's reports are kept."""
         if self.manifest is None:
             return []
-        qw = set(words(request.replace("-", "")))
+        skip = set(STOP) | {"report", "reports", "dashboard", "dashboards", "page", "show", "me", "my"}
+        qw = {w for w in words(request.replace("-", "")) if w not in skip}
+        qw |= {w.rstrip("s") for w in qw}
         entity_of = {m.key: m.entity for m in self.snap.measures}
+
+        def own_words(*texts: Any) -> set[str]:
+            out = {w for t in texts if t for w in words(str(t).replace("_", " ").replace("-", "")) if w not in skip}
+            return out | {w.rstrip("s") for w in out}
+
+        prefixes = {key: str(report.get("dashboard") or key.split("_", 1)[0])
+                    for key, report in self.manifest.reports.items()}
+        named_prefixes = {p for p in prefixes.values() if own_words(p) & qw}
         out = []
         for key, report in self.manifest.reports.items():
-            # A blueprint report (US-155) names its section and dashboard; 1.x keys read "<dashboard>_<theme>".
-            theme = (report.get("section") or (key.split("_", 1)[1] if "_" in key else key)).lower()
-            prefix = report.get("dashboard") or key.split("_", 1)[0]
-            if not (THEMES.get(theme, set()) & qw):
+            if named_prefixes and prefixes[key] not in named_prefixes:
                 continue
-            if prefix == "requests" and not (qw & {"request", "requests", "demand", "intake", "pipeline"}):
-                continue
-            if prefix == "projects" and qw & {"request", "requests", "demand", "intake"} and not qw & {"project",
-                                                                                                    "projects"}:
+            theme = report.get("section") or (key.split("_", 1)[1] if "_" in key else key)
+            prefix_words = own_words(prefixes[key])
+            topic = own_words(theme, report.get("tab"), report.get("title")) - prefix_words
+            # The request names this report's topic, or names only the dashboard ("the requests dashboard").
+            if not topic & qw and not (named_prefixes and not qw - prefix_words):
                 continue
             widgets = []
             for i, w in enumerate(report["widgets"]):
@@ -603,55 +599,48 @@ async def show_plan(plan_id: str, body: PlanShowIn,
     return {**plan_review.public(plan), "plan_id": plan_id}
 
 
-@router.post("/reports/plans/{plan_id}/build", status_code=201)
-async def build(plan_id: str, request: Request, idempotency_key: str | None = Header(default=None),
-                principal: Principal = Depends(require(Perm.REPORTS_CREATE))) -> dict[str, Any]:
-    """Build (API-026): create the draft report and run every planned widget once under the Creator's scope."""
-    route = f"{BUILD_ROUTE}/{plan_id}"
-    async with tenant_tx(principal.tenant_id) as conn:
-        if (prior := await replay(conn, principal, route, idempotency_key)) is not None:
-            return prior
-        row = await _own_plan(conn, principal, plan_id)
-        if row["status"] == "built" and row["report_id"]:
-            raise TelaError(ErrorCode.CONFLICT, "This plan is already built.", {"report_id": str(row["report_id"])})
-        plan = row["plan"]
-        if not plan["sections"]:
-            raise TelaError(ErrorCode.CONFLICT, "There is nothing in this plan to build.")
-        report = await create_report(conn, principal, plan["title"], [{"ref": f["ref"]} for f in plan["page_filters"]],
-                                     plan_id=plan_id, with_section=False)
-        placed: list[tuple[str, dict[str, Any]]] = []
-        for s in plan["sections"]:
-            sid = await add_section(conn, principal.tenant_id, report["id"], s["title"], s["kind"])
-            section = {"id": sid}
-            # A blueprint's callouts open its section and its footnote closes it (US-158 text blocks, US-159).
-            ch = TEXT_SIZES["callout"][1]
-            for i, c in enumerate(s.get("callouts", [])):
-                await add_text_item(conn, principal.tenant_id, report["id"], sid, "callout", c["text"], i * ch,
-                                    title=c.get("title"), level=c.get("level", "info"))
-            bottom = len(s.get("callouts", [])) * ch
-            for w in s["widgets"]:
-                h = def_hash(w["spec"])
-                existing = await fetch_one(conn, "SELECT id FROM content.widgets WHERE owner_id = :u AND def_hash = :h "
-                                                 "AND deleted_at IS NULL", {"u": principal.user_id, "h": h})
-                wid = str(existing["id"]) if existing else new_id()
-                if existing is None:
-                    await conn.execute(
-                        text("INSERT INTO content.widgets (id, tenant_id, title, spec, visual, model_version_id, "
-                             "connection_id, certification_state, owner_id, question, def_hash, created_by) VALUES "
-                             "(:id, :t, :title, CAST(:s AS jsonb), :v, :mv, :c, 'certified', :u, :q, :h, :u)"),
-                        {"id": wid, "t": principal.tenant_id, "title": w["title"], "s": json.dumps(w["spec"]),
-                         "v": w["visual"], "mv": w["spec"]["model_version_id"], "c": w["spec"]["connection_id"],
-                         "u": principal.user_id, "q": row["request"], "h": h})
-                lay = next((p for p in plan["layout_preview"] if p["widget_ref"] == w["ref"]), None)
-                await place_widget(conn, report, section, wid, w["visual"], **(
-                    {"x": lay["x"], "y": lay["y"], "w": lay["w"], "h": lay["h"]} if lay else {}))
-                bottom = max(bottom, lay["y"] + lay["h"] if lay else bottom + default_size(w["visual"])[1])
-                placed.append((w["ref"], {**w, "widget_id": wid}))
-            if s.get("footnote"):
-                await add_text_item(conn, principal.tenant_id, report["id"], sid, "footnote", s["footnote"], bottom)
-        await conn.execute(text("UPDATE content.report_plans SET status = 'built', report_id = :r WHERE id = :id"),
-                           {"r": report["id"], "id": row["id"]})
-    service: QueryService = request.app.state.query_service
+async def build_report(conn: Any, principal: Principal, plan: dict[str, Any], plan_id: str,
+                       question: str) -> tuple[dict[str, Any], list[tuple[str, dict[str, Any]]]]:
+    """Create the draft report of a plan: its sections, text blocks and widgets (pinned to the Creator's library,
+    reusing identical definitions). Returns the report and the placed widgets (plan ref, widget)."""
+    report = await create_report(conn, principal, plan["title"], [{"ref": f["ref"]} for f in plan["page_filters"]],
+                                 plan_id=plan_id, with_section=False)
+    placed: list[tuple[str, dict[str, Any]]] = []
+    for s in plan["sections"]:
+        sid = await add_section(conn, principal.tenant_id, report["id"], s["title"], s["kind"])
+        section = {"id": sid}
+        # A blueprint's callouts open its section and its footnote closes it (US-158 text blocks, US-159).
+        ch = TEXT_SIZES["callout"][1]
+        for i, c in enumerate(s.get("callouts", [])):
+            await add_text_item(conn, principal.tenant_id, report["id"], sid, "callout", c["text"], i * ch,
+                                title=c.get("title"), level=c.get("level", "info"))
+        bottom = len(s.get("callouts", [])) * ch
+        for w in s["widgets"]:
+            h = def_hash(w["spec"])
+            existing = await fetch_one(conn, "SELECT id FROM content.widgets WHERE owner_id = :u AND def_hash = :h "
+                                             "AND deleted_at IS NULL", {"u": principal.user_id, "h": h})
+            wid = str(existing["id"]) if existing else new_id()
+            if existing is None:
+                await conn.execute(
+                    text("INSERT INTO content.widgets (id, tenant_id, title, spec, visual, model_version_id, "
+                         "connection_id, certification_state, owner_id, question, def_hash, created_by) VALUES "
+                         "(:id, :t, :title, CAST(:s AS jsonb), :v, :mv, :c, 'certified', :u, :q, :h, :u)"),
+                    {"id": wid, "t": principal.tenant_id, "title": w["title"], "s": json.dumps(w["spec"]),
+                     "v": w["visual"], "mv": w["spec"]["model_version_id"], "c": w["spec"]["connection_id"],
+                     "u": principal.user_id, "q": question, "h": h})
+            lay = next((p for p in plan["layout_preview"] if p["widget_ref"] == w["ref"]), None)
+            await place_widget(conn, report, section, wid, w["visual"], **(
+                {"x": lay["x"], "y": lay["y"], "w": lay["w"], "h": lay["h"]} if lay else {}))
+            bottom = max(bottom, lay["y"] + lay["h"] if lay else bottom + default_size(w["visual"])[1])
+            placed.append((w["ref"], {**w, "widget_id": wid}))
+        if s.get("footnote"):
+            await add_text_item(conn, principal.tenant_id, report["id"], sid, "footnote", s["footnote"], bottom)
+    return report, placed
+
+
+async def run_placed(service: QueryService, principal: Principal,
+                     placed: list[tuple[str, dict[str, Any]]]) -> list[dict[str, Any]]:
+    """Run every placed widget once under the Creator: ok (rows), empty, hidden or failed."""
     results = []
     for ref, w in placed:
         try:
@@ -669,6 +658,27 @@ async def build(plan_id: str, request: Request, idempotency_key: str | None = He
         except TelaError as exc:
             results.append({"widget_ref": ref, "widget_id": w["widget_id"], "title": w["title"], "status": "failed",
                             "message": exc.message})
+    return results
+
+
+@router.post("/reports/plans/{plan_id}/build", status_code=201)
+async def build(plan_id: str, request: Request, idempotency_key: str | None = Header(default=None),
+                principal: Principal = Depends(require(Perm.REPORTS_CREATE))) -> dict[str, Any]:
+    """Build (API-026): create the draft report and run every planned widget once under the Creator's scope."""
+    route = f"{BUILD_ROUTE}/{plan_id}"
+    async with tenant_tx(principal.tenant_id) as conn:
+        if (prior := await replay(conn, principal, route, idempotency_key)) is not None:
+            return prior
+        row = await _own_plan(conn, principal, plan_id)
+        if row["status"] == "built" and row["report_id"]:
+            raise TelaError(ErrorCode.CONFLICT, "This plan is already built.", {"report_id": str(row["report_id"])})
+        plan = row["plan"]
+        if not plan["sections"]:
+            raise TelaError(ErrorCode.CONFLICT, "There is nothing in this plan to build.")
+        report, placed = await build_report(conn, principal, plan, plan_id, row["request"])
+        await conn.execute(text("UPDATE content.report_plans SET status = 'built', report_id = :r WHERE id = :id"),
+                           {"r": report["id"], "id": row["id"]})
+    results = await run_placed(request.app.state.query_service, principal, placed)
     out = {"report_id": str(report["id"]), "results": results}
     async with tenant_tx(principal.tenant_id) as conn:
         await audit.record(conn, tenant_id=principal.tenant_id, action="report.built", object_type="report",

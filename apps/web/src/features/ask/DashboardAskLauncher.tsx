@@ -1,4 +1,4 @@
-import { Bot } from "lucide-react";
+import { BrandMark } from "../../components/BrandLoader";
 
 import { useAppName } from "../../app/branding";
 import { Button } from "../../components/ui/button";
@@ -18,7 +18,7 @@ export function DashboardAskLauncher({ onOpen }: { onOpen: () => void }) {
     <Button size="lg" className="fixed bottom-6 right-6 z-40 rounded-full shadow-overlay" onClick={onOpen}
       onPointerEnter={() => void loadDashboardAskPanel()} onFocus={() => void loadDashboardAskPanel()}
       aria-label={`Ask ${appName} about this dashboard`}>
-      <Bot aria-hidden />Ask
+      <span className="inline-flex size-7 items-center justify-center rounded-full bg-surface"><BrandMark size={20} /></span>Ask
     </Button>
   );
 }

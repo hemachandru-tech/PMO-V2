@@ -1,13 +1,14 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Award, ChevronDown, Code2, Lightbulb, Pencil, Pin, Rows3, Workflow } from "lucide-react";
+import { ArrowRight, Award, BookOpenCheck, ChevronDown, Code2, Lightbulb, Pencil, Pin, Rows3, Workflow } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-import type { Column } from "../../api/app";
+import type { AnswerContext, Column } from "../../api/app";
 import type { ChartSpec } from "../../api/querySpec";
 import { VISUAL_NAMES, type ReportListItem } from "../../api/authoring";
 import { api, ApiError } from "../../api/client";
+import { DashboardPinPick, pinPageOf, type PinPage } from "../../components/DashboardPinPick";
 import { can, useMe } from "../../app/me";
 import { Chart } from "../../components/Chart";
 import { ContentBadge } from "../../components/ContentBadge";
@@ -43,7 +44,8 @@ const QUICK = ["Top 5", "By month", "Compare with the previous period"];
  * once certified, RULE-009), Drill to records and Refine (follow-up questions, answered with new SQL), Save as gold
  * example (to the Admin's curation queue, where the spec is written) and Helpful / Not helpful / This isn't what I asked.
  */
-export function DirectSqlAnswer({ turn, pinTarget = null, latest = true, onFollowUp }: {
+export function DirectSqlAnswer({ turn, pinTarget = null, pinDashboard = null, latest = true, onFollowUp }: {
+  pinDashboard?: string | null;
   turn: Turn;
   pinTarget?: string | null;
   /** Quick refinements show under the latest answer only (US-261). */
@@ -121,6 +123,7 @@ export function DirectSqlAnswer({ turn, pinTarget = null, latest = true, onFollo
           </ul>
         </div>
       )}
+      {c.context && Object.keys(c.context).length > 0 && <ContextUsed ctx={c.context} />}
       <details className="group rounded-[12px] border border-line bg-surface-raised px-4 py-2.5">
         <summary className="flex cursor-pointer list-none items-center gap-2 text-small font-medium text-ink-muted [&::-webkit-details-marker]:hidden">
           <Code2 aria-hidden className="size-4" />The SQL
@@ -179,9 +182,55 @@ export function DirectSqlAnswer({ turn, pinTarget = null, latest = true, onFollo
       )}
       {pinning && c.sql && c.connection_id && (
         <PinSqlDialog sql={c.sql} connectionId={c.connection_id} defaultTitle={question} visual={chosen ?? "table"}
-          visuals={viz?.visuals?.suitable ?? []} defaultReportId={pinTarget} onClose={() => setPinning(false)} />
+          visuals={viz?.visuals?.suitable ?? []} defaultReportId={pinTarget} defaultDashboardId={pinDashboard} onClose={() => setPinning(false)} />
       )}
     </article>
+  );
+}
+
+/**
+ * What the answer relied on, in plain words: the data date, the tables, the model's business rules it applied and the
+ * session memory (the earlier question a follow-up was read with). Closed by default so the answer stays simple.
+ */
+function ContextUsed({ ctx }: { ctx: AnswerContext }) {
+  const rules = ctx.rules ?? [];
+  const summary = [
+    ctx.data_date ? `Data date ${ctx.data_date}` : null,
+    rules.length ? `${rules.length} business ${rules.length === 1 ? "rule" : "rules"}` : "No business rules",
+    ctx.previous_question ? "Follow-up" : null,
+  ].filter(Boolean).join(" · ");
+  return (
+    <details className="group rounded-[12px] border border-line bg-surface-raised px-4 py-2.5" data-context-used>
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-small font-medium text-ink-muted [&::-webkit-details-marker]:hidden">
+        <BookOpenCheck aria-hidden className="size-4" />Context used<span className="font-normal">· {summary}</span>
+        <ChevronDown aria-hidden className="ml-auto size-4 transition-transform group-open:rotate-180" />
+      </summary>
+      <dl className="mt-2 grid gap-x-4 gap-y-1.5 text-small sm:grid-cols-[max-content_1fr]">
+        <dt className="text-ink-muted">Data date</dt>
+        <dd>{ctx.data_date ?? "—"}{ctx.data_date_set === false ? " (calendar date: the model sets no data date)" : " (set on the model)"}</dd>
+        <dt className="text-ink-muted">Tables</dt>
+        <dd className="font-mono">{(ctx.tables ?? []).join(", ") || "—"}</dd>
+        <dt className="text-ink-muted">Business rules</dt>
+        <dd>
+          {rules.length === 0 ? <span className="text-ink-muted">None matched{ctx.rules_in_model ? ` (the model has ${ctx.rules_in_model})` : " (the model has none: generate it with your documents)"}</span> : (
+            <ul className="grid gap-1">
+              {rules.map((r) => (
+                <li key={r.term}>
+                  <span className="font-medium">{r.term}</span>{r.always && <span className="text-ink-muted"> · always</span>}
+                  {r.sql && <code className="block break-words font-mono text-ink-muted">{r.sql}</code>}
+                  {r.cite && <span className="text-ink-muted">{r.cite}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </dd>
+        {ctx.samples && ctx.samples.length > 0 && (<><dt className="text-ink-muted">Sample rows</dt><dd>5 real rows each of {ctx.samples.join(", ")}</dd></>)}
+        {ctx.dashboard && (<><dt className="text-ink-muted">Dashboard</dt><dd>{ctx.dashboard.dashboard}: read its {ctx.dashboard.widgets} widgets{ctx.dashboard.page_filters ? ` and ${ctx.dashboard.page_filters} filters you set` : ""}{ctx.dashboard.about_widget ? `, about “${ctx.dashboard.about_widget}”` : ""}</dd></>)}
+        <dt className="text-ink-muted">Memory</dt>
+        <dd>{ctx.earlier_turns ? <>Read with the last {ctx.earlier_turns} {ctx.earlier_turns === 1 ? "answer" : "answers"} of this chat and the SQL each ran{ctx.previous_question ? <> (latest: “{ctx.previous_question}”)</> : null}</> : ctx.previous_question ? <>Read with the earlier question “{ctx.previous_question}”</> : "A new question (nothing carried over)"}{ctx.turns_in_conversation ? ` · ${ctx.turns_in_conversation} earlier ${ctx.turns_in_conversation === 1 ? "turn" : "turns"} in this conversation` : ""}</dd>
+        {ctx.prompt_chars != null && (<><dt className="text-ink-muted">Prompt size</dt><dd>{Math.round(ctx.prompt_chars / 4).toLocaleString()} tokens (about)</dd></>)}
+      </dl>
+    </details>
   );
 }
 
@@ -224,7 +273,8 @@ function SuggestGoldButton({ turnId }: { turnId: string }) {
  * Pin a Direct SQL answer (US-260): the SQL is checked again and saved as a Custom SQL widget, in the library or on one
  * of your reports. It keeps the Custom SQL badge; a published dashboard takes it only once certified (RULE-009).
  */
-function PinSqlDialog({ sql, connectionId, defaultTitle, visual: initial, visuals, defaultReportId, onClose }: {
+function PinSqlDialog({ sql, connectionId, defaultTitle, visual: initial, visuals, defaultReportId, defaultDashboardId = null, onClose }: {
+  defaultDashboardId?: string | null;
   sql: string;
   connectionId: string;
   defaultTitle: string;
@@ -241,18 +291,23 @@ function PinSqlDialog({ sql, connectionId, defaultTitle, visual: initial, visual
   const [reportId, setReportId] = useState(defaultReportId ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  const [done, setDone] = useState<{ reportId: string | null } | null>(null);
+  const [dashboardId, setDashboardId] = useState(defaultDashboardId ?? "");
+  const [done, setDone] = useState<{ reportId: string | null; dashboard?: PinPage } | null>(null);
   const choices = Array.from(new Set(["table", ...visuals]));
   const submit = async () => {
     setBusy(true);
     setError(null);
     try {
       const checked = await api<{ check_token: string }>("/api/v1/custom-sql/check", { method: "POST", body: { connection_id: connectionId, sql } });
+      const page = dashboardId ? await pinPageOf(dashboardId) : undefined;
+      const target = page?.report_id ?? (reportId || null);
       await api("/api/v1/widgets/custom-sql", {
         method: "POST",
-        body: { connection_id: connectionId, sql, check_token: checked.check_token, title: title.trim(), visual, drafted_by_ai: true, report_id: reportId || null },
+        body: { connection_id: connectionId, sql, check_token: checked.check_token, title: title.trim(), visual, drafted_by_ai: true, report_id: target },
       });
-      setDone({ reportId: reportId || null });
+      setDone({ reportId: target, dashboard: page });
+      void qc.invalidateQueries({ queryKey: ["dashboards"] });
+      if (page) void qc.invalidateQueries({ queryKey: ["dashboard", page.dashboard_id] });
       void qc.invalidateQueries({ queryKey: ["reports"] });
       if (reportId) void qc.invalidateQueries({ queryKey: ["report", reportId] });
     } catch (e) {
@@ -266,7 +321,7 @@ function PinSqlDialog({ sql, connectionId, defaultTitle, visual: initial, visual
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Pin to a report</DialogTitle>
+          <DialogTitle>Pin to a dashboard or report</DialogTitle>
           <DialogDescription>
             The widget keeps this SQL, not today&apos;s numbers, and shows the Custom SQL badge. It can go on a published dashboard once certified.
           </DialogDescription>
@@ -275,7 +330,7 @@ function PinSqlDialog({ sql, connectionId, defaultTitle, visual: initial, visual
           <>
             <p>
               Pinned as a live Custom SQL widget.
-              {done.reportId && <> It is on <Link className="text-link underline-offset-4 hover:underline" to={`/reports/${done.reportId}`} onClick={onClose}>{report?.title ?? "your report"}</Link>.</>}
+              {done.dashboard ? <> It is on <Link className="text-link underline-offset-4 hover:underline" to={`/dashboards/${done.dashboard.dashboard_id}/draft`} onClick={onClose}>{done.dashboard.dashboard}</Link>, tab “Pinned from chat”.</> : done.reportId && <> It is on <Link className="text-link underline-offset-4 hover:underline" to={`/reports/${done.reportId}`} onClick={onClose}>{report?.title ?? "your report"}</Link>.</>}
             </p>
             <DialogFooter><Button onClick={onClose}>Done</Button></DialogFooter>
           </>
@@ -294,16 +349,17 @@ function PinSqlDialog({ sql, connectionId, defaultTitle, visual: initial, visual
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="pin-sql-report">Report</Label>
-                <NativeSelect id="pin-sql-report" value={reportId} onChange={(e) => setReportId(e.target.value)}>
+                <NativeSelect id="pin-sql-report" value={reportId} disabled={!!dashboardId} onChange={(e) => setReportId(e.target.value)}>
                   <option value="">Library only</option>
                   {mine.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}
                 </NativeSelect>
               </div>
             </div>
+            <DashboardPinPick value={dashboardId} onChange={setDashboardId} id="pin-sql-dashboard" />
             <FormAlert error={error} />
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-              <Button type="submit" disabled={busy || !title.trim()}>{busy ? "Pinning…" : "Pin"}</Button>
+              <Button type="submit" disabled={busy || !title.trim()}>{busy ? "Pinning…" : dashboardId ? "Pin to dashboard" : "Pin"}</Button>
             </DialogFooter>
           </form>
         )}

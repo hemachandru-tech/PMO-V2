@@ -79,9 +79,13 @@ _FENCE = re.compile(r"^\s*```[A-Za-z]*[ \t]*\r?\n(.*?)\r?\n?```\s*$", re.DOTALL)
 
 def unfence(text: str) -> str:
     """The JSON inside one Markdown code fence (```json ... ```), or the text as it came. Hosted models that are not
-    held to the schema (Gemini, BUG-027) often fence their JSON even when told to answer with JSON only."""
+    held to the schema (Gemini, BUG-027) often fence their JSON even when told to answer with JSON only, sometimes
+    with text before or after the fence."""
+    match = re.search(r"```(?:json)?\s*[\r\n]+(.*?)\s*```", text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
     match = _FENCE.match(text)
-    return match.group(1).strip() if match else text
+    return match.group(1).strip() if match else text.strip()
 
 
 class EmbedIn(BaseModel):
@@ -288,10 +292,12 @@ def create_app(
             try:
                 parsed = json.loads(answer)
                 jsonschema.validate(parsed, body.json_schema)
-            except json.JSONDecodeError:
-                status, schema_error = "invalid_output", "The answer was not valid JSON."
+            except json.JSONDecodeError as exc:
+                status, schema_error = "invalid_output", f"The answer was not valid JSON: {exc}"
+                log.warning("gateway.json_decode_error", error=str(exc), answer=answer[:500], raw=out.text[:500])
             except jsonschema.ValidationError as exc:
                 status, schema_error = "invalid_output", f"{'/'.join(map(str, exc.absolute_path))}: {exc.message}"
+                log.warning("gateway.schema_validation_error", error=schema_error, answer=answer[:500])
 
         CALLS.labels(provider=provider_name, status=status).inc()
         await ledger_sink.write(Invocation(**base, scanner_verdict="clean", status=status,

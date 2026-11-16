@@ -61,6 +61,7 @@ BASE_CTE = "tela_base"
 COHORT_CTE = "tela_cohort"
 COMPARE_CUR = "tela_cur"
 COMPARE_PREV = "tela_prev"
+PERCENTILE_DIALECTS = ("postgres", "duckdb")  # dialects this compiler can write a median / percentile for
 DIALECTS = {"postgres": "postgres", "mysql": "mysql", "sqlserver": "tsql", "excel": "duckdb", "csv": "duckdb",
             "dataverse": "tsql"}
 # Source profiles narrow a dialect: the Dataverse TDS endpoint accepts a subset of T-SQL (ADR-013). Until the
@@ -986,7 +987,7 @@ class SqlCompiler:
             return exp.Count(this=exp.Distinct(expressions=[value]))
         if agg.agg in ("median", "percentile"):
             q = exp.Literal.number(0.5 if agg.agg == "median" else agg.p)
-            if self.dialect == "postgres":
+            if self.dialect == PERCENTILE_DIALECTS[0]:
                 return exp.WithinGroup(this=exp.PercentileCont(this=q),
                                        expression=exp.Order(expressions=[exp.Ordered(this=value)]))
             if self.dialect == "duckdb":

@@ -9,7 +9,7 @@ from google import genai
 from google.genai import errors, types
 
 from tela_common.errors import ErrorCode, TelaError
-from tela_gateway.providers.base import ProviderResult, split_system, timed_out, unavailable
+from tela_gateway.providers.base import ProviderResult, split_system, timed_out, unavailable, with_retries
 
 
 class GeminiProvider:
@@ -20,6 +20,11 @@ class GeminiProvider:
             api_key=api_key, http_options=types.HttpOptions(timeout=int(timeout * 1000)))
 
     async def _call(self, fn: Any, **kwargs: Any) -> Any:
+        """One provider call, tried again after a short wait on a rate limit or a passing 5xx (the Gemini client,
+        unlike the OpenAI and Anthropic ones, does not retry by itself)."""
+        return await with_retries(lambda: self._call_once(fn, **kwargs))
+
+    async def _call_once(self, fn: Any, **kwargs: Any) -> Any:
         try:
             return await fn(**kwargs)
         except errors.APIError as exc:
@@ -36,8 +41,14 @@ class GeminiProvider:
         system, turns = split_system(messages)
         contents = [types.Content(role="model" if m["role"] == "assistant" else "user",
                                   parts=[types.Part(text=m["content"])]) for m in turns]
-        config = types.GenerateContentConfig(system_instruction=system or None, temperature=temperature or 0,
-                                             max_output_tokens=max_tokens)
+        config_kwargs: dict[str, Any] = {
+            "system_instruction": system or None,
+            "temperature": temperature or 0,
+            "max_output_tokens": max(max_tokens, 2048),
+        }
+        if "flash-lite" not in model.lower():
+            config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+        config = types.GenerateContentConfig(**config_kwargs)
         if json_schema is not None:
             config.response_mime_type = "application/json"
             config.response_json_schema = json_schema

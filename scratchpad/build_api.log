@@ -1,0 +1,248 @@
+ Image tela-web:dev Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 505B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 769B done
+#2 DONE 0.0s
+
+#3 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+#3 DONE 0.9s
+
+#4 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+#4 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+#4 CACHED
+
+#5 [internal] load metadata for docker.io/library/node:22.12-alpine
+#5 ...
+
+#6 [internal] load metadata for docker.io/nginxinc/nginx-unprivileged:1.27-alpine
+#6 DONE 0.8s
+
+#5 [internal] load metadata for docker.io/library/node:22.12-alpine
+#5 DONE 0.8s
+
+#7 [internal] load .dockerignore
+#7 transferring context: 248B done
+#7 DONE 0.0s
+
+#8 [runtime 1/3] FROM docker.io/nginxinc/nginx-unprivileged:1.27-alpine@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0
+#8 resolve docker.io/nginxinc/nginx-unprivileged:1.27-alpine@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0 0.0s done
+#8 DONE 0.0s
+
+#9 [build 1/8] FROM docker.io/library/node:22.12-alpine@sha256:51eff88af6dff26f59316b6e356188ffa2c422bd3c3b76f2556a2e7e89d080bd
+#9 resolve docker.io/library/node:22.12-alpine@sha256:51eff88af6dff26f59316b6e356188ffa2c422bd3c3b76f2556a2e7e89d080bd 0.0s done
+#9 DONE 0.0s
+
+#10 [internal] load build context
+#10 transferring context: 58.87kB 0.7s done
+#10 DONE 0.7s
+
+#11 [build 3/8] RUN npm install -g pnpm@9.15.0 --no-fund --no-audit
+#11 CACHED
+
+#12 [build 4/8] COPY apps/web/package.json apps/web/pnpm-lock.yaml ./
+#12 CACHED
+
+#13 [build 5/8] COPY apps/web/patches ./patches
+#13 CACHED
+
+#14 [build 2/8] WORKDIR /web
+#14 CACHED
+
+#15 [build 6/8] RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
+#15 CACHED
+
+#16 [build 7/8] COPY apps/web/ ./
+#16 DONE 0.1s
+
+#17 [build 8/8] RUN pnpm build
+#17 0.417 
+#17 0.417 > @tela/web@0.1.0 build /web
+#17 0.417 > tsc -b && vite build
+#17 0.417 
+#17 22.40 vite v6.0.3 building for production...
+#17 22.46 transforming...
+#17 25.68 node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js (74:0): A comment
+#17 25.68 
+#17 25.68 "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+#17 25.68  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+#17 25.68  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+#17 25.68 
+#17 25.68 in "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+#17 25.69 node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js (400:0): A comment
+#17 25.69 
+#17 25.69 "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+#17 25.69 
+#17 25.69 in "node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+#17 33.12 ✓ 4277 modules transformed.
+#17 34.09 rendering chunks...
+#17 36.00 computing gzip size...
+#17 36.19 dist/index.html                                 0.47 kB │ gzip:   0.29 kB
+#17 36.19 dist/assets/tela-logo-Xh0Hf2pl.png             31.35 kB
+#17 36.19 dist/assets/PrintApp-C3kaQGqh.css               0.33 kB │ gzip:   0.19 kB
+#17 36.19 dist/assets/ReportCanvasPage-DkFmqkxk.css       2.35 kB │ gzip:   0.57 kB
+#17 36.19 dist/assets/index-CbNeu0-a.css                 92.28 kB │ gzip:  17.18 kB
+#17 36.19 dist/assets/askModes-C8sFyy6Y.js                0.17 kB │ gzip:   0.17 kB │ map:     0.58 kB
+#17 36.19 dist/assets/govern-BWfUJaD3.js                  0.19 kB │ gzip:   0.18 kB │ map:     7.23 kB
+#17 36.19 dist/assets/plus-Ce3-aus3.js                    0.40 kB │ gzip:   0.31 kB │ map:     1.07 kB
+#17 36.19 dist/assets/cloud-T63aGLsx.js                   0.40 kB │ gzip:   0.32 kB │ map:     1.01 kB
+#17 36.19 dist/assets/arrow-up-B1ZzOokK.js                0.41 kB │ gzip:   0.32 kB │ map:     1.11 kB
+#17 36.19 dist/assets/arrow-left-BKWl50zJ.js              0.42 kB │ gzip:   0.32 kB │ map:     1.12 kB
+#17 36.19 dist/assets/arrow-right-BAd2k4cn.js             0.42 kB │ gzip:   0.32 kB │ map:     1.13 kB
+#17 36.19 dist/assets/loader-circle-CYgbFYe0.js           0.42 kB │ gzip:   0.32 kB │ map:     1.09 kB
+#17 36.19 dist/assets/arrow-up-right-Cfr0cKyK.js          0.42 kB │ gzip:   0.32 kB │ map:     1.14 kB
+#17 36.19 dist/assets/play-YmeNhFiS.js                    0.43 kB │ gzip:   0.34 kB │ map:     1.09 kB
+#17 36.19 dist/assets/circle-slash-DSl0G-Zg.js            0.45 kB │ gzip:   0.33 kB │ map:     1.22 kB
+#17 36.19 dist/assets/list-filter-B4AtHPEu.js             0.45 kB │ gzip:   0.33 kB │ map:     1.22 kB
+#17 36.19 dist/assets/rotate-cw-SFIYnanL.js               0.45 kB │ gzip:   0.34 kB │ map:     1.15 kB
+#17 36.19 dist/assets/lock-Cw4F2qmD.js                    0.45 kB │ gzip:   0.35 kB │ map:     1.19 kB
+#17 36.19 dist/assets/rotate-ccw-Cya8j8AC.js              0.45 kB │ gzip:   0.34 kB │ map:     1.16 kB
+#17 36.19 dist/assets/undo-2-CYpMNH6K.js                  0.46 kB │ gzip:   0.34 kB │ map:     1.14 kB
+#17 36.19 dist/assets/circle-check-BNj8ATFk.js            0.46 kB │ gzip:   0.34 kB │ map:     1.23 kB
+#17 36.19 dist/assets/table-2-t2Aj0Uon.js                 0.47 kB │ gzip:   0.35 kB │ map:     1.28 kB
+#17 36.19 dist/assets/upload-DPyITnjE.js                  0.47 kB │ gzip:   0.35 kB │ map:     1.23 kB
+#17 36.19 dist/assets/copy-B6MoVCFd.js                    0.48 kB │ gzip:   0.36 kB │ map:     1.22 kB
+#17 36.19 dist/assets/download-YWtz-yeS.js                0.48 kB │ gzip:   0.35 kB │ map:     1.25 kB
+#17 36.19 dist/assets/textarea-6WfsY8BN.js                0.50 kB │ gzip:   0.36 kB │ map:     1.07 kB
+#17 36.19 dist/assets/eye-BNfhdJi-.js                     0.50 kB │ gzip:   0.36 kB │ map:     1.25 kB
+#17 36.19 dist/assets/external-link-CINZ5GoE.js           0.50 kB │ gzip:   0.35 kB │ map:     1.29 kB
+#17 36.19 dist/assets/workflow-D4QJs5-E.js                0.52 kB │ gzip:   0.36 kB │ map:     1.39 kB
+#17 36.19 dist/assets/pencil-CsQanIDd.js                  0.52 kB │ gzip:   0.38 kB │ map:     1.26 kB
+#17 36.19 dist/assets/refresh-cw-De868tzu.js              0.57 kB │ gzip:   0.38 kB │ map:     1.41 kB
+#17 36.19 dist/assets/bot-Enk4gfOt.js                     0.57 kB │ gzip:   0.39 kB │ map:     1.56 kB
+#17 36.19 dist/assets/trash-jS6c2_ts.js                   0.59 kB │ gzip:   0.38 kB │ map:     1.50 kB
+#17 36.19 dist/assets/layout-grid-7zZU3iTt.js             0.60 kB │ gzip:   0.35 kB │ map:     1.66 kB
+#17 36.19 dist/assets/key-round-BqMAqzuu.js               0.61 kB │ gzip:   0.42 kB │ map:     1.39 kB
+#17 36.19 dist/assets/authoring-Cr6apEFm.js               0.61 kB │ gzip:   0.38 kB │ map:    17.95 kB
+#17 36.19 dist/assets/message-square-text-ClJV9cCE.js     0.61 kB │ gzip:   0.41 kB │ map:     1.53 kB
+#17 36.19 dist/assets/eye-off-CXmboiv6.js                 0.68 kB │ gzip:   0.43 kB │ map:     1.59 kB
+#17 36.19 dist/assets/label-BGpXYCOR.js                   0.68 kB │ gzip:   0.47 kB │ map:     2.67 kB
+#17 36.19 dist/assets/file-spreadsheet-ByYEl4G4.js        0.69 kB │ gzip:   0.42 kB │ map:     1.72 kB
+#17 36.19 dist/assets/KnowledgeNav-DscqKAKw.js            0.72 kB │ gzip:   0.44 kB │ map:     1.87 kB
+#17 36.19 dist/assets/status-badge-B_avkOJG.js            0.77 kB │ gzip:   0.46 kB │ map:     1.90 kB
+#17 36.19 dist/assets/native-select-DwFbIH7y.js           0.78 kB │ gzip:   0.50 kB │ map:     1.98 kB
+#17 36.19 dist/assets/confirm-dialog-BgJJZy-G.js          0.78 kB │ gzip:   0.48 kB │ map:     2.74 kB
+#17 36.19 dist/assets/calculator-BP2TG8_R.js              0.78 kB │ gzip:   0.44 kB │ map:     2.14 kB
+#17 36.19 dist/assets/filter-chip-DwdXJ-20.js             0.94 kB │ gzip:   0.52 kB │ map:     2.29 kB
+#17 36.19 dist/assets/steps-jJAAnjzD.js                   1.14 kB │ gzip:   0.63 kB │ map:     3.05 kB
+#17 36.19 dist/assets/knowledge-DVbdbcnY.js               1.19 kB │ gzip:   0.68 kB │ map:    17.44 kB
+#17 36.19 dist/assets/useInfiniteQuery-CdC_Fkpv.js        1.23 kB │ gzip:   0.55 kB │ map:     4.80 kB
+#17 36.19 dist/assets/ConnectionPicker-d24M0PSD.js        1.23 kB │ gzip:   0.72 kB │ map:     3.98 kB
+#17 36.19 dist/assets/tableColour-Cpfpr7xQ.js             1.33 kB │ gzip:   0.71 kB │ map:     3.79 kB
+#17 36.19 dist/assets/NewReportDialog-DWuIDtLt.js         1.36 kB │ gzip:   0.78 kB │ map:     4.41 kB
+#17 36.19 dist/assets/table-BndQ30Rg.js                   1.53 kB │ gzip:   0.58 kB │ map:     4.23 kB
+#17 36.19 dist/assets/ResultTable-CqxTcPsR.js             1.57 kB │ gzip:   0.92 kB │ map:     4.77 kB
+#17 36.19 dist/assets/PeoplePicker-r2F-MPdP.js            1.71 kB │ gzip:   1.01 kB │ map:     5.66 kB
+#17 36.19 dist/assets/TextBlock-CGedV2Iy.js               1.71 kB │ gzip:   0.87 kB │ map:     5.26 kB
+#17 36.19 dist/assets/RequestCertification-CNJpDzjt.js    1.78 kB │ gzip:   1.02 kB │ map:     5.06 kB
+#17 36.19 dist/assets/sse-B7SIK_4g.js                     1.84 kB │ gzip:   0.96 kB │ map:     6.79 kB
+#17 36.19 dist/assets/packs-CI0Utu9G.js                   2.15 kB │ gzip:   0.86 kB │ map:    16.28 kB
+#17 36.19 dist/assets/with-selector-D8lv0JTE.js           2.38 kB │ gzip:   1.04 kB │ map:     9.19 kB
+#17 36.19 dist/assets/array-DAyrToPm.js                   2.40 kB │ gzip:   1.08 kB │ map:    10.19 kB
+#17 36.19 dist/assets/kpi-card-CK4QLPkz.js                2.74 kB │ gzip:   1.25 kB │ map:     7.93 kB
+#17 36.19 dist/assets/DetailTable-BQF6Jsnj.js             2.75 kB │ gzip:   1.41 kB │ map:     7.52 kB
+#17 36.19 dist/assets/Definition-C_T0owaN.js              2.78 kB │ gzip:   1.38 kB │ map:     8.24 kB
+#17 36.19 dist/assets/TestChecklist-C1xkOI1w.js           2.96 kB │ gzip:   1.34 kB │ map:     6.98 kB
+#17 36.19 dist/assets/useMutation-wRD1rYMi.js             2.96 kB │ gzip:   1.27 kB │ map:     8.55 kB
+#17 36.19 dist/assets/PublishRequestsPage-BDhbd_Zu.js     3.04 kB │ gzip:   1.39 kB │ map:     7.67 kB
+#17 36.19 dist/assets/DrillSheet-BukGw__c.js              3.26 kB │ gzip:   1.54 kB │ map:     8.50 kB
+#17 36.19 dist/assets/tabs-BnL5Ukai.js                    3.32 kB │ gzip:   1.45 kB │ map:    14.53 kB
+#17 36.19 dist/assets/Suggestions-DXZYg-b7.js             4.12 kB │ gzip:   1.74 kB │ map:    11.55 kB
+#17 36.19 dist/assets/switch-B9BqqMal.js                  4.21 kB │ gzip:   1.84 kB │ map:    17.08 kB
+#17 36.19 dist/assets/FieldsPage-Cr1vS_MR.js              4.41 kB │ gzip:   2.02 kB │ map:    10.80 kB
+#17 36.19 dist/assets/checkbox-C2DEH8nc.js                4.42 kB │ gzip:   1.94 kB │ map:    18.71 kB
+#17 36.19 dist/assets/HeatGrid-Dyltbbe0.js                4.51 kB │ gzip:   1.87 kB │ map:    13.27 kB
+#17 36.19 dist/assets/ReportsPage-D0tSvXlR.js             4.75 kB │ gzip:   2.05 kB │ map:    11.64 kB
+#17 36.19 dist/assets/DashboardAskPanel-D_gCx-D3.js       4.83 kB │ gzip:   2.17 kB │ map:    10.87 kB
+#17 36.19 dist/assets/SaveFromDialog-DiK6VH5Y.js          5.29 kB │ gzip:   2.17 kB │ map:    20.71 kB
+#17 36.19 dist/assets/NotificationsPage-DNhE9dyd.js       5.34 kB │ gzip:   2.28 kB │ map:    13.60 kB
+#17 36.19 dist/assets/SshKeysPage-RNBYrfXz.js             6.15 kB │ gzip:   2.67 kB │ map:    15.48 kB
+#17 36.19 dist/assets/radio-group-Ds5nDpxB.js             6.21 kB │ gzip:   2.48 kB │ map:    27.65 kB
+#17 36.19 dist/assets/ConditionsPage-Bgb1yFbm.js          7.40 kB │ gzip:   2.53 kB │ map:    16.93 kB
+#17 36.19 dist/assets/AnswerFeedbackPage-CRiAKvJL.js      8.01 kB │ gzip:   3.07 kB │ map:    20.97 kB
+#17 36.19 dist/assets/schemas-DNemdb6d.js                 8.04 kB │ gzip:   2.70 kB │ map:    21.56 kB
+#17 36.19 dist/assets/VersionsPage-DGHsMr3G.js            8.08 kB │ gzip:   3.04 kB │ map:    20.09 kB
+#17 36.19 dist/assets/ValueSynonymsPage-9OXf5TXf.js       9.97 kB │ gzip:   3.52 kB │ map:    25.66 kB
+#17 36.19 dist/assets/AiDashboardPage-b0EnSvR3.js        10.08 kB │ gzip:   3.65 kB │ map:    25.75 kB
+#17 36.19 dist/assets/ApplyPackDialog-WTXyqKkp.js        10.20 kB │ gzip:   3.84 kB │ map:    26.18 kB
+#17 36.19 dist/assets/ReportPlannerPage-BJmaqd-x.js      10.72 kB │ gzip:   3.83 kB │ map:    26.86 kB
+#17 36.19 dist/assets/AuditPage-YBvhYg9U.js              10.92 kB │ gzip:   3.98 kB │ map:    28.07 kB
+#17 36.19 dist/assets/ConnectionsPage-cQ3V3XOV.js        11.41 kB │ gzip:   4.30 kB │ map:    29.95 kB
+#17 36.19 dist/assets/PackMappingStep-BZpmAcVZ.js        11.65 kB │ gzip:   3.98 kB │ map:    32.38 kB
+#17 36.19 dist/assets/DefinitionsPage-f_mCYfgV.js        12.81 kB │ gzip:   4.29 kB │ map:    31.64 kB
+#17 36.19 dist/assets/CurationPage-N2O12acV.js           13.15 kB │ gzip:   4.41 kB │ map:    32.97 kB
+#17 36.19 dist/assets/OverviewPage-DgLzo3qq.js           13.17 kB │ gzip:   4.57 kB │ map:    32.29 kB
+#17 36.19 dist/assets/AskPage-C04ocXk4.js                14.34 kB │ gzip:   5.08 kB │ map:    34.24 kB
+#17 36.19 dist/assets/DashboardPage-CKe0LoWQ.js          14.52 kB │ gzip:   5.61 kB │ map:    38.13 kB
+#17 36.19 dist/assets/ApproveModelPage-FGgIp5L7.js       14.84 kB │ gzip:   4.90 kB │ map:    36.47 kB
+#17 36.19 dist/assets/KnowledgePage-CbDv1bnt.js          15.05 kB │ gzip:   5.30 kB │ map:    37.12 kB
+#17 36.19 dist/assets/StarterContentPage-tQDY99XZ.js     15.77 kB │ gzip:   5.46 kB │ map:    40.60 kB
+#17 36.19 dist/assets/DashboardsPage-BQqSABjv.js         16.71 kB │ gzip:   5.79 kB │ map:    48.56 kB
+#17 36.19 dist/assets/CustomSqlPage-BG0XKQKX.js          17.91 kB │ gzip:   6.32 kB │ map:    42.65 kB
+#17 36.19 dist/assets/ViewerWidget-D1DERu6-.js           18.09 kB │ gzip:   6.64 kB │ map:    51.41 kB
+#17 36.19 dist/assets/ComposerPage-CRTRGMRq.js           18.77 kB │ gzip:   6.49 kB │ map:    49.03 kB
+#17 36.19 dist/assets/AgentRunsPage-D8YplMUb.js          19.01 kB │ gzip:   6.47 kB │ map:    47.00 kB
+#17 36.19 dist/assets/AiSettingsPage-BDCeCWdO.js         20.14 kB │ gzip:   7.17 kB │ map:    49.77 kB
+#17 36.19 dist/assets/PublishPage-DJ4ViK15.js            22.97 kB │ gzip:   8.03 kB │ map:    66.51 kB
+#17 36.19 dist/assets/CertificationPage-CaFsTOta.js      23.55 kB │ gzip:   7.27 kB │ map:    57.26 kB
+#17 36.19 dist/assets/ModelStudioPage-Cu3buXrz.js        23.93 kB │ gzip:   7.56 kB │ map:    59.53 kB
+#17 36.19 dist/assets/PacksPage-BbzqDAJ9.js              25.44 kB │ gzip:   8.56 kB │ map:    72.89 kB
+#17 36.19 dist/assets/FieldBuilderPage-DuKwHcV7.js       25.53 kB │ gzip:   8.46 kB │ map:    66.89 kB
+#17 36.19 dist/assets/AgentsPage-WNOY2P63.js             26.16 kB │ gzip:   7.75 kB │ map:    64.04 kB
+#17 36.19 dist/assets/GoldExamplesPage-CvfV6DSr.js       26.26 kB │ gzip:   8.05 kB │ map:    65.36 kB
+#17 36.19 dist/assets/engines-C3E70jlj.js                26.99 kB │ gzip:   8.17 kB │ map:    65.90 kB
+#17 36.19 dist/assets/PrintApp-rFUBENz2.js               27.07 kB │ gzip:  11.10 kB │ map:   124.25 kB
+#17 36.19 dist/assets/step-Cuu7Lnl-.js                   27.35 kB │ gzip:  10.15 kB │ map:   111.02 kB
+#17 36.19 dist/assets/motion-features-BTXoLSvZ.js        38.64 kB │ gzip:  14.74 kB │ map:   238.48 kB
+#17 36.19 dist/assets/BrandingPage-Cu3Ci8ox.js           41.90 kB │ gzip:  11.81 kB │ map:   110.22 kB
+#17 36.19 dist/assets/AddConnectionPage-CdGjZOaC.js      42.09 kB │ gzip:  12.27 kB │ map:   105.33 kB
+#17 36.19 dist/assets/ShareDialog-CuJy89i0.js            57.36 kB │ gzip:  19.53 kB │ map:   244.26 kB
+#17 36.19 dist/assets/VersionsTab-MP5R3ESY.js            63.38 kB │ gzip:  21.68 kB │ map:   234.05 kB
+#17 36.19 dist/assets/AccessPage-CbH_ygdI.js             64.35 kB │ gzip:  18.20 kB │ map:   173.18 kB
+#17 36.19 dist/assets/AskChat-hklx1ZCu.js                67.13 kB │ gzip:  20.02 kB │ map:   188.80 kB
+#17 36.19 dist/assets/PackPage-Cch9oNPV.js               96.32 kB │ gzip:  28.11 kB │ map:   284.09 kB
+#17 36.19 dist/assets/data-table-DWEGWll2.js             97.01 kB │ gzip:  28.69 kB │ map:   522.63 kB
+#17 36.19 dist/assets/form-DO9MieRV.js                  139.75 kB │ gzip:  42.63 kB │ map:   772.89 kB
+#17 36.19 dist/assets/ReportCanvasPage-CIxAW0V6.js      140.08 kB │ gzip:  43.45 kB │ map:   532.44 kB
+#17 36.19 dist/assets/react-BgIcUjSp.js                 167.41 kB │ gzip:  54.78 kB │ map:   709.00 kB
+#17 36.19 dist/assets/CatalogueChart-CBGif5m_.js        177.90 kB │ gzip:  59.59 kB │ map:   926.28 kB
+#17 36.19 dist/assets/PlotChart-aK-cjW7s.js             273.04 kB │ gzip:  93.80 kB │ map: 1,240.57 kB
+#17 36.19 dist/assets/RechartsChart-DbU2khHH.js         370.92 kB │ gzip: 105.03 kB │ map: 2,024.48 kB
+#17 36.19 dist/assets/SqlEditor-B7pTpti1.js             380.67 kB │ gzip: 126.15 kB │ map: 1,759.25 kB
+#17 36.19 dist/assets/index-Db2jFuKu.js                 452.97 kB │ gzip: 139.34 kB │ map: 1,858.47 kB
+#17 36.19 dist/assets/Chart-pkgx13xw.js                 557.97 kB │ gzip: 189.15 kB │ map: 3,030.57 kB
+#17 36.19 
+#17 36.19 (!) Some chunks are larger than 500 kB after minification. Consider:
+#17 36.19 - Using dynamic import() to code-split the application
+#17 36.19 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+#17 36.19 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#17 36.19 ✓ built in 13.77s
+#17 DONE 36.4s
+
+#18 [runtime 2/3] COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+#18 CACHED
+
+#19 [runtime 3/3] COPY --from=build /web/dist /usr/share/nginx/html
+#19 DONE 0.1s
+
+#20 exporting to image
+#20 exporting layers
+#20 exporting layers 0.7s done
+#20 exporting manifest sha256:3842cec2fdbed236329a70ac7ea511e3ddb6e7de53a289f52601291f872a2360 done
+#20 exporting config sha256:6ce0593ae4230e215a16a63571c4caed731cb3eaae53179ee5869df5fe2b6df1 done
+#20 exporting attestation manifest sha256:950e1bdca344bf9dffd9618499783cca4778c75007422b0c69e5dcc73637baa1 done
+#20 exporting manifest list sha256:ba61f478bec1a8ba8b006f8d9e8e385907193c9e0655c75f4d1df17329448dfc done
+#20 naming to docker.io/library/tela-web:dev done
+#20 unpacking to docker.io/library/tela-web:dev 0.1s done
+#20 DONE 0.8s
+
+#21 resolving provenance for metadata file
+#21 DONE 0.0s
+ Image tela-web:dev Built 
+ Container tela-web-1 Recreate 
+ Container tela-web-1 Recreated 
+ Container tela-web-1 Starting 
+ Container tela-web-1 Started 
+tela-proxy-1

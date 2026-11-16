@@ -180,6 +180,10 @@ services:
       TELA_OBJECT_STORE_ACCESS_KEY: tela
       TELA_OBJECT_STORE_SECRET_KEY_FILE: /run/secrets/s3_secret_key
       TELA_OBJECT_STORE_SSE: none
+      # Approved models are written here as JSON (model/export.py); the folder is services/api/model_exports.
+      TELA_MODEL_EXPORT_DIR: /data/model_exports
+    volumes:
+      - ../../services/api/model_exports:/data/model_exports
     secrets: [database_url, redis_url, bao_api_role_id, bao_api_secret_id, service_signing_key, execution_signing_key,
               s3_secret_key]
     networks: [edge, app]

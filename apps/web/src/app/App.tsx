@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrandLoading } from "../components/BrandLoader";
 import { lazy, Suspense, type ReactNode } from "react";
 import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 
@@ -24,6 +25,7 @@ const ReportPlannerPage = lazy(() => import("../features/reports/ReportPlannerPa
 const ReportCanvasPage = lazy(() => import("../features/reports/ReportCanvasPage").then((m) => ({ default: m.ReportCanvasPage })));
 const DashboardsPage = lazy(() => import("../features/dashboards/DashboardsPage").then((m) => ({ default: m.DashboardsPage })));
 const NewDashboardPage = lazy(() => import("../features/dashboards/DashboardsPage").then((m) => ({ default: m.NewDashboardPage })));
+const AiDashboardPage = lazy(() => import("../features/dashboards/AiDashboardPage").then((m) => ({ default: m.AiDashboardPage })));
 const ComposerPage = lazy(() => import("../features/dashboards/ComposerPage").then((m) => ({ default: m.ComposerPage })));
 const PublishPage = lazy(() => import("../features/dashboards/PublishPage").then((m) => ({ default: m.PublishPage })));
 const VersionsPage = lazy(() => import("../features/dashboards/VersionsPage").then((m) => ({ default: m.VersionsPage })));
@@ -68,12 +70,12 @@ const UiCatalogue = import.meta.env.DEV
  */
 export function preloadRoute(path: string | null) {
   if (!path) return;
-  if (/^\/dashboards\/[^/]+\/?$/.test(path) && !path.startsWith("/dashboards/new")) void loadDashboard();
+  if (/^\/dashboards\/[^/]+\/?$/.test(path) && !path.startsWith("/dashboards/new") && !path.startsWith("/dashboards/ai")) void loadDashboard();
   else if (path.startsWith("/ask")) void loadAsk();
 }
 
 function Page({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<p className="tl text-ink-muted" aria-busy="true">Loading…</p>}>{children}</Suspense>;
+  return <Suspense fallback={<BrandLoading />}>{children}</Suspense>;
 }
 
 export function AppRoutes() {
@@ -89,6 +91,7 @@ export function AppRoutes() {
         <Route path="shared" element={<Page><DashboardsPage shared /></Page>} />
         <Route path="dashboards" element={<Page><DashboardsPage /></Page>} />
         <Route path="dashboards/new" element={<Page><NewDashboardPage /></Page>} />
+        <Route path="dashboards/ai" element={<Page><AiDashboardPage /></Page>} />
         <Route path="dashboards/:id" element={<Page><DashboardPage /></Page>} />
         <Route path="dashboards/:id/draft" element={<Page><DashboardPage draft /></Page>} />
         <Route path="dashboards/:id/edit" element={<Page><ComposerPage /></Page>} />

@@ -224,8 +224,10 @@ class MySqlAdapter(DbApiAdapter):
             return TelaError(ErrorCode.READ_ONLY_VIOLATION, "Write attempt refused by the source.")
         if code in (1142, 1143, 1044):
             return TelaError(ErrorCode.SQL_OBJECT_NOT_ALLOWED, "The data source refused access to an object.")
-        if code in (1054, 1146):
+        if code == 1146:
             return TelaError(ErrorCode.SCHEMA_CHANGED, SCHEMA_CHANGED_MESSAGE)
+        if code == 1054:
+            return TelaError(ErrorCode.QUERY_FAILED, "Unknown column in query.", {"sqlstate": code})
         if isinstance(exc, pymysql.err.OperationalError) and code in (2003, 2006, 2013, 2055):
             return TelaError(ErrorCode.SOURCE_UNREACHABLE, "The data source is not reachable right now.")
         log.warning("runner.query_failed", engine=self.engine, code=code)

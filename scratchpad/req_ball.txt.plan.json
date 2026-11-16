@@ -1,0 +1,764 @@
+{
+ "job_id": "01a1e2e0-627a-7198-89c6-d466cecec0f4",
+ "owner": "01a1d957-b781-7049-af85-aabdcf04cee8",
+ "status": "planned",
+ "steps": [
+  "Read the model: 14 measures, 122 group-bys, 10 rules",
+  "The LLM planned 5 pages; checking every key against the model",
+  "1 pages are short of 6 widgets; asking the LLM for replacements",
+  "Plan ready: 5 pages, 30 widgets, 16 KPIs, 0 left out"
+ ],
+ "request": "Build a dashboard that shows how the data flows: an overview page, then one page per main area of the data (deliveries and their metrics, players and sessions, callbacks, users and their activity). Each page: KPIs on top, then trends over time, splits by status/type, and rankings.\n",
+ "plan": {
+  "title": "Data Flow Dashboard",
+  "connection_id": "01a1df2c-8124-7328-aed7-bc5afed52631",
+  "connection": "ball-report",
+  "model_version_id": "01a1e2c8-1192-705a-a226-d2c381e3a6f2",
+  "model_version": 7,
+  "data_date": null,
+  "min_widgets": 6,
+  "global_filters": [
+   {
+    "key": "deliveries.status",
+    "ref": "field:deliveries.status",
+    "label": "Status",
+    "reaches_all": false,
+    "shared": false
+   }
+  ],
+  "not_possible": [],
+  "dropped": [],
+  "catalogue": {
+   "measures": 14,
+   "group_bys": 122,
+   "rules": 10
+  },
+  "reports": [
+   {
+    "title": "Overview",
+    "purpose": "High-level overview of system activities, deliveries, callbacks, and user engagement across the platform.",
+    "page_filters": [],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 4,
+    "kpis": [
+     {
+      "ref": "w1",
+      "title": "Total Deliveries",
+      "visual": "figure",
+      "measure": "deliveries_count",
+      "measure_label": "Number of deliveries",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w2",
+      "title": "Total Callbacks",
+      "visual": "figure",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w3",
+      "title": "Total User Activities",
+      "visual": "figure",
+      "measure": "user_activity_count",
+      "measure_label": "Number of user activity",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w4",
+      "title": "Total Admin Actions",
+      "visual": "figure",
+      "measure": "admin_activity_log_count",
+      "measure_label": "Number of admin activity log",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w5",
+      "title": "Deliveries Trend Over Time",
+      "visual": "trend",
+      "measure": "deliveries_count",
+      "measure_label": "Number of deliveries",
+      "extra_measures": [],
+      "group_by": [],
+      "time": {
+       "by": "deliveries.created_at",
+       "grain": "month"
+      },
+      "filters": [],
+      "top": null,
+      "question": "How are deliveries trending over time?"
+     },
+     {
+      "ref": "w6",
+      "title": "Deliveries by Status",
+      "visual": "ranked_bar",
+      "measure": "deliveries_count",
+      "measure_label": "Number of deliveries",
+      "extra_measures": [],
+      "group_by": [
+       "deliveries.status"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the breakdown of deliveries by status?"
+     },
+     {
+      "ref": "w7",
+      "title": "Top Clip IDs by Deliveries",
+      "visual": "ranked_bar",
+      "measure": "deliveries_count",
+      "measure_label": "Number of deliveries",
+      "extra_measures": [],
+      "group_by": [
+       "deliveries.clip_id"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "Which clips have the highest number of deliveries?"
+     },
+     {
+      "ref": "w8",
+      "title": "Callbacks by Stage",
+      "visual": "ranked_bar",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [
+       "callbacks.stage"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of callbacks across different stages?"
+     },
+     {
+      "ref": "w9",
+      "title": "User Activity Methods",
+      "visual": "donut",
+      "measure": "user_activity_count",
+      "measure_label": "Number of user activity",
+      "extra_measures": [],
+      "group_by": [
+       "user_activity.method"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of HTTP methods in user activity?"
+     },
+     {
+      "ref": "w10",
+      "title": "Admin Activities by Action",
+      "visual": "ranked_bar",
+      "measure": "admin_activity_log_count",
+      "measure_label": "Number of admin activity log",
+      "extra_measures": [],
+      "group_by": [
+       "admin_activity_log.action"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "What are the most frequent admin actions?"
+     }
+    ]
+   },
+   {
+    "title": "Deliveries and Metrics",
+    "purpose": "Detailed view of deliveries, delivery metrics, reports, and related processing stages.",
+    "page_filters": [],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 4,
+    "kpis": [
+     {
+      "ref": "w11",
+      "title": "Delivery Count",
+      "visual": "figure",
+      "measure": "deliveries_count",
+      "measure_label": "Number of deliveries",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w12",
+      "title": "Delivery Metrics Count",
+      "visual": "figure",
+      "measure": "delivery_metrics_count",
+      "measure_label": "Number of delivery metrics",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w13",
+      "title": "Delivery Report Count",
+      "visual": "figure",
+      "measure": "delivery_report_count",
+      "measure_label": "Number of delivery report",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w14",
+      "title": "Sideangle Deliveries",
+      "visual": "figure",
+      "measure": "sideangle_delivery_count",
+      "measure_label": "Number of sideangle delivery",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w15",
+      "title": "Delivery Reports Trend",
+      "visual": "trend",
+      "measure": "delivery_report_count",
+      "measure_label": "Number of delivery report",
+      "extra_measures": [],
+      "group_by": [],
+      "time": {
+       "by": "delivery_report.created_at",
+       "grain": "month"
+      },
+      "filters": [],
+      "top": null,
+      "question": "How are delivery reports trending over time?"
+     },
+     {
+      "ref": "w16",
+      "title": "Deliveries by Model Key",
+      "visual": "ranked_bar",
+      "measure": "deliveries_count",
+      "measure_label": "Number of deliveries",
+      "extra_measures": [],
+      "group_by": [
+       "deliveries.model_key"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the breakdown of deliveries by model key?"
+     },
+     {
+      "ref": "w17",
+      "title": "Top Metric Keys",
+      "visual": "ranked_bar",
+      "measure": "delivery_metrics_count",
+      "measure_label": "Number of delivery metrics",
+      "extra_measures": [],
+      "group_by": [
+       "delivery_metrics.metric_key"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "Which metric keys are recorded most frequently?"
+     },
+     {
+      "ref": "w18",
+      "title": "Delivery Reports by Length Zone",
+      "visual": "ranked_bar",
+      "measure": "delivery_report_count",
+      "measure_label": "Number of delivery report",
+      "extra_measures": [],
+      "group_by": [
+       "delivery_report.length_zone"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of length zones in delivery reports?"
+     },
+     {
+      "ref": "w19",
+      "title": "Sideangle Delivery Status",
+      "visual": "donut",
+      "measure": "sideangle_delivery_count",
+      "measure_label": "Number of sideangle delivery",
+      "extra_measures": [],
+      "group_by": [
+       "sideangle_delivery.status"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the status breakdown of sideangle deliveries?"
+     },
+     {
+      "ref": "w20",
+      "title": "Top Player IDs in Deliveries",
+      "visual": "ranked_bar",
+      "measure": "deliveries_count",
+      "measure_label": "Number of deliveries",
+      "extra_measures": [],
+      "group_by": [
+       "deliveries.player_id"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "Which player IDs have the highest delivery counts?"
+     }
+    ]
+   },
+   {
+    "title": "Players and Sessions",
+    "purpose": "Tracking sessions, session players, delivery players, and venue information.",
+    "page_filters": [],
+    "filled_in": 1,
+    "widget_count": 6,
+    "kpi_count": 3,
+    "kpis": [
+     {
+      "ref": "w21",
+      "title": "Session Master Demo Count",
+      "visual": "figure",
+      "measure": "session_master_demo_count",
+      "measure_label": "Number of session master demo",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w22",
+      "title": "Session Players Count",
+      "visual": "figure",
+      "measure": "session_players_count",
+      "measure_label": "Number of session players",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w23",
+      "title": "Delivery Players Count",
+      "visual": "figure",
+      "measure": "delivery_players_count",
+      "measure_label": "Number of delivery players",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w24",
+      "title": "Session Players Trend",
+      "visual": "trend",
+      "measure": "session_players_count",
+      "measure_label": "Number of session players",
+      "extra_measures": [],
+      "group_by": [],
+      "time": {
+       "by": "session_players.first_seen",
+       "grain": "month"
+      },
+      "filters": [],
+      "top": null,
+      "question": "How are session players first seen over time?"
+     },
+     {
+      "ref": "w25",
+      "title": "Sessions by Venue",
+      "visual": "ranked_bar",
+      "measure": "session_master_demo_count",
+      "measure_label": "Number of session master demo",
+      "extra_measures": [],
+      "group_by": [
+       "session_master_demo.venue"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of sessions across venues?"
+     },
+     {
+      "ref": "w26",
+      "title": "Top Session IDs in Delivery Players",
+      "visual": "ranked_bar",
+      "measure": "delivery_players_count",
+      "measure_label": "Number of delivery players",
+      "extra_measures": [],
+      "group_by": [
+       "delivery_players.session_id"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "Which session IDs have the highest delivery player activity?"
+     },
+     {
+      "ref": "w27",
+      "title": "Session Master Demo Distribution",
+      "visual": "table",
+      "measure": "session_master_demo_count",
+      "measure_label": "Number of session master demo",
+      "extra_measures": [],
+      "group_by": [
+       "session_master_demo.session_id",
+       "session_master_demo.venue"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What are the session master demo details?"
+     },
+     {
+      "ref": "w29",
+      "title": "Session Players Activity",
+      "visual": "ranked_bar",
+      "measure": "session_players_count",
+      "measure_label": "Number of session players",
+      "extra_measures": [],
+      "group_by": [
+       "session_players.session_id"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "What are the top sessions for session players?"
+     },
+     {
+      "ref": "w48",
+      "title": "Number of delivery players by stage",
+      "visual": "ranked_bar",
+      "measure": "delivery_players_count",
+      "measure_label": "Number of delivery players",
+      "extra_measures": [],
+      "group_by": [
+       "callbacks.stage"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ]
+   },
+   {
+    "title": "Callbacks",
+    "purpose": "Monitoring callback processing stages, status codes, and success rates.",
+    "page_filters": [],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 1,
+    "kpis": [
+     {
+      "ref": "w30",
+      "title": "Total Callbacks",
+      "visual": "figure",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w31",
+      "title": "Callbacks Trend Over Time",
+      "visual": "trend",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [],
+      "time": {
+       "by": "callbacks.created_at",
+       "grain": "month"
+      },
+      "filters": [],
+      "top": null,
+      "question": "How are callbacks trending over time?"
+     },
+     {
+      "ref": "w32",
+      "title": "Callbacks by Stage",
+      "visual": "ranked_bar",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [
+       "callbacks.stage"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of callbacks by stage?"
+     },
+     {
+      "ref": "w33",
+      "title": "Callbacks by Status Code",
+      "visual": "donut",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [
+       "callbacks.status_code"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the proportion of status codes in callbacks?"
+     },
+     {
+      "ref": "w34",
+      "title": "Callbacks by OK Flag",
+      "visual": "ranked_bar",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [
+       "callbacks.ok"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "How many callbacks are marked OK versus not OK?"
+     },
+     {
+      "ref": "w35",
+      "title": "Top Video IDs in Callbacks",
+      "visual": "ranked_bar",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [
+       "callbacks.video_id"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "Which video IDs generate the most callbacks?"
+     },
+     {
+      "ref": "w36",
+      "title": "Callback Stage Details",
+      "visual": "table",
+      "measure": "callbacks_count",
+      "measure_label": "Number of callbacks",
+      "extra_measures": [],
+      "group_by": [
+       "callbacks.stage",
+       "callbacks.status_code"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What are the callback counts broken down by stage and status code?"
+     }
+    ]
+   },
+   {
+    "title": "Users and Activity",
+    "purpose": "Overview of user master data, activity logs, permissions, and device information.",
+    "page_filters": [],
+    "filled_in": 0,
+    "widget_count": 6,
+    "kpi_count": 4,
+    "kpis": [
+     {
+      "ref": "w37",
+      "title": "User Master Count",
+      "visual": "figure",
+      "measure": "user_master_demo_count",
+      "measure_label": "Number of user master demo",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w38",
+      "title": "User Activity Count",
+      "visual": "figure",
+      "measure": "user_activity_count",
+      "measure_label": "Number of user activity",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w39",
+      "title": "User Device Count",
+      "visual": "figure",
+      "measure": "user_device_demo_count",
+      "measure_label": "Number of user device demo",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     },
+     {
+      "ref": "w40",
+      "title": "User Permission Count",
+      "visual": "figure",
+      "measure": "user_permission_count",
+      "measure_label": "Number of user permission",
+      "extra_measures": [],
+      "group_by": [],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": ""
+     }
+    ],
+    "widgets": [
+     {
+      "ref": "w41",
+      "title": "User Activity Trend Over Time",
+      "visual": "trend",
+      "measure": "user_activity_count",
+      "measure_label": "Number of user activity",
+      "extra_measures": [],
+      "group_by": [],
+      "time": {
+       "by": "user_activity.ts",
+       "grain": "month"
+      },
+      "filters": [],
+      "top": null,
+      "question": "How is user activity trending over time?"
+     },
+     {
+      "ref": "w42",
+      "title": "Users by Role",
+      "visual": "donut",
+      "measure": "user_master_demo_count",
+      "measure_label": "Number of user master demo",
+      "extra_measures": [],
+      "group_by": [
+       "user_master_demo.role"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the breakdown of users by role?"
+     },
+     {
+      "ref": "w43",
+      "title": "User Activity by Endpoint",
+      "visual": "ranked_bar",
+      "measure": "user_activity_count",
+      "measure_label": "Number of user activity",
+      "extra_measures": [],
+      "group_by": [
+       "user_activity.endpoint"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "Which endpoints are most frequently accessed in user activity?"
+     },
+     {
+      "ref": "w44",
+      "title": "User Devices by Platform",
+      "visual": "donut",
+      "measure": "user_device_demo_count",
+      "measure_label": "Number of user device demo",
+      "extra_measures": [],
+      "group_by": [
+       "user_device_demo.platform"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of user devices by platform?"
+     },
+     {
+      "ref": "w45",
+      "title": "User Permissions by Perm Key",
+      "visual": "ranked_bar",
+      "measure": "user_permission_count",
+      "measure_label": "Number of user permission",
+      "extra_measures": [],
+      "group_by": [
+       "user_permission.perm_key"
+      ],
+      "time": null,
+      "filters": [],
+      "top": 5,
+      "question": "Which permission keys are assigned most frequently?"
+     },
+     {
+      "ref": "w46",
+      "title": "User Activity by Auth Status",
+      "visual": "ranked_bar",
+      "measure": "user_activity_count",
+      "measure_label": "Number of user activity",
+      "extra_measures": [],
+      "group_by": [
+       "user_activity.auth"
+      ],
+      "time": null,
+      "filters": [],
+      "top": null,
+      "question": "What is the distribution of auth statuses in user activity?"
+     }
+    ]
+   }
+  ]
+ }
+}

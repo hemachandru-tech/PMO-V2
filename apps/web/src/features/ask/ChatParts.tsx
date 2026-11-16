@@ -1,4 +1,5 @@
-import { ArrowUp, BarChart3, Check, Copy, Sparkles, Table2 } from "lucide-react";
+import { ArrowUp, BarChart3, Check, Copy, Mic, MicOff, Table2 } from "lucide-react";
+import { BrandLoader, BrandMark } from "../../components/BrandLoader";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ComponentPropsWithoutRef, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -31,13 +32,15 @@ export function AssistantMessage({ children, className }: { children: ReactNode;
 }
 
 export function AssistantAvatar({ busy = false }: { busy?: boolean }) {
-  return (
-    <span data-ask-avatar aria-hidden
-      className={cn("mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-on-accent shadow-sm",
-        busy && "animate-pulse motion-reduce:animate-none")}>
-      <Sparkles className="size-3.5" />
-    </span>
-  );
+  // The brand logo; while the answer is being worked out it sits inside the turning brand ring.
+  return busy
+    ? <span data-ask-avatar aria-hidden className="mt-0.5 inline-flex"><BrandLoader size={32} /></span>
+    : (
+      <span data-ask-avatar aria-hidden
+        className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-surface shadow-sm ring-1 ring-line">
+        <BrandMark size={20} />
+      </span>
+    );
 }
 
 const STAGES: [string, string][] = [
@@ -142,6 +145,9 @@ export const Composer = forwardRef<ComposerHandle, {
   maxLength?: number;
 }>(function Composer({ id, label, value, onChange, onSubmit, placeholder, submitLabel = "Ask", children, footer, className, maxLength = 2000 }, ref) {
   const box = useRef<HTMLTextAreaElement>(null);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
   useImperativeHandle(ref, () => ({ focus: () => box.current?.focus() }), []);
   useEffect(() => {
     const el = box.current;
@@ -149,10 +155,79 @@ export const Composer = forwardRef<ComposerHandle, {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, [value]);
+
   const send = (e?: FormEvent) => {
     e?.preventDefault();
     if (value.trim()) onSubmit(value.trim());
   };
+
+  const toggleVoice = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      return;
+    }
+
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => {
+        setListening(true);
+        toast.info("Listening... speak your question now.");
+      };
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        let finalTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        const text = (finalTranscript || interimTranscript).trim();
+        if (text) {
+          onChange(text);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setListening(false);
+        if (event.error !== "no-speech") {
+          toast.error(`Voice error: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setListening(false);
+        if (box.current?.value?.trim()) {
+          const query = box.current.value.trim();
+          toast.success(`Voice captured: "${query}"`);
+          onSubmit(query);
+        }
+      };
+
+      recognition.start();
+    } catch (err: any) {
+      console.error("SpeechRecognition start failed", err);
+      setListening(false);
+      toast.error("Could not start voice recognition.");
+    }
+  };
+
   return (
     <form onSubmit={send} data-ask-form className={cn("grid gap-1.5", className)}>
       <div data-ask-composer
@@ -164,10 +239,32 @@ export const Composer = forwardRef<ComposerHandle, {
           className="max-h-[200px] min-h-6 w-full resize-none bg-transparent text-body text-ink outline-none placeholder:text-ink-muted" />
         <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">{children}</div>
-          <Button type="submit" size="icon" aria-label={submitLabel} disabled={!value.trim()}
-            className="size-8 shrink-0 rounded-full">
-            <ArrowUp aria-hidden />
-          </Button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={listening ? "danger" : "ghost"}
+                  onClick={toggleVoice}
+                  aria-label={listening ? "Stop listening" : "Voice assistant (Speak to search)"}
+                  className={cn(
+                    "size-8 rounded-full transition-all",
+                    listening
+                      ? "animate-pulse bg-red-600 text-white hover:bg-red-700"
+                      : "text-ink-muted hover:bg-surface-sunken hover:text-ink"
+                  )}
+                >
+                  {listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{listening ? "Listening... click to stop" : "Voice assistant (Speak to search)"}</TooltipContent>
+            </Tooltip>
+            <Button type="submit" size="icon" aria-label={submitLabel} disabled={!value.trim()}
+              className="size-8 shrink-0 rounded-full">
+              <ArrowUp aria-hidden />
+            </Button>
+          </div>
         </div>
       </div>
       {footer && <p className="px-4 text-center text-small text-ink-muted">{footer}</p>}

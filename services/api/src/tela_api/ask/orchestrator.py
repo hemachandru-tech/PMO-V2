@@ -37,6 +37,7 @@ from tela_api.ask import meaning as semantic
 from tela_api.ask import recipes as analysis
 from tela_api.ask import rewrite as rewriting
 from tela_api.ask import steps as plan_steps
+from tela_api.ask.dashboard_context import dashboard_note
 from tela_api.ask.direct_sql import answer as direct_answer
 from tela_api.ask.linking import (
     LINK_SYSTEM,
@@ -315,6 +316,19 @@ class Orchestrator:
                                                             "n": rewriting.HISTORY})
         return [Turn(r["question"], r["spec"] if r["status"] == "complete" else None) for r in reversed(rows)]
 
+    async def direct_history(self, principal: Principal, conversation_id: Any, turn_id: str,
+                             n: int = 3) -> list[dict[str, Any]]:
+        """The conversation's last answered Direct SQL turns before this one, oldest first, with the SQL each ran
+        and its row count (saved with the turn's narrative): what a follow-up builds on. A new chat has none."""
+        async with tenant_tx(principal.tenant_id) as conn:
+            rows = await fetch_all(
+                conn, "SELECT question, narrative->'direct_sql' AS d FROM chat.turns WHERE conversation_id = :c AND "
+                      "id <> CAST(:t AS uuid) AND status = 'complete' AND planner = 'direct_sql' AND created_at <= "
+                      "(SELECT created_at FROM chat.turns WHERE id = CAST(:t AS uuid)) ORDER BY created_at DESC "
+                      "LIMIT :n", {"c": conversation_id, "t": turn_id, "n": n})
+        return [{"question": r["question"], "sql": (r["d"] or {}).get("sql"),
+                 "row_count": (r["d"] or {}).get("row_count")} for r in reversed(rows)]
+
     async def sources(self, principal: Principal, connection_id: str | None) -> list[Source]:
         out: list[Source] = []
         async with tenant_tx(principal.tenant_id) as conn:
@@ -458,7 +472,7 @@ class Orchestrator:
                           model_version_id=src.snap.model_version_id, ask_mode=src.ask_mode)
         await trace.set_ask_mode(src.ask_mode)
         if src.ask_mode == "direct_sql":  # US-256: the source's answer mode picks the planner (DEC-29, DEC-30)
-            await self._direct_sql(principal, turn_id, question, src, started, turn["conversation_id"])
+            await self._direct_sql(principal, turn_id, question, src, started, turn["conversation_id"], context)
             return
 
         history = await self.history(principal, turn["conversation_id"], turn_id)
@@ -578,7 +592,7 @@ class Orchestrator:
             log.warning("ask.gold_suggestion_failed", error_class=type(exc).__name__)
 
     async def _direct_sql(self, principal: Principal, turn_id: str, question: str, src: Source,
-                          started: float, conversation_id: Any) -> None:
+                          started: float, conversation_id: Any, context: dict[str, Any] | None = None) -> None:
         """Direct SQL mode (US-257): the question's frame (US-253) and AG-10's SQL through the Custom SQL pipeline, run
         once on the scoped path. The answer is never certified and carries the Custom SQL badge and its SQL. It is
         drawn as a chart when one fits and can be pinned as a Custom SQL widget (US-260), which a published dashboard
@@ -586,15 +600,25 @@ class Orchestrator:
         history = await self.history(principal, conversation_id, turn_id)
         previous = history[-1].question if history else None
         framed = await self.direct_frame(principal, question, src, previous=previous, turn_id=turn_id)
+        scope_note, scope = None, None
+        if (context or {}).get("dashboard_id"):  # asked on a dashboard: its widgets and filters are the context
+            async with tenant_tx(principal.tenant_id) as conn:
+                scope_note, scope = await dashboard_note(conn, context or {}, src.snap, str(src.connection["id"]))
+        earlier = await self.direct_history(principal, conversation_id, turn_id)
         got = await direct_answer(self.service, self.gateway, principal, connection_id=str(src.connection["id"]),
-                                  question=direct_question(question, previous, framed["frame"]),
-                                  frame=framed["frame"], turn_id=turn_id)
+                                  question=question if earlier else direct_question(question, previous,
+                                                                                    framed["frame"]),
+                                  frame=framed["frame"], turn_id=turn_id, scope_note=scope_note, scope=scope,
+                                  conversation=earlier)
         body = got.out()
+        # Session memory: the earlier turns this question was read with (a follow-up keeps their subject).
+        body["context"] = {**(body.get("context") or {}), "previous_question": previous,
+                           "follow_up": framed["frame"].follow_up, "turns_in_conversation": len(history)}
         await self.update(principal, turn_id, planner="direct_sql")
         if got.status != "ok" or got.result is None:
             await self.fail(principal, turn_id, "direct_sql_refused", got.message or "I can't answer that with SQL.",
                             started, ask_mode="direct_sql", **{k: body[k] for k in (
-                                "reason", "sql", "explanation", "checks", "badge", "shape")})
+                                "reason", "sql", "explanation", "checks", "badge", "shape", "context")})
             return
         result = got.result
         await self.emit(principal, turn_id, "plan", {"planner": "direct_sql", "certified": False, "sql": got.sql,
@@ -611,7 +635,9 @@ class Orchestrator:
             {"text": "Not certified · Direct SQL: the model wrote this query; Tela checked and scoped it."}],
             "source": "template"}
         await self.emit(principal, turn_id, "narrative", story, started)
-        await self.update(principal, turn_id, visual=viz.get("visual"), narrative=story, status="complete")
+        # The SQL is kept with the turn (not shown in the story) so the next question of this chat can build on it.
+        await self.update(principal, turn_id, visual=viz.get("visual"), status="complete",
+                          narrative={**story, "direct_sql": {"sql": got.sql, "row_count": result.get("row_count")}})
         # US-260: pinned as a Custom SQL widget (RULE-009 still keeps it off a published dashboard until certified)
         await self.emit(principal, turn_id, "complete", {
             **body, "turn_id": turn_id, "ask_mode": "direct_sql", "can_export": False, "can_pin": True,
@@ -1697,6 +1723,8 @@ class Orchestrator:
             await self.fail(principal, turn_id, "no_source", MSG_NO_SOURCE, started)
             return True
         src = sources[0]
+        if src.ask_mode == "direct_sql" or not (w.spec or {}).get("measure"):
+            return False  # Direct SQL answers it, with the widget and the dashboard as its context
         page = [Filter.model_validate(f) for f in context.get("page_filters") or []]
         base, _, _ = merge_page_filters(w.spec, snap, page, w.follow_page_filters)
         base = {k: v for k, v in base.items() if k != "visual"} | ({"visual": {"type": w.visual}})

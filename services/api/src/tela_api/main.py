@@ -20,6 +20,7 @@ from tela_api.connections import router as connections_router
 from tela_api.connections import ssh as ssh_keys_router
 from tela_api.content import chat_edit as chat_edit_router
 from tela_api.content import custom_sql_api as custom_sql_router
+from tela_api.content import dashboard_ai as dashboard_ai_router
 from tela_api.content import dashboards as dashboards_router
 from tela_api.content import exports as exports_router
 from tela_api.content import fields as fields_router
@@ -32,6 +33,7 @@ from tela_api.content import suggestions as suggestions_router
 from tela_api.content import viewer as viewer_router
 from tela_api.content import widgets as widgets_router
 from tela_api.content import wording
+from tela_api.content import v2_endpoints as pmo_v2_router
 from tela_api.core.db import dispose_engine, init_engine, tenant_tx
 from tela_api.core.errors import install_error_handlers
 from tela_api.core.middleware import RequestContextMiddleware
@@ -53,6 +55,7 @@ from tela_api.llm import router as llm_router
 from tela_api.llm import runs_router as agent_runs_router
 from tela_api.llm.client import GatewayClient
 from tela_api.model import assistant as assistant_router
+from tela_api.model import builder as builder_router
 from tela_api.model import router as model_router
 from tela_api.packs import blueprint_router as pack_blueprints_router
 from tela_api.packs import router as packs_router
@@ -178,6 +181,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(file_sources_router.internal)
     app.include_router(model_router.router)
     app.include_router(assistant_router.router)
+    app.include_router(builder_router.router)
     app.include_router(packs_router.router)
     app.include_router(pack_blueprints_router.router)
     app.include_router(pack_updates_router.router)
@@ -207,6 +211,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(reports_router.router)
     app.include_router(chat_edit_router.router)
     app.include_router(suggestions_router.router)
+    app.include_router(dashboard_ai_router.router)
     app.include_router(dashboards_router.router)
     app.include_router(dashboard_groups_router.router)
     app.include_router(starter_admin_router.router)
@@ -226,6 +231,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(platform_router.router)
     app.include_router(branding_router.router)
     app.include_router(overview_router.router)
+    app.include_router(pmo_v2_router.router)
 
     setup_tracing(app, "tela-api", settings.otel_exporter_otlp_endpoint)
     return app

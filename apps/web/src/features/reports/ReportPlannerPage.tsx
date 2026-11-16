@@ -92,7 +92,7 @@ export function ReportPlannerPage() {
           <Textarea id="plan-request" value={request} maxLength={2000} rows={2} aria-label="Describe the report"
             onChange={(e) => setRequest(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && request.trim()) { e.preventDefault(); void makePlan(); } }}
-            placeholder="Delivery health for my region: overdue go-lives, schedule risk, and where the delays are by platform" />
+            placeholder={home.data?.suggested_questions?.[0] ? `For example: ${home.data.suggested_questions[0]}` : "Describe the figures and breakdowns you want, in your own words"} />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-small text-ink-muted" aria-live="polite">
               {plan && took !== null && busy === null ? `Planned in ${took.toFixed(1)} s · uses model ${plan.connection}${plan.model_version ? ` v${plan.model_version}` : ""}` : "Enter to plan, Shift + Enter for a new line"}
@@ -119,7 +119,7 @@ export function ReportPlannerPage() {
             {plan.notes?.map((n) => <p key={n} className="text-small text-ink-muted">{n}</p>)}
             {plan.review && <PlanReviewNote review={plan.review} busy={busy !== null} onShow={(w) => void show(w)} />}
             {plan.sections.length === 0 ? (
-              <EmptyState icon={CircleSlash} title="Nothing to build yet">Nothing in this request can be built from the connected data. Try naming a measure, such as open projects or overdue go-lives.</EmptyState>
+              <EmptyState icon={CircleSlash} title="Nothing to build yet">Nothing in this request can be built from the connected data. Try naming one of the measures in your data model.</EmptyState>
             ) : plan.sections.map((s) => (
               <section key={s.key} aria-label={s.title} className="grid gap-2">
                 <h3 className="text-small font-semibold uppercase tracking-wide text-ink-muted">{s.title}</h3>

@@ -102,6 +102,64 @@ def _allowed_names(snap: ModelSnapshot) -> tuple[set[str], dict[str, ModelEntity
     return set(lookup), lookup
 
 
+SIMPLE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_$]*$")
+QUOTES = {"mysql": ("`", "`"), "tsql": ("[", "]")}  # every other dialect quotes with double quotes
+
+
+def _quote_awkward_names(text: str, snap: ModelSnapshot, dialect: str) -> str:
+    """Quote, outside string literals and quoted names, the model's own schema and table names that can't be
+    written bare (a hyphen or space: ``shop-data.orders`` reads as a subtraction). Names come from the
+    approved model, never from a list here; an already quoted name is left alone."""
+    awkward: set[str] = set()
+    for e in snap.entities:
+        awkward |= {p for p in e.source_object.split(".") if p and not SIMPLE_NAME.match(p)}
+    if not awkward:
+        return text
+    left, right = QUOTES.get(dialect, ('"', '"'))
+    pattern = re.compile(r"(?<![\w`\"\[])(" + "|".join(re.escape(n) for n in sorted(awkward, key=len, reverse=True))
+                         + r")(?![\w`\"\]])", re.I)
+    out, i, n = [], 0, len(text)
+    while i < n:  # copy quoted spans as they are; rewrite only the bare text between them
+        c = text[i]
+        close = {"'": "'", "`": "`", '"': '"', "[": "]"}.get(c)
+        if close is not None:
+            j = text.find(close, i + 1)
+            while j != -1 and close == "'" and j + 1 < n and text[j + 1] == "'":  # '' inside a string
+                j = text.find(close, j + 2)
+            j = n - 1 if j == -1 else j
+            out.append(text[i:j + 1])
+            i = j + 1
+            continue
+        j = i
+        while j < n and text[j] not in "'`\"[":
+            j += 1
+        out.append(pattern.sub(lambda m: f"{left}{m.group(1)}{right}", text[i:j]))
+        i = j
+    return "".join(out)
+
+
+def _split_dotted_tables(tree: exp.Expression) -> None:
+    """A table written as ONE quoted name holding a dot (```shop-data.orders```) is the schema and the table
+    quoted together: split it, so the alias, the scope rewrite and the runner see ``schema``.``table``."""
+    for table in tree.find_all(exp.Table):
+        name = table.name
+        if not table.db and "." in name:
+            schema, _, bare = name.rpartition(".")
+            if schema and bare:
+                table.set("db", exp.to_identifier(schema, quoted=not SIMPLE_NAME.match(schema)))
+                table.set("this", exp.to_identifier(bare, quoted=not SIMPLE_NAME.match(bare)))
+
+
+def _parse_problem(text: str, dialect: str) -> str | None:
+    """The parser's own words for a statement that doesn't parse (for the model's repair, not for people)."""
+    import sqlglot
+    try:
+        sqlglot.parse(text, read=dialect)
+    except Exception as exc:  # noqa: BLE001 - any parser complaint is the answer
+        return str(exc).splitlines()[0][:300]
+    return None
+
+
 def _sentinels(tree: exp.Expression) -> list[exp.Expression]:
     return [n for n in tree.find_all(exp.Anonymous) if str(n.this).lower() == SENTINEL]
 
@@ -131,15 +189,22 @@ def validate(sql: str, *, engine: str, descriptor: dict[str, Any] | None, snap: 
     ok("page_filters_placeholder", "found" if count else "not used")
 
     allowed, lookup = _allowed_names(snap)
+    text = _quote_awkward_names(text, snap, dialect)
     try:
         tree = check_statement(text, dialect, allowed)
     except TelaError as exc:
         step = GUARD_STEP.get(exc.code, "read_only")
         for s in STEP_NAMES[2:STEP_NAMES.index(step)]:
             ok(s)
-        raise fail(step, TelaError(exc.code, MESSAGES[step], {"reason": exc.details.get("reason")})) from exc
+        details: dict[str, Any] = {"reason": exc.details.get("reason")}
+        if step == "parse" and (problem := _parse_problem(text, dialect)):
+            details["parse_error"] = problem
+        if step == "allowed_objects":
+            details["allowed"] = sorted(governed_objects(snap))[:60]
+        raise fail(step, TelaError(exc.code, MESSAGES[step], details)) from exc
     for s in ("parse", "single_select", "read_only", "allowed_objects"):
         ok(s)
+    _split_dotted_tables(tree)
 
     # Alias every governed table (the scope injector keeps the alias, so `projects.region` keeps working).
     cte_names = {_norm(c.alias) for c in tree.find_all(exp.CTE)}
@@ -207,7 +272,8 @@ def _columns_to_aliases(tree: exp.Expression) -> None:
 
     The scope injector replaces the table with a subquery under its alias, so ``dbo.t`` is no longer in the FROM
     and the database can't bind ``dbo.t.col`` (run 01a1ce49: SQL Server error 4104 on Dataverse). A table used
-    twice under two aliases is left alone: the column is ambiguous, as it is in the database."""
+    twice under two aliases is left alone: the column is ambiguous, as it is in the database. In a self-join where
+    one instance is unaliased (its alias is the table name), ``schema.table.col`` refers to that unaliased instance."""
     by_object: dict[str, set[str]] = {}
     for table in tree.find_all(exp.Table):
         if table.db and table.alias:
@@ -217,10 +283,13 @@ def _columns_to_aliases(tree: exp.Expression) -> None:
         if db is None or not column.table:
             continue
         found = by_object.get(_norm(f"{db.name}.{column.table}"), set())
-        if len(found) == 1:
+        target = next(iter(found)) if len(found) == 1 else next(
+            (a for a in found if _norm(a) == _norm(column.table)), None
+        )
+        if target:
             column.set("catalog", None)
             column.set("db", None)
-            column.set("table", exp.to_identifier(next(iter(found))))
+            column.set("table", exp.to_identifier(target))
 
 
 def _check_columns(tree: exp.Expression, aliases: dict[str, ModelEntity], hidden: frozenset[str],

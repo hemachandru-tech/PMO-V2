@@ -147,7 +147,7 @@ export function ComposerPage() {
             : preview.error ? <FormAlert error={asApiError(preview.error)} />
               : preview.data && (
                 <div className={preview.isFetching ? "opacity-60 transition-opacity" : undefined} aria-busy={preview.isFetching}>
-                  <DashboardBody key={`${preview.data.layout}:${(preview.data.tabs ?? []).map((t) => t.id).join(",")}`} dashboard={preview.data} draft preview />
+                  <DashboardBody key={`${preview.data.layout}:${(preview.data.tabs ?? []).map((t) => t.id).join(",")}`} dashboard={preview.data} draft preview chat />
                 </div>
               )}
         </Card>

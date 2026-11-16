@@ -1,4 +1,5 @@
-import { Bot, ExternalLink, Filter, MessageSquarePlus, X } from "lucide-react";
+import { ExternalLink, Filter, MessageSquarePlus, X } from "lucide-react";
+import { BrandMark } from "../../components/BrandLoader";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -71,8 +72,8 @@ export function DashboardAskPanel({ dashboard: d, filters, open, onOpenChange, a
         onOpenAutoFocus={(e) => { e.preventDefault(); input.current?.focus(); }}
         onInteractOutside={(e) => e.preventDefault()}>
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2"><Bot aria-hidden className="size-5 text-accent" />Ask about this dashboard</SheetTitle>
-          <SheetDescription>{appName} answers with certified measures, in your data scope, using this dashboard's filters.</SheetDescription>
+          <SheetTitle className="flex items-center gap-2"><BrandMark size={22} />Ask about this dashboard</SheetTitle>
+          <SheetDescription>{appName} answers from your data model, in your data scope, reading this dashboard's widgets and filters.</SheetDescription>
           <div className="flex flex-wrap gap-2 pt-1">
             <Button variant="secondary" size="sm" onClick={newConversation} disabled={turns.length === 0}><MessageSquarePlus aria-hidden />New conversation</Button>
             {conversationId && (
@@ -84,7 +85,7 @@ export function DashboardAskPanel({ dashboard: d, filters, open, onOpenChange, a
         <div className="grid min-h-0 flex-1 content-start gap-4 overflow-y-auto p-4">
           {turns.length === 0 && (
             <div className="grid gap-3">
-              <p className="text-ink-muted">Ask a question about the figures on this dashboard, for example “Which programmes have the most overdue go-lives?”</p>
+              <p className="text-ink-muted">Ask a question about the figures on this dashboard{widgets[0] ? <>, for example “What is behind {widgets[0].title}?”</> : "."} Answers use this dashboard’s widgets and the filters you set. Pin a good answer and it shows on the dashboard.</p>
               {widgets.length > 0 && !about && (
                 <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Ask about a widget">
                   <span className="text-small text-ink-muted">Or ask about</span>
@@ -95,7 +96,7 @@ export function DashboardAskPanel({ dashboard: d, filters, open, onOpenChange, a
               )}
             </div>
           )}
-          <TurnList session={session} onAsk={ask} />
+          <TurnList session={session} onAsk={ask} pinDashboard={d.id} />
           <div ref={end} />
         </div>
 

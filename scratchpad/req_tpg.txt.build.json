@@ -1,0 +1,476 @@
+{
+ "dashboard_id": "01a1e2e3-9de6-73c0-9b54-079964420766",
+ "report_ids": [
+  "01a1e2e3-9d8d-7317-bc15-ecdd10e6c0da",
+  "01a1e2e3-9da5-733c-ae72-2a7f41b3e831",
+  "01a1e2e3-9db5-71c5-87ed-4384db2f66f1",
+  "01a1e2e3-9dc6-7124-8e29-6186bdc85eb0",
+  "01a1e2e3-9dd7-70cf-a571-f97ddf6cd624"
+ ],
+ "results": [
+  {
+   "widget_ref": "w1",
+   "widget_id": "01a1e2e3-9d90-7323-8c61-8f3c373cd0b0",
+   "title": "open_projects",
+   "status": "ok",
+   "rows": 1,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w2",
+   "widget_id": "01a1e2e3-9d94-71b0-9d93-f851d0ba124a",
+   "title": "on_hold",
+   "status": "ok",
+   "rows": 1,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w3",
+   "widget_id": "01a1e2e3-9d95-706c-802e-7f410d042c26",
+   "title": "schedule_risk",
+   "status": "ok",
+   "rows": 1,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w4",
+   "widget_id": "01a1e2e3-9d97-722d-baf6-fb8ab4f79bd1",
+   "title": "stale_projects",
+   "status": "ok",
+   "rows": 1,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w5",
+   "widget_id": "01a1e2e3-9d98-70c2-adeb-4f1c0e8f3f00",
+   "title": "over_budget",
+   "status": "ok",
+   "rows": 1,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w6",
+   "widget_id": "01a1e2e3-9d99-7221-ae7c-d1883366d4e6",
+   "title": "key_priorities_attention",
+   "status": "ok",
+   "rows": 1,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w7",
+   "widget_id": "01a1e2e3-9d9c-72ba-b7c6-2cdd2d22d21f",
+   "title": "Open Projects by Region and Reported Status",
+   "status": "ok",
+   "rows": 27,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w8",
+   "widget_id": "01a1e2e3-9d9e-72e8-be0e-74c99ee421fe",
+   "title": "Open Projects by Reported Status",
+   "status": "ok",
+   "rows": 4,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w9",
+   "widget_id": "01a1e2e3-9d9f-730e-8e6b-62509edc9d8a",
+   "title": "Open Projects by Lifecycle Phase",
+   "status": "ok",
+   "rows": 100,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w10",
+   "widget_id": "01a1e2e3-9da0-700b-b3eb-f778128d3bc8",
+   "title": "Open Projects by Priority",
+   "status": "ok",
+   "rows": 5,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w11",
+   "widget_id": "01a1e2e3-9da1-7327-8ef2-d31f45e3e98d",
+   "title": "Key Priority Projects by Calculated Health",
+   "status": "ok",
+   "rows": 10,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w12",
+   "widget_id": "01a1e2e3-9da2-73ed-8b1a-dcdde746e881",
+   "title": "Open Projects by Portfolio",
+   "status": "ok",
+   "rows": 3,
+   "report": "Executive overview"
+  },
+  {
+   "widget_ref": "w13",
+   "widget_id": "01a1e2e3-9d95-706c-802e-7f410d042c26",
+   "title": "schedule_risk",
+   "status": "ok",
+   "rows": 1,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w14",
+   "widget_id": "01a1e2e3-9da7-72da-a225-6146563fb297",
+   "title": "on_hold_over_90",
+   "status": "ok",
+   "rows": 1,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w15",
+   "widget_id": "01a1e2e3-9da8-7376-8935-72092b26a71e",
+   "title": "slip_vs_baseline_median",
+   "status": "failed",
+   "message": "This figure needs a median or percentile, which this database can't compute yet.",
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w16",
+   "widget_id": "01a1e2e3-9daa-704f-b052-7a62efa32249",
+   "title": "slip_vs_baseline_p85",
+   "status": "failed",
+   "message": "This figure needs a median or percentile, which this database can't compute yet.",
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w17",
+   "widget_id": "01a1e2e3-9dab-700f-afae-acb02a47a33f",
+   "title": "longest_on_hold_days",
+   "status": "ok",
+   "rows": 1,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w18",
+   "widget_id": "01a1e2e3-9dad-729b-b702-db0ac3200323",
+   "title": "Open Projects by Days Past Planned Go-Live",
+   "status": "ok",
+   "rows": 6,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w19",
+   "widget_id": "01a1e2e3-9dae-7069-a55a-24642d8621fd",
+   "title": "Open Projects by Go-Live Horizon",
+   "status": "ok",
+   "rows": 5,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w20",
+   "widget_id": "01a1e2e3-9daf-71dd-8e01-e7539560758d",
+   "title": "Average Slip vs First Baseline by Region",
+   "status": "ok",
+   "rows": 14,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w21",
+   "widget_id": "01a1e2e3-9db0-7062-b2e7-09235332a90a",
+   "title": "Schedule Risk by CIO",
+   "status": "ok",
+   "rows": 14,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w22",
+   "widget_id": "01a1e2e3-9db2-736f-8bcc-b9e6ea43d916",
+   "title": "Projects on Hold by Aging and Reason",
+   "status": "ok",
+   "rows": 10,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w23",
+   "widget_id": "01a1e2e3-9db3-7334-9d8c-dd55d401a6de",
+   "title": "Project Starts Trend",
+   "status": "ok",
+   "rows": 22,
+   "report": "Delivery and schedule"
+  },
+  {
+   "widget_ref": "w24",
+   "widget_id": "01a1e2e3-9db7-7316-bdb9-0de55ea26f5d",
+   "title": "approved_budget_total",
+   "status": "ok",
+   "rows": 1,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w25",
+   "widget_id": "01a1e2e3-9db8-70f8-bf7d-4913cd01e53d",
+   "title": "forecast_cost_total",
+   "status": "ok",
+   "rows": 1,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w26",
+   "widget_id": "01a1e2e3-9db9-73a4-b029-0806c6e42b60",
+   "title": "budget_variance",
+   "status": "ok",
+   "rows": 1,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w27",
+   "widget_id": "01a1e2e3-9dbb-718c-a695-d69cd9cd5300",
+   "title": "budget_variance_pct",
+   "status": "ok",
+   "rows": 1,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w28",
+   "widget_id": "01a1e2e3-9dbc-71ab-903e-2d99b9efdf90",
+   "title": "forecast_over_budget_15",
+   "status": "ok",
+   "rows": 1,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w29",
+   "widget_id": "01a1e2e3-9dbd-7110-86ef-1fe89595059e",
+   "title": "projects_excluded",
+   "status": "ok",
+   "rows": 1,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w30",
+   "widget_id": "01a1e2e3-9dbf-70f2-94df-3c5b8aade25b",
+   "title": "Approved Budget vs Forecast Cost by CIO",
+   "status": "ok",
+   "rows": 14,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w31",
+   "widget_id": "01a1e2e3-9dc0-7087-8917-64293407c697",
+   "title": "Over-Budget Projects by Variance Spread",
+   "status": "ok",
+   "rows": 4,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w32",
+   "widget_id": "01a1e2e3-9dc1-73c3-a3ae-ad96e35953d0",
+   "title": "Forecast Cost by Budget Type",
+   "status": "ok",
+   "rows": 3,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w33",
+   "widget_id": "01a1e2e3-9dc2-734b-bda2-c7511abf065f",
+   "title": "Estimated TCV of Open Projects by Region",
+   "status": "ok",
+   "rows": 14,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w34",
+   "widget_id": "01a1e2e3-9dc3-7331-8113-56a3f8d9b3cc",
+   "title": "Over-Budget Projects Ranked by Variance",
+   "status": "ok",
+   "rows": 6,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w35",
+   "widget_id": "01a1e2e3-9dc5-72dc-b111-1aa5146d789b",
+   "title": "Forecast Cost by Region",
+   "status": "ok",
+   "rows": 14,
+   "report": "Finance (forecast vs budget)"
+  },
+  {
+   "widget_ref": "w36",
+   "widget_id": "01a1e2e3-9dc8-73f4-b320-754920972cdc",
+   "title": "open_demand",
+   "status": "ok",
+   "rows": 1,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w37",
+   "widget_id": "01a1e2e3-9dc9-7389-983a-99de811cf433",
+   "title": "overdue_gates_total",
+   "status": "ok",
+   "rows": 1,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w38",
+   "widget_id": "01a1e2e3-9dca-7239-80a8-03face41f448",
+   "title": "overdue_dou",
+   "status": "ok",
+   "rows": 1,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w39",
+   "widget_id": "01a1e2e3-9dcb-708f-bc4a-76d55239949a",
+   "title": "overdue_darb",
+   "status": "ok",
+   "rows": 1,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w40",
+   "widget_id": "01a1e2e3-9dcd-71f0-8031-6a632b9721b9",
+   "title": "overdue_sow",
+   "status": "ok",
+   "rows": 1,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w41",
+   "widget_id": "01a1e2e3-9dce-72fa-9b5f-7951e959e58a",
+   "title": "requests_on_hold_over_180",
+   "status": "ok",
+   "rows": 1,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w42",
+   "widget_id": "01a1e2e3-9dd0-70c2-ad88-655d1447aab0",
+   "title": "Requests by Request State",
+   "status": "ok",
+   "rows": 7,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w43",
+   "widget_id": "01a1e2e3-9dd1-70a9-bec5-09a3ab53618f",
+   "title": "Open Demand by Request Region and Priority",
+   "status": "ok",
+   "rows": 27,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w44",
+   "widget_id": "01a1e2e3-9dd2-73cb-8aab-1f3035463096",
+   "title": "Open Demand by Request Age",
+   "status": "ok",
+   "rows": 4,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w45",
+   "widget_id": "01a1e2e3-9dd3-707f-b408-116703f7b2d3",
+   "title": "Conversion Rate and Days to Convert",
+   "status": "ok",
+   "rows": 1,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w46",
+   "widget_id": "01a1e2e3-9dd4-70ad-b301-09179feb7124",
+   "title": "Change Requests by Reason",
+   "status": "ok",
+   "rows": 2,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w47",
+   "widget_id": "01a1e2e3-9dd5-73d8-a924-cd3b11a7388c",
+   "title": "Open Demand by CIO",
+   "status": "ok",
+   "rows": 12,
+   "report": "Demand pipeline"
+  },
+  {
+   "widget_ref": "w48",
+   "widget_id": "01a1e2e3-9dd9-7096-ba07-31bb1ec08b99",
+   "title": "status_reporting_compliance_pct",
+   "status": "ok",
+   "rows": 1,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w49",
+   "widget_id": "01a1e2e3-9dda-7337-96fb-aa93ede3e4bf",
+   "title": "baselining_compliance_pct",
+   "status": "ok",
+   "rows": 1,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w50",
+   "widget_id": "01a1e2e3-9ddb-730b-840f-ed5c1669ff75",
+   "title": "budget_code_compliance_pct",
+   "status": "ok",
+   "rows": 1,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w51",
+   "widget_id": "01a1e2e3-9ddc-72b7-9d8c-7cdc9c944514",
+   "title": "pm_assignment_compliance_pct",
+   "status": "ok",
+   "rows": 1,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w52",
+   "widget_id": "01a1e2e3-9ddd-7315-97c6-7450f23262ac",
+   "title": "closure_compliance_pct",
+   "status": "ok",
+   "rows": 1,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w53",
+   "widget_id": "01a1e2e3-9ddf-71da-9b5e-103ba05a8a8a",
+   "title": "Open Risks by Risk Category",
+   "status": "ok",
+   "rows": 4,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w54",
+   "widget_id": "01a1e2e3-9de0-70c4-b0a1-a13c88cdb7d4",
+   "title": "High Exposure and Overdue Risks by Project",
+   "status": "ok",
+   "rows": 10,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w55",
+   "widget_id": "01a1e2e3-9de1-700a-bab6-da3f84272019",
+   "title": "Open Issues by Priority",
+   "status": "ok",
+   "rows": 2,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w56",
+   "widget_id": "01a1e2e3-9de2-70e7-9607-659ec6abc0e4",
+   "title": "Overdue Action Items",
+   "status": "ok",
+   "rows": 1,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w57",
+   "widget_id": "01a1e2e3-9de3-7206-a1ac-7760dd4bb45b",
+   "title": "PCRs Pending by Approval Stage",
+   "status": "ok",
+   "rows": 6,
+   "report": "Governance and RAID"
+  },
+  {
+   "widget_ref": "w58",
+   "widget_id": "01a1e2e3-9de5-7083-b7cb-09b469726a3c",
+   "title": "Go-Live Change PCRs by Reason",
+   "status": "ok",
+   "rows": 9,
+   "report": "Governance and RAID"
+  }
+ ]
+}

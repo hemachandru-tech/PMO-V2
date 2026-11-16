@@ -1,0 +1,380 @@
+{
+ "dashboard_id": "01a1e2e0-8b81-72f3-a46c-63f6f0aee98f",
+ "report_ids": [
+  "01a1e2e0-8b2e-7218-a8d5-45663b7d09f0",
+  "01a1e2e0-8b4a-7294-a95d-dc48be3a8c8a",
+  "01a1e2e0-8b5c-70a6-aa0a-0a8ab3b397f6",
+  "01a1e2e0-8b6c-710f-a54f-6753e4b3214b",
+  "01a1e2e0-8b75-7254-82a1-a88fc4498d97"
+ ],
+ "results": [
+  {
+   "widget_ref": "w1",
+   "widget_id": "01a1e2e0-8b33-73c3-9f3b-375143eadffc",
+   "title": "Total Deliveries",
+   "status": "ok",
+   "rows": 1,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w2",
+   "widget_id": "01a1e2e0-8b37-73c4-b323-05b8c12b0624",
+   "title": "Total Callbacks",
+   "status": "ok",
+   "rows": 1,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w3",
+   "widget_id": "01a1e2e0-8b39-71d2-9a54-0a7bfba2d0bc",
+   "title": "Total User Activities",
+   "status": "ok",
+   "rows": 1,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w4",
+   "widget_id": "01a1e2e0-8b3c-7338-a446-744a508fa79e",
+   "title": "Total Admin Actions",
+   "status": "ok",
+   "rows": 1,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w5",
+   "widget_id": "01a1e2e0-8b3e-7112-82f6-5f9dd1fd1c19",
+   "title": "Deliveries Trend Over Time",
+   "status": "ok",
+   "rows": 4,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w6",
+   "widget_id": "01a1e2e0-8b40-71d6-909a-fa04108af594",
+   "title": "Deliveries by Status",
+   "status": "ok",
+   "rows": 3,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w7",
+   "widget_id": "01a1e2e0-8b43-735a-a836-01226ccbb282",
+   "title": "Top Clip IDs by Deliveries",
+   "status": "ok",
+   "rows": 5,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w8",
+   "widget_id": "01a1e2e0-8b44-7358-acfc-7038f9039c23",
+   "title": "Callbacks by Stage",
+   "status": "ok",
+   "rows": 9,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w9",
+   "widget_id": "01a1e2e0-8b45-7388-b181-fe4d141b5e90",
+   "title": "User Activity Methods",
+   "status": "ok",
+   "rows": 7,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w10",
+   "widget_id": "01a1e2e0-8b47-708d-abcd-ad9d64b19144",
+   "title": "Admin Activities by Action",
+   "status": "ok",
+   "rows": 4,
+   "report": "Overview"
+  },
+  {
+   "widget_ref": "w11",
+   "widget_id": "01a1e2e0-8b33-73c3-9f3b-375143eadffc",
+   "title": "Delivery Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w12",
+   "widget_id": "01a1e2e0-8b4d-7286-8189-7abce9030b15",
+   "title": "Delivery Metrics Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w13",
+   "widget_id": "01a1e2e0-8b4e-7325-aa12-9e3cd54f99db",
+   "title": "Delivery Report Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w14",
+   "widget_id": "01a1e2e0-8b50-7025-a65f-97bf9e001c90",
+   "title": "Sideangle Deliveries",
+   "status": "ok",
+   "rows": 1,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w15",
+   "widget_id": "01a1e2e0-8b52-70c6-9141-033eb963306f",
+   "title": "Delivery Reports Trend",
+   "status": "ok",
+   "rows": 3,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w16",
+   "widget_id": "01a1e2e0-8b54-70c9-824e-a01737616803",
+   "title": "Deliveries by Model Key",
+   "status": "ok",
+   "rows": 3,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w17",
+   "widget_id": "01a1e2e0-8b55-71b2-afd7-1aba965d3df8",
+   "title": "Top Metric Keys",
+   "status": "ok",
+   "rows": 5,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w18",
+   "widget_id": "01a1e2e0-8b57-712c-888a-401fb024c7c3",
+   "title": "Delivery Reports by Length Zone",
+   "status": "ok",
+   "rows": 6,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w19",
+   "widget_id": "01a1e2e0-8b58-703c-b02a-285fcdd1131c",
+   "title": "Sideangle Delivery Status",
+   "status": "ok",
+   "rows": 3,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w20",
+   "widget_id": "01a1e2e0-8b5a-73c2-a772-bf73c3769dfa",
+   "title": "Top Player IDs in Deliveries",
+   "status": "ok",
+   "rows": 3,
+   "report": "Deliveries and Metrics"
+  },
+  {
+   "widget_ref": "w21",
+   "widget_id": "01a1e2e0-8b5e-70f3-baf8-33162e6cb2ea",
+   "title": "Session Master Demo Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w22",
+   "widget_id": "01a1e2e0-8b60-7316-a24e-4256efe06575",
+   "title": "Session Players Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w23",
+   "widget_id": "01a1e2e0-8b61-7044-a569-2e7ce531ee50",
+   "title": "Delivery Players Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w24",
+   "widget_id": "01a1e2e0-8b63-73c2-b520-549648b6d7f9",
+   "title": "Session Players Trend",
+   "status": "ok",
+   "rows": 3,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w25",
+   "widget_id": "01a1e2e0-8b65-7105-8834-7669b40b1657",
+   "title": "Sessions by Venue",
+   "status": "ok",
+   "rows": 2,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w26",
+   "widget_id": "01a1e2e0-8b66-728c-bf49-aeed2e25ccaf",
+   "title": "Top Session IDs in Delivery Players",
+   "status": "ok",
+   "rows": 5,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w27",
+   "widget_id": "01a1e2e0-8b67-70cc-bbdb-1f9f753aa232",
+   "title": "Session Master Demo Distribution",
+   "status": "ok",
+   "rows": 2,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w29",
+   "widget_id": "01a1e2e0-8b69-7217-bdd5-fffbd9ce86b7",
+   "title": "Session Players Activity",
+   "status": "ok",
+   "rows": 5,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w48",
+   "widget_id": "01a1e2e0-8b6a-7226-9a48-f9412f3bdab1",
+   "title": "Number of delivery players by stage",
+   "status": "ok",
+   "rows": 9,
+   "report": "Players and Sessions"
+  },
+  {
+   "widget_ref": "w30",
+   "widget_id": "01a1e2e0-8b37-73c4-b323-05b8c12b0624",
+   "title": "Total Callbacks",
+   "status": "ok",
+   "rows": 1,
+   "report": "Callbacks"
+  },
+  {
+   "widget_ref": "w31",
+   "widget_id": "01a1e2e0-8b6e-7125-b963-83cfd3da2678",
+   "title": "Callbacks Trend Over Time",
+   "status": "ok",
+   "rows": 4,
+   "report": "Callbacks"
+  },
+  {
+   "widget_ref": "w32",
+   "widget_id": "01a1e2e0-8b44-7358-acfc-7038f9039c23",
+   "title": "Callbacks by Stage",
+   "status": "ok",
+   "rows": 9,
+   "report": "Callbacks"
+  },
+  {
+   "widget_ref": "w33",
+   "widget_id": "01a1e2e0-8b70-738c-ba4d-26d3db1424d5",
+   "title": "Callbacks by Status Code",
+   "status": "ok",
+   "rows": 2,
+   "report": "Callbacks"
+  },
+  {
+   "widget_ref": "w34",
+   "widget_id": "01a1e2e0-8b71-7312-a315-8c062cb0ec87",
+   "title": "Callbacks by OK Flag",
+   "status": "ok",
+   "rows": 2,
+   "report": "Callbacks"
+  },
+  {
+   "widget_ref": "w35",
+   "widget_id": "01a1e2e0-8b73-728d-bf4c-f869dbc19b8b",
+   "title": "Top Video IDs in Callbacks",
+   "status": "ok",
+   "rows": 3,
+   "report": "Callbacks"
+  },
+  {
+   "widget_ref": "w36",
+   "widget_id": "01a1e2e0-8b74-704e-af4a-28fdf825dd94",
+   "title": "Callback Stage Details",
+   "status": "ok",
+   "rows": 9,
+   "report": "Callbacks"
+  },
+  {
+   "widget_ref": "w37",
+   "widget_id": "01a1e2e0-8b76-702d-a406-d6cfcc43ef9b",
+   "title": "User Master Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w38",
+   "widget_id": "01a1e2e0-8b39-71d2-9a54-0a7bfba2d0bc",
+   "title": "User Activity Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w39",
+   "widget_id": "01a1e2e0-8b78-7122-a782-dffb921c9d9d",
+   "title": "User Device Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w40",
+   "widget_id": "01a1e2e0-8b79-73c8-a0bf-b6d1e436519d",
+   "title": "User Permission Count",
+   "status": "ok",
+   "rows": 1,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w41",
+   "widget_id": "01a1e2e0-8b7b-73c8-935d-8205a38b81de",
+   "title": "User Activity Trend Over Time",
+   "status": "ok",
+   "rows": 4,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w42",
+   "widget_id": "01a1e2e0-8b7c-735e-ace1-8ffe2c894ade",
+   "title": "Users by Role",
+   "status": "ok",
+   "rows": 4,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w43",
+   "widget_id": "01a1e2e0-8b7d-70fc-8473-6caa9a256106",
+   "title": "User Activity by Endpoint",
+   "status": "ok",
+   "rows": 5,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w44",
+   "widget_id": "01a1e2e0-8b7e-7363-9bbd-ab1b89a3fe83",
+   "title": "User Devices by Platform",
+   "status": "ok",
+   "rows": 2,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w45",
+   "widget_id": "01a1e2e0-8b7f-72d4-896a-082f09f1d9b6",
+   "title": "User Permissions by Perm Key",
+   "status": "ok",
+   "rows": 3,
+   "report": "Users and Activity"
+  },
+  {
+   "widget_ref": "w46",
+   "widget_id": "01a1e2e0-8b80-7023-a8d8-fb72adb81b62",
+   "title": "User Activity by Auth Status",
+   "status": "ok",
+   "rows": 3,
+   "report": "Users and Activity"
+  }
+ ]
+}

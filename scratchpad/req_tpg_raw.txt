@@ -1,0 +1,117 @@
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+<system-reminder>
+<tools-used-before-summary>Bash, Edit, Read, Write, mcp__Claude_Browser__browser_batch, mcp__Claude_Browser__computer, mcp__Claude_Browser__find, mcp__Claude_Browser__javascript_tool, mcp__Claude_Browser__navigate, mcp__Claude_Browser__preview_start, mcp__ccd_turn__update_plan, mcp__ccd_turn__wrap_up</tools-used-before-summary>
+</system-reminder>
+Summary:
+1. Primary Request and Intent:
+   - Phase 1: Using the user's rules documents (`/Users/prodian/Downloads/TelaAdditional2.md` = TPG rules Part A wins over Part B; `/Users/prodian/Downloads/TelaGlossary2.md` = column glossary), connect to MySQL `tpg` (Dataverse names), compute ground truth for 12 PMO questions, then test the Tela app (PMO V2) on them and explain failures. User: "use the additional rule and gossary that rule use to take the grouthtruth".
+   - Phase 2: "don't hardcode on code.. yes fix.. some changes: on UI and backend: user when connect the db (code will show tables and columns) user can select or select all columns.. then (optional) docs of knowledge and glossary, then user generate the model (only llm can do) show the preview.. (if no knowledge/glossary/rule) user can create the model.. model must understand data flow.. (faster and tokenless and 0% hallucinate).. UI show the context session, memory.. test the 12 again".
+   - Fix rules being ignored without hardcoding; use gemini flash lite ("use gemini flash lite.. please check and solve this"); "when you rerun the question ..definitely delete the cache and conversatioon..for llm"; remove tpg_program; write dashboard rules doc; two rule reads.
+   - Then switched to manual mode: user asks questions, I query `tpg` directly and answer; compare two candidate queries.
+   - Explanations requested: restaurant analogy, how LLM understands the model, new DB connection instructions, read-only user creation (ball-report, password 1234).
+   - Phase 3: Ask only ball-report (disable tpg); make model strong for any DB/domain (ids, vocabularies for status/stage columns, date formats like mm/dd/yyyy, data flow); solve "where it can go wrong" (LLM inconsistent, multi-step, too many rules); fix "No data source with an approved model is available to you yet".
+   - "up the PMO v2.. give the instruction in UI how db change and disable"; give credentials; where's the model / model path; export tpg v8 model + command + README; "backend will save the model..in backend folder".
+   - CURRENT: Dashboard: "now we need to work on dashboard..my model llm will understand and give the dashboard page projectwise show the... no hardcode" with an example prompt (PMO Mission Control: 5 reports with KPIs and widgets using certified measure/dimension keys, global rules: reporting_date, default scope, Amber, forecast not spent, cross-filters, AVOID list, OUTPUT plan report→widget→{chart type, measure key, group-by dimension key, filters} then build and show preview). "minimum 6widgets .. preview have the hardcode on the code ..remove and generic ,, and test it.."
+
+2. Key Technical Concepts:
+   - Tela stack (Docker Compose on Colima): api (FastAPI, gunicorn 2 workers), web (React/TS), llm-gateway (Gemini; policy allow-list of tasks incl. model_assist, report_plan, sql_draft; 30 req/min/user), connector-runner, postgres (`tela` db, owner `tela_owner`, RLS), redis, openbao vault, keycloak.
+   - Semantic model (tela_query_spec ModelSnapshot): entities/fields/links/measures/dimensions/settings(reporting_date) + new `rules` (BusinessRule) + new field `values`.
+   - Direct SQL Ask mode (AG-10 sql_draft): prompt = role + shape rules + dialect facts + data date + tables/columns(descriptions, values) + certified measures + business rules; checks (custom_sql), rule_check post-SQL repair, run-error repair, figure check, answer memory (Redis), plan + CTE guidance.
+   - Model builder: column selection, documents, LLM describe + rules extraction (two reads, merged), rule validation (sqlglot parse, column existence, positive value check against data), data profile (empty/constant/secret/identifier/vocabulary/text_date/flag/json), link inference by data overlap, draft save, preview, approval.
+   - Scope policies (iam.scope_policies) required per connection for Ask to see sources.
+   - Model export to folder on approval.
+   - Existing report planner (content/planner.py, rules-first with hardcoded THEMES), reports/dashboards infrastructure (reports.py, dashboards.py, widgets.py, layout.py, render.py, starters.py), web features/dashboards and features/reports (ReportPlannerPage.tsx).
+
+3. Files and Code Sections:
+   - packages/query-spec/src/tela_query_spec/model.py: added `BusinessRule` (key, term, meaning, entity, sql, kind Literal["condition","expression","population","display"], synonyms, always, origin, cite, status Literal["ok","needs_review","off"], issue); `ModelSnapshot.rules: list[BusinessRule]`; `ModelField.values: list[str]`.
+   - services/api/src/tela_api/model/router.py: SECTIONS add "rules"; DraftPatch.rules; approval now exports model (`exported = await export_model(conn, model_id, str(draft["id"]))` in a new tenant_tx after approval, returned in response); new endpoint `POST /models/{model_id}/export` (Perm.MODEL_EDIT) raising PRECONDITION_FAILED if export off.
+   - services/api/src/tela_api/model/builder.py (new, large): endpoints `GET /connections/{id}/model/selection`, `POST /connections/{id}/model/generate` (job in Redis `tela:modelgen:{job_id}`), `GET /model-jobs/{job_id}`; AGENT "AG-11", GATEWAY_TASK "model_assist"; DESCRIBE_SYSTEM (with name_column), RULES_SYSTEM (kinds population/display, {data_date} placeholder, overridden flag, counts-only restriction instruction), INFER_SYSTEM; RULE_PASSES=(7000,4500) two reads + `merge_passes`; `rule_sig` (term words minus table subject words); place_rules (dedupe by sig, first stands, inherit population), check_rule (parse, columns exist, no-column → review), positive_values + check_values (positive literals must exist in data), settle_populations; merge mode (keep pack entities, apply_selection, keep curated labels via auto_label), FK links accepted (`for ln in definition["links"]: if origin=="foreign_key": accepted=True`); profiling via profile.py when approved version exists; docs listed only where model_version_id IS NULL, docs in picked order.
+   - services/api/src/tela_api/model/profile.py (new): ColumnProfile; profile_entity (COUNT/COUNT DISTINCT/MIN/MAX per 60 columns through execute_custom on approved version, per-column fallback, vocab ≤ VOCAB_MAX=60 via GROUP BY, date sample); date_format/date_expression (mysql STR_TO_DATE, tsql CONVERT, else TO_DATE); apply_profile (clear_profile of old notes, keeps prior hidden state for unreadable columns, secret regex hidden, empty/constant hidden, json, identifier requires unique + CODE regex + HAS_DIGIT, text_date, flag, vocabulary values); infer_links (same-name unique + `<table>_id` → table PK alias; child PK skipped; ≥90% overlap; origin "proposed", accepted True).
+   - services/api/src/tela_api/model/export.py (new): `export_model(conn, model_id, version_id=None)` writes `<TELA_MODEL_EXPORT_DIR>/<connection-slug>/v<N>.json`, latest.json, manifest.json; best-effort.
+   - services/api/src/tela_api/core/settings.py: `model_export_dir: str | None = None`.
+   - deploy/compose/compose.yaml (api service): `TELA_MODEL_EXPORT_DIR: /data/model_exports` and `volumes: - ../../services/api/model_exports:/data/model_exports`. Folder chmod 777; README.md copied there.
+   - services/api/src/tela_api/content/sql_context.py: SqlDraftOut gained `plan: list[str]` first; MAX_COLUMNS 40 (rule columns rank 0, identifier/json rank 6, described 5); DIALECT_RULES mysql/postgres add "Never compare a DATE ... with ''"; relevant_tables: rule-phrase tables forced, value-vocabulary matching (`_forms`, asked_forms & valued), exact table name +2; `selected_rules` (MAX_RULES=20; always rank0, population/relabel display rank1, named rank2, others dropped; subject words excluded); `_relabel`; `rules_context` (tags for always/population/display, `_with_date`, meaning[:180], precedence note); `date_context`; `ruled(term, rules, snap)` drops clashing measures/agreed terms; descriptions in column notes; schema_context(as_of=...).
+   - services/api/src/tela_api/ask/direct_sql.py: system_prompt hardcoded TPG instructions removed, generic, plan/CTE instruction; `without_ruled_terms`; context dict (data_date, tables, rules, prompt_chars, rules_enforced, rules_still_missing, figures_short, from_memory); model vocab merged into values; answer memory (`memory_key`, `recall`, `remember`, TTL 30d, key `tela:sqlmem:...` via service.cache.backend); rule_gaps + figures_missing → `_rule_repair` (one repair, keep only if fewer gaps or figures fixed); `_run_repair` with `run_error_text` (includes sqlstate code); shape_problem "number" now allows several aggregates (`if not aggs or dims`).
+   - services/api/src/tela_api/ask/rule_check.py (new): Gap, `rule_gaps(sql, snap, question, rules, dialect)` (always rules via pieces `_pieces`, population unless own status filter, display only if `relabels`, named phrase rules; dotted table names `t.name.lower().split(".")[-1]`; one-word terms don't pull other tables), `relabels` (CASE equality/simple CASE/COALESCE), `figures_missing`, `repair_prompt(..., notes)`.
+   - services/api/src/tela_api/ask/orchestrator.py: direct SQL body context gains previous_question, follow_up, turns_in_conversation; fail passes context.
+   - services/api/src/tela_api/llm/client.py: run_agent/_run_agent `max_tokens` param.
+   - services/api/src/tela_api/main.py: include builder_router.
+   - Tests added: tests/test_model_builder_unit.py, tests/test_rule_check_unit.py, tests/test_model_profile_unit.py, tests/test_model_export_unit.py (75+ related tests pass; 329 related unit tests passed).
+   - apps/web/src/features/admin/connections/ModelBuilderSteps.tsx (new): ColumnsStep, KnowledgeStep (Read 1st/2nd order badge, UploadDialog), GenerateStep (job polling with refetchIntervalInBackground, data date input), ModelPreview (rules table, tables/columns with kind badge and values).
+   - apps/web/src/features/admin/connections/AddConnectionPage.tsx: STEPS add columns/knowledge/generate; SchemaStep "Next: choose columns".
+   - apps/web/src/features/admin/connections/ConnectionsPage.tsx: Disable (ConfirmDialog) / Enable buttons calling `/connections/{id}/disable|enable`.
+   - apps/web/src/features/ask/DirectSqlAnswer.tsx: ContextUsed panel; apps/web/src/api/app.ts AnswerContext type.
+   - apps/web/src/features/admin/knowledge/KnowledgePage.tsx: exported UploadDialog.
+   - Scratchpad/project files: scratchpad/groundtruth_tpg_12q.md, groundtruth_tpg.py, run_app_12q.py, tela_12q_comparison.md (rounds 1–7), TPG_dashboard_rules.md, PMO_dashboard_definitions.md, dashboard_definitions.py, scratchpad/models/tpg-mysql-model-v8.json + README_MODEL.md; services/api/model_exports/{README.md, tpg-mysql/v8.json…, ball-report/v6.json, v7.json…}.
+   - Currently examined for dashboard task: services/api/src/tela_api/content/planner.py — hardcoded THEMES dict:
+     ```python
+     THEMES = {
+         "overview": {"overview", "summary", "portfolio", "health", "status"},
+         "executive": {...}, "governance": {"governance", "quality", "rag", "stale", "hygiene", "compliance"},
+         "delivery": {...}, "finance": {...}, "flow": {...}, "pipeline": {"pipeline", "requests", "intake"},
+         "demand": {"demand"}, "commercial": {...},
+     }
+     ```
+     and theme_sections hardcoded `if prefix == "requests" and not (qw & {"request","requests","demand","intake","pipeline"})` / `if prefix == "projects" and qw & {...}`. Planner endpoints: POST /reports/plan, GET /reports/plans/{id}, /edit, /show, /build. ReportPlannerPage.tsx placeholder has hardcoded PMO text ("Delivery health for my region: overdue go-lives...", "open projects or overdue go-lives"). dashboards.py endpoints: /dashboards, /dashboards/{id}/view, /preview, /prechecks, /publish; reports.py: create_report, add_section, place_widget, /reports/{id}/items.
+
+4. Errors and fixes:
+   - Colima only mounted another session's scratchpad → restarted with `--mount "/Users/prodian/Desktop/PMO V2:w"`; force-recreated containers.
+   - Vault wiped on restart (Gemini key, tpg password lost) → user re-entered Gemini key; I re-entered tpg_ro/1234 in UI. Attempt to read Gemini key from vault was denied by classifier; I stopped and won't retry.
+   - gemini-3.5-pro / flash 404 earlier misread (flash actually saved); user later asked flash-lite; set back.
+   - Gateway "forbidden" for task → use GATEWAY_TASK "model_assist"; audit.record needed correlation_id.
+   - {data_date} quoted placeholder, DATEDIFF dialect, invented years → bind_date/normalise_date, dialect + data date in prompt.
+   - Curated labels overwritten → only replace auto labels; restored 771 labels via psql.
+   - Approval blocked by hidden measure fields (Unknown column) → never hide used fields; fixed `_used_fields` cross-entity match.
+   - Rule-check bugs: split always rule, ambiguous one-word terms, dotted table names → fixed.
+   - Negative value check too aggressive → removed.
+   - tpg_program added via Model studio with blocking currency questions → removed entity via draft PATCH, dismissed questions.
+   - "No data source with an approved model" → new ball-report connection lacked scope policies (old ones on deleted connection); created all-rows admin policies via POST /api/v1/admin/scope-policies/bulk.
+   - Ask mode PATCH ignored → use `PUT /connections/{id}/ask-mode {"mode":"direct_sql"}`.
+   - Profile re-run lost empty/constant (approved version hides them) → keep prior profile for unreadable columns; clear_profile to avoid note pile-up; full_name misclassified as id → HAS_DIGIT requirement; metric_key vocab → VOCAB_MAX 60; link to wrong table → `<table>_id` alias.
+   - Shape check forced one figure → allow multiple aggregates.
+
+5. Problem Solving:
+   - TPG 12-question accuracy: progressed from 1/12 to 7/12 (+partials); remaining failures are multi-table registers/rankings (Q8, Q9) and run-to-run variance.
+   - ball-report tests: deliveries 65 ✅, active coaches/students 4/12 ✅, callbacks done 117 ✅, answer memory ✅; speed/coach questions ambiguous across multiple delivery tables (suggested a rules doc).
+   - Current state: tpg-mysql disabled; ball-report connected, direct_sql, model v7 (exported); planner gemini-3.5-flash-lite; nothing committed.
+
+6. All user messages:
+   - (Initial, with TelaAdditional2.md + TelaGlossary2.md) "now we have the test nd 100% accuracy made the app.. connected to db-tpg yourself and get the 10 question grouthtruth once give the grounthtruth for me ..then you can test the app on the 10 question compare the grouthtruth and app output ..(reason why fail)" + 12 pasted questions.
+   - "use the additional rule and gossary that rule use to take the grouthtruth"
+   - "Done, rerun test"; "Re-entered, rerun"; "Key saved, rerun"
+   - "don't hardcode on code.. yes,fix.. some changes :on UI and backend user when connect the db..(code will show the which tables and columns)user can select or select all which columns wants)..once complete the select process..(if user want to give the docs of knowldege and glossery )then user generate the model (only llm can do) show the preview..(if there is no knowldge and gloassary and rule)user can create the model that option can you do.. model is understanding and must data flow everything must..(faster and tokenless and 0% hallucinate) UI will be show the context session,memory more concepts have on my backend ..UI simple to show the option ..see the backend test the 12 again"
+   - "yes fix,,don't hardcode anything"; "Yes, switch model"; "I'll set it myself"; "give the report"; "use gemini flash lite .. please ccheck and solve this"; mid-turn: "when you rerun the question ..definitely delete the cache and conversatioon..for llm"; "Remove tpg_program"; "Yes, draft it"; "Yes, do that"; "Stop here"
+   - "now everything leave it... you can access my db tpg.. i will ask the question with you..you can create the query and give the answer here..ok.. i will compare manual..frst.."
+   - "How are projects distributed across each the designated dimension in Go-live: first baselined against planned?"
+   - Two queries pasted: "which query is correct?"
+   - "okk.ok now i need understand what is happening when to start with db connection,..,llm rag and model what is happening ..on my code..? give the explain like i am the hotel or restaurtant explain"
+   - "how to llm understand the model hw to give the query etc"
+   - "now i need to new db connect .? give the instruction .i will do on manual"
+   - "give the instruction of Create a read-only database user?"
+   - "password 1234 db:ball-report"
+   - (with two infographic images) "before: now aplication have 2 db..what can i do for ball-report only ask the question..other one i need to stop 1.this is good idea? now when the model create ..i need here your thinking intelligent want my model..see the model and data flow and data uniques stuffs..no take the unwanted data like customer_id uniques ..status,stage this kind of columns have show (vocauble )so that can llm model will take to understand ..date type(mm/dd/yyyy)like that stuffs..i need the model will be strong for any domain and any db.. 2.in the image,where it can go wrong problem should be solve it brooo...check it is priority and solve"
+   - mid-turn: "?solve" (screenshot: "No data source with an approved model is available to you yet.")
+   - "up the PMO v2 .. give the instruction in UI how t db change and disable"
+   - "give the crendiatials..."
+   - (screenshot of Connections) "?where i go to take the disable and enable?"
+   - "ok now, where get the model ? i need the model path of db"
+   - "give the tpg v8 model here..give the command and readme of model see in the raw data"
+   - "backend will save the model..in backend folder"
+   - "now we need to work on dashboard..my model llm will understand and give the dashboard page projectwise show the no hardcode : for example: [pasted PMO Mission Control prompt: ROLE (use ONLY certified measures and dimensions, keys exactly, never invent), GLOBAL RULES (reporting_date, default scope, open project, Amber, blank Not set, forecast not spend, USD $K/$M, every widget filters & cross-filters), DASHBOARD name + global filters, REPORT 1–5 with KPIs and W1–W6 widgets, AVOID list, OUTPUT plan format then build and preview] minimum 6widgets .. preview have the hardcode on the code ..remove and generic ,, and test it.."
+
+   Security-relevant constraints: Do not extract or handle the user's Gemini API key from the vault (classifier denied; I stated I won't retry); never enter real provider API keys myself; local dev test credentials (Tela admin `daDLKr3oChUHJi7IFfP1HPcRCPKxU2rMNr6Ll14o`, MySQL root/1234, tpg_ro/1234, ball_ro/1234) were provided to the user on request and are local-dev only. Always clear Tela caches and conversations before rerunning test questions (user instruction). No hardcoding of domain rules in code (user instruction).
+
+7. Pending Tasks:
+   - Dashboard feature (current): LLM plans a multi-report dashboard ("project-wise" pages) from the semantic model (certified measures/dimensions + rules + settings), no hardcoding, minimum 6 widgets per report, output plan (report → widget → {chart type, measure key, group-by dimension key, filters}), build it, show preview; remove hardcoding from the preview/planner code (planner.py THEMES and projects/requests special cases; ReportPlannerPage.tsx hardcoded placeholder/empty-state text) and make generic; test it (tpg model has 124 measures/50 dimensions; ball-report has 14 measures/0 dimensions).
+
+8. Current Work:
+   Just started the dashboard task. Plan list set: (1) Map existing dashboard planner, preview, hardcoding [in progress]; (2) Design LLM dashboard plan from the model; (3) Build backend: plan, validate, create dashboard; (4) Remove hardcoding from preview, make generic; (5) UI: generate dashboard and preview; (6) Test with ball-report and tpg prompt. Findings so far: report planner `services/api/src/tela_api/content/planner.py` is rules-first with hardcoded THEMES keyword dict and hardcoded "projects"/"requests" prefix logic in `theme_sections`; MAX_WIDGETS=24; build uses `create_report`, `add_section`, `place_widget` from reports.py and `place`/`Box` from layout.py; `widget_spec`, `spec_shape`; dashboards.py has /dashboards, /view, /preview, /publish; web has features/dashboards (ComposerPage, DashboardsPage, composer/) and features/reports (ReportPlannerPage.tsx with hardcoded PMO placeholder "Delivery health for my region: overdue go-lives, schedule risk, and where the delays are by platform" and empty state "Try naming a measure, such as open projects or overdue go-lives."). Note tpg-mysql is currently disabled (needed for testing with the tpg prompt — would need Enable) and the gateway allows task "report_plan".
+
+9. Optional Next Step:
+   Continue mapping then designing the LLM dashboard planner, per the user's latest request: "now we need to work on dashboard..my model llm will understand and give the dashboard page projectwise show the ... no hardcode ... minimum 6widgets .. preview have the hardcode on the code ..remove and generic ,, and test it..". Next: read planner.py's plan/build flow (widget dict format, `self.widget(spec, title, visual)`, build endpoint), dashboards.py create/view structure (how a dashboard holds reports/pages), and the composer/preview UI, then implement an LLM planner (gateway task "report_plan") that takes the model's certified measures/dimensions/rules/settings + the user's free-text dashboard request, returns a validated plan (keys checked against the model, never invented, ≥6 widgets per report), builds reports + dashboard via existing functions, replaces THEMES/hardcoded special cases with generic logic, and tests with ball-report (and tpg after enabling, with user consent) — clearing caches as instructed.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/prodian/.claude/projects/-Users-prodian-Desktop-PMO-V2/7185d9a4-0bcd-44ba-9ead-43e04217224a.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+
+The messages after this summary are the most recent messages from before compaction, kept verbatim. The summary was written without seeing them, so something it says has not happened yet may already have happened in them.

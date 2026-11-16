@@ -1,0 +1,20 @@
+{
+  "connection": "tpg-mysql",
+  "connection_id": "01a1da60-f79e-7093-8592-dc5ee47fb344",
+  "engine": "mysql",
+  "model_id": "01a1da62-e4f9-7242-89f6-01b97632cb8d",
+  "latest_version": 8,
+  "exported_at": "2026-11-16T05:15:12.705988+00:00",
+  "versions": [
+    {
+      "version": 8,
+      "version_id": "01a1dea8-bad1-725f-8165-5dc0632676c8",
+      "status": "approved",
+      "approved_at": "2026-11-15T10:47:36.891476+00:00",
+      "file": "v8.json",
+      "entities": 10,
+      "rules": 121,
+      "measures": 124
+    }
+  ]
+}

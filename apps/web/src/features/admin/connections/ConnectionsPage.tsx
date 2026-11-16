@@ -10,6 +10,7 @@ import { Alert, FormAlert } from "../../../components/ui/alert";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
+import { ConfirmDialog, type ConfirmRequest } from "../../../components/ui/confirm-dialog";
 import { DataTable, type DataColumn } from "../../../components/ui/data-table";
 import { FilterChip } from "../../../components/ui/filter-chip";
 import { StatusBadge } from "../../../components/ui/status-badge";
@@ -146,8 +147,15 @@ function ConnectionActions({ c, report }: { c: ConnectionItem; report: (id: stri
   const qc = useQueryClient();
   const refresh = () => void qc.invalidateQueries({ queryKey: ["connections"] });
   const act = useMutation({
-    mutationFn: async (action: "test" | "introspect") => {
+    mutationFn: async (action: "test" | "introspect" | "disable" | "enable") => {
       report(c.id, { error: null });
+      if (action === "disable") {
+        await api(`/api/v1/connections/${c.id}/disable`, { method: "POST" });
+        report(c.id, { message: "Disabled: Ask, reports and dashboards no longer use this source. Enable brings it back." });
+      }
+      if (action === "enable") {
+        report(c.id, { result: await api<TestResult>(`/api/v1/connections/${c.id}/enable`, { method: "POST" }) });
+      }
       if (action === "test") report(c.id, { result: await api<TestResult>(`/api/v1/connections/${c.id}/test`, { method: "POST" }) });
       if (action === "introspect") {
         const r = await api<{ status: string; objects?: number; message?: string; error?: { message: string } }>(`/api/v1/connections/${c.id}/introspect`, { method: "POST" });
@@ -165,7 +173,9 @@ function ConnectionActions({ c, report }: { c: ConnectionItem; report: (id: stri
   });
   const [packOpen, setPackOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
+  const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
   const draft = c.status === "draft";
+  const disabled = c.status === "disabled";
   return (
     <span className="flex flex-wrap gap-x-3">
       <Button asChild variant="link" size="sm"><Link to={`/admin/connections/new?id=${c.id}&step=details`}>{c.status === "error" ? "Fix details" : "Update details"}</Link></Button>
@@ -174,6 +184,15 @@ function ConnectionActions({ c, report }: { c: ConnectionItem; report: (id: stri
       <Button variant="link" size="sm" onClick={() => setPackOpen(true)} disabled={act.isPending || draft}>Starter pack</Button>
       <Button variant="link" size="sm" onClick={() => setModeOpen(true)} disabled={draft}>Ask mode</Button>
       {!c.model.id && <Button variant="link" size="sm" onClick={() => createModel.mutate()} disabled={draft}>Build model</Button>}
+      {disabled
+        ? <Button variant="link" size="sm" onClick={() => act.mutate("enable")} disabled={act.isPending}>Enable</Button>
+        : <Button variant="link" size="sm" onClick={() => setConfirm({
+            title: `Disable ${c.name}?`,
+            body: "Ask, reports and dashboards stop using this source until it is enabled again. Its model, data rules and history are kept; nothing is deleted.",
+            confirm: "Disable", danger: true,
+            onConfirm: () => { setConfirm(null); act.mutate("disable"); },
+          })} disabled={act.isPending}>Disable</Button>}
+      <ConfirmDialog request={confirm} onClose={() => setConfirm(null)} busy={act.isPending} />
       <AskModeDialog connectionId={c.id} connectionName={c.name} open={modeOpen} onClose={() => setModeOpen(false)} />
       <ApplyPackDialog connectionId={c.id} connectionName={c.name} open={packOpen} onClose={() => setPackOpen(false)} onApplied={(r) => {
         refresh();

@@ -40,6 +40,7 @@ class ModelField(_M):
     sensitivity: Sensitivity = "internal"
     is_queryable: bool = True
     blank_handling: str | None = None
+    values: list[str] = Field(default_factory=list)  # the column's values when it has few (model builder profile)
 
     _k = field_validator("key")(check_ident)
 
@@ -193,6 +194,30 @@ class Dimension(_M):
         return {self.field} | value_fields(self.of)
 
 
+class BusinessRule(_M):
+    """A business term and the condition that defines it, read by the model builder from the Admin's documents (or
+    inferred from the schema when there are none) and checked against the source columns. Direct SQL is given the
+    rules a question touches, so the model writes the agreed condition instead of guessing (no rule text in code)."""
+
+    key: str
+    term: str = Field(min_length=1, max_length=120)
+    meaning: str = Field(default="", max_length=600)
+    entity: str | None = None  # entity key the condition is written on; None for a rule that is not about one table
+    sql: str | None = Field(default=None, max_length=2000)  # a boolean condition or expression on the source columns
+    # condition: a filter for the term; expression: a calculation; population: the filter that applies when a
+    # question names the records without a status of its own ("how many projects"); display: how a column's values
+    # are shown (an expression to select instead of the bare column).
+    kind: Literal["condition", "expression", "population", "display"] = "condition"
+    synonyms: list[str] = Field(default_factory=list)
+    always: bool = False  # applies to every question on its entity (default scope, what "open" means)
+    origin: Literal["document", "inferred", "admin"] = "document"
+    cite: str | None = Field(default=None, max_length=200)  # the document and section it came from
+    status: Literal["ok", "needs_review", "off"] = "ok"
+    issue: str | None = Field(default=None, max_length=300)  # why it needs review (an unknown column, bad SQL)
+
+    _k = field_validator("key")(check_ident)
+
+
 class ModelSnapshot(_M):
     model_version_id: str
     connection_id: str
@@ -202,6 +227,7 @@ class ModelSnapshot(_M):
     links: list[ModelLink] = Field(default_factory=list)
     measures: list[Measure] = Field(default_factory=list)
     dimensions: list[Dimension] = Field(default_factory=list)
+    rules: list[BusinessRule] = Field(default_factory=list)  # business terms and their conditions (model builder)
     settings: dict[str, str] = Field(default_factory=dict)  # e.g. reporting_date for date-relative pack rules
     # File sources (US-108): the uploaded file version the model was approved on; queries read that version.
     source_pin: dict[str, Any] | None = None

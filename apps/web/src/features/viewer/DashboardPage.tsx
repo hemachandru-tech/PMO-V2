@@ -88,8 +88,10 @@ export function DashboardPage({ draft = false }: { draft?: boolean }) {
  * Filter bar, tabs or grouped reports, drill and the Ask panel (US-189) for one rendered dashboard. The composer
  * reuses it for its live preview (US-142): `preview` sizes the grid by its container instead of the window, without Ask.
  */
-export function DashboardBody({ dashboard: d, draft = false, preview = false, filters: controlled, onFiltersChange }: {
+export function DashboardBody({ dashboard: d, draft = false, preview = false, chat: withChat, filters: controlled, onFiltersChange }: {
   dashboard: Dashboard;
+  /** Show the AI chat (Ask about this dashboard) even in a preview, e.g. in the composer. */
+  chat?: boolean;
   draft?: boolean;
   preview?: boolean;
   /** Controlled page filters: the viewer page owns them so Export uses what the reader sees. */
@@ -106,7 +108,7 @@ export function DashboardBody({ dashboard: d, draft = false, preview = false, fi
     if (t) setDrillUsed(true);
     setDrillTarget(t);
   };
-  const canAsk = !preview && can(me, "ask.use");
+  const canAsk = (withChat ?? !preview) && can(me, "ask.use");
   const [chat, setChat] = useState(false);
   const [chatUsed, setChatUsed] = useState(false);
   const [about, setAbout] = useState<AskAbout | null>(null);

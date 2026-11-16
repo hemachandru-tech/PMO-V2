@@ -1,7 +1,6 @@
 import {
   BadgeCheck,
   BookOpen,
-  Boxes,
   Code2,
   Database,
   FileText,
@@ -10,7 +9,6 @@ import {
   House,
   LayoutDashboard,
   MessageSquare,
-  Package,
   Palette,
   Send,
   Shapes,
@@ -75,8 +73,6 @@ export const NAV: NavItem[] = [
     visible: (me) => can(me, "connections.manage"), also: ["/admin/models", "/admin/ssh-keys"],
   },
   { key: "access", label: "Access", to: "/admin/access", icon: ShieldCheck, group: "Administer", visible: (me) => any(me, "mappings.manage", "policies.manage") },
-  { key: "starter", label: "Starter content", to: "/admin/starter", icon: Package, group: "Administer", visible: (me) => can(me, "starter.manage") },
-  { key: "packs", label: "Packs", to: "/admin/packs", icon: Boxes, group: "Administer", visible: (me) => can(me, "packs.author") },
   { key: "knowledge", label: "Knowledge", to: "/admin/knowledge", icon: BookOpen, group: "Administer", visible: (me) => can(me, "knowledge.manage") },
   { key: "audit", label: "Audit log", to: "/admin/audit", icon: History, group: "Administer", visible: (me) => can(me, "audit.read") },
   { key: "ai", label: "AI settings", to: "/admin/ai", icon: Sparkles, group: "Administer", visible: (me) => can(me, "settings.manage"), also: ["/admin/agent-runs", "/admin/agents"] },
@@ -110,8 +106,6 @@ export const ADMIN_SECTIONS: AdminSection[] = [
     { label: "Access", to: "/admin/access", visible: (me) => any(me, "mappings.manage", "policies.manage") },
   ] },
   { key: "content", label: "Content", screens: [
-    { label: "Starter content", to: "/admin/starter", visible: (me) => can(me, "starter.manage") },
-    { label: "Packs", to: "/admin/packs", visible: (me) => can(me, "packs.author") },
     { label: "Certification", to: "/govern/certification", visible: (me) => can(me, "certification.decide") },
     { label: "Publish requests", to: "/govern/publish-requests", visible: (me) => can(me, "dashboards.publish") },
   ] },

@@ -22,6 +22,7 @@ import { cn } from "../../../lib/utils";
 import { ApplyPackDialog } from "../starter/ApplyPackDialog";
 import { schemaRead } from "./schemaCache";
 import { TestChecklist } from "./TestChecklist";
+import { ColumnsStep, GenerateStep, KnowledgeStep, useBuilderChoice } from "./ModelBuilderSteps";
 import { useAppName } from "../../../app/branding";
 
 const STEPS = [
@@ -29,6 +30,9 @@ const STEPS = [
   { key: "details", label: "Details" },
   { key: "test", label: "Test" },
   { key: "schema", label: "Read schema" },
+  { key: "columns", label: "Choose columns" },
+  { key: "knowledge", label: "Knowledge" },
+  { key: "generate", label: "Generate model" },
 ] as const;
 type Step = (typeof STEPS)[number]["key"];
 
@@ -38,7 +42,8 @@ const schemaKey = (id: string) => ["connection-introspect", id];
 
 /**
  * Add a connection as a full-page stepper (FEAT-005, FEAT-006; SCR-09; US-144; board ConnectionFlow): engine →
- * details → test → read schema, then on to a starter pack or Model studio. The step and the connection live in the
+ * details → test → read schema → choose columns → knowledge (optional) → generate the model with the LLM and preview
+ * it, then approve; a starter pack or Model studio stay available from the schema step. The step and the connection live in the
  * URL, so Back works and "Update details" on a broken connection opens the same flow at its details step.
  */
 export function AddConnectionPage() {
@@ -55,6 +60,7 @@ export function AddConnectionPage() {
   const index = STEPS.findIndex((s) => s.key === step);
   const reachable = (i: number) => i <= index || (!!id && (i <= 2 || connected));
   const engine = asEngine(connection.data?.engine ?? params.get("engine"));
+  const [choice, setChoice] = useBuilderChoice(id ?? "new");
   const onTested = (cid: string, result: TestResult) => {
     qc.setQueryData(testKey(cid), result);
     void qc.invalidateQueries({ queryKey: ["connection", cid] });
@@ -79,7 +85,10 @@ export function AddConnectionPage() {
             onBack={() => go("engine")} onTested={onTested} />
         )}
         {step === "test" && id && <TestStep id={id} name={connection.data?.name} onBack={() => go("details")} onNext={() => go("schema")} />}
-        {step === "schema" && id && <SchemaStep id={id} connection={connection.data} onBack={() => go("test")} />}
+        {step === "schema" && id && <SchemaStep id={id} connection={connection.data} onBack={() => go("test")} onNext={() => go("columns")} />}
+        {step === "columns" && id && <ColumnsStep id={id} choice={choice} onChange={setChoice} onBack={() => go("schema")} onNext={() => go("knowledge")} />}
+        {step === "knowledge" && id && <KnowledgeStep id={id} choice={choice} onChange={setChoice} onBack={() => go("columns")} onNext={() => go("generate")} />}
+        {step === "generate" && id && <GenerateStep id={id} choice={choice} onChange={setChoice} onBack={() => go("knowledge")} />}
       </Card>
     </div>
   );
@@ -215,7 +224,7 @@ function TestStep({ id, name, onBack, onNext }: { id: string; name?: string; onB
 }
 
 
-function SchemaStep({ id, connection, onBack }: { id: string; connection?: ConnectionItem; onBack: () => void }) {
+function SchemaStep({ id, connection, onBack, onNext }: { id: string; connection?: ConnectionItem; onBack: () => void; onNext: () => void }) {
   const appName = useAppName();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -293,16 +302,17 @@ function SchemaStep({ id, connection, onBack }: { id: string; connection?: Conne
       <div className="flex flex-wrap gap-2">
         <Button variant="ghost" onClick={onBack}>Back</Button>
         <Button variant="secondary" onClick={() => read.mutate()} disabled={read.isPending}>{read.isPending ? "Reading…" : items.length ? "Read again" : "Read schema"}</Button>
+        {items.length > 0 && <Button onClick={onNext}>Next: choose columns</Button>}
         {connection?.model.id ? (
           <>
             {(match || close) && <Button variant="secondary" onClick={() => setPackOpen(true)}>{match ? "Add starter pack" : "Map the starter pack"}</Button>}
-            <Button asChild><Link to={`/admin/models/${connection.model.id}`}>Open Model studio</Link></Button>
+            <Button asChild variant="secondary"><Link to={`/admin/models/${connection.model.id}`}>Open Model studio</Link></Button>
           </>
         ) : items.length > 0 && (
           <>
-            {match && <Button onClick={() => install.mutate(match)} disabled={install.isPending}>{install.isPending ? "Installing…" : `Install ${match.pack_key}`}</Button>}
+            {match && <Button variant="secondary" onClick={() => install.mutate(match)} disabled={install.isPending}>{install.isPending ? "Installing…" : `Install ${match.pack_key}`}</Button>}
             {close && <Button variant="secondary" onClick={() => setPackOpen(true)}>Map the starter pack</Button>}
-            <Button variant={match ? "secondary" : "primary"} onClick={() => build.mutate()} disabled={build.isPending}>{build.isPending ? "Starting…" : "Build the model in Model studio"}</Button>
+            <Button variant="secondary" onClick={() => build.mutate()} disabled={build.isPending}>{build.isPending ? "Starting…" : "Build by hand in Model studio"}</Button>
           </>
         )}
       </div>
