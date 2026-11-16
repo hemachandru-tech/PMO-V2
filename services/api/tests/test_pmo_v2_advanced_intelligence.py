@@ -2,6 +2,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
+
 from tela_api.brain.delta_rules import (
     delete_delta_rule,
     get_all_active_rules,
@@ -130,7 +131,7 @@ def test_auto_generate_model_snapshot_generic():
     }
     fks = [{"from_table": "deliveries", "to_table": "players", "from_col": "id", "to_col": "id"}]
     snapshot = auto_generate_model_snapshot(schema, foreign_keys=fks, connection_name="sports_db")
-    
+
     assert len(snapshot.entities) == 2
     assert any(e.key == "deliveries" for e in snapshot.entities)
     assert any(e.key == "players" for e in snapshot.entities)

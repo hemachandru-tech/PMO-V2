@@ -24,6 +24,7 @@ the listed tables (``MAX_MEASURES``, the question's first), so a draft uses the 
 from __future__ import annotations
 
 import re
+from itertools import pairwise
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -77,7 +78,8 @@ DIALECT_RULES: dict[str, str] = {
     "mysql": ("MySQL rules: ONLY_FULL_GROUP_BY is on, so every selected expression that is not an aggregate must "
               "appear in GROUP BY exactly as selected (or select it through an alias of the same expression). There "
               "is no PERCENTILE_CONT, PERCENTILE_DISC or MEDIAN: compute a median or percentile with ROW_NUMBER() OVER "
-              "(ORDER BY x) and COUNT(*) OVER (); never use GROUP_CONCAT for percentiles. For durations use TIMESTAMPDIFF; TIMEDIFF caps at 838 hours. Quote "
+              "(ORDER BY x) and COUNT(*) OVER (); never use GROUP_CONCAT for percentiles. For durations "
+              "use TIMESTAMPDIFF; TIMEDIFF caps at 838 hours. Quote "
               "names with backticks. Never compare a DATE or DATETIME column with '' (an empty string): MySQL refuses "
               "it; a missing date is IS NULL."),
     "postgres": ("PostgreSQL rules: quote names with double quotes; medians and percentiles use PERCENTILE_CONT(...) "
@@ -91,7 +93,7 @@ DIALECT_RULES: dict[str, str] = {
 
 def sql_name(name: str, dialect: str | None) -> str:
     """One identifier as the dialect writes it: bare when it is a plain name, quoted otherwise."""
-    return exp.to_identifier(name, quoted=not SIMPLE_NAME.match(name)).sql(dialect=dialect or None)
+    return str(exp.to_identifier(name, quoted=not SIMPLE_NAME.match(name)).sql(dialect=dialect or None))
 
 
 def sql_object(source_object: str, dialect: str | None) -> str:
@@ -125,7 +127,7 @@ def _asked(question: str) -> set[str]:
     """The question's terms plus each pair of neighbouring words run together, so "side-cam" or "side cam"
     meets a table or column whose name runs them together (``sidecam_run``)."""
     ws = words(question.replace("_", " "))
-    joined = {_stem(a + b) for a, b in zip(ws, ws[1:]) if a not in FILLER and b not in FILLER}
+    joined = {_stem(a + b) for a, b in pairwise(ws) if a not in FILLER and b not in FILLER}
     return _terms(question) | joined
 
 
@@ -167,9 +169,9 @@ def relevant_tables(snap: Any, question: str) -> list[str]:
             score[m.entity] += 3 * len(asked & (_terms(m.label) | _terms(m.key)))
     for r in getattr(snap, "rules", None) or []:  # a business term the question uses brings the table it is defined on
         if r.status == "ok" and r.entity in score:
-            named = _terms(r.term) | {t for s in r.synonyms for t in _terms(s)}
+            rule_words = _terms(r.term) | {t for s in r.synonyms for t in _terms(s)}
             whole = sum(1 for s in (r.term, *r.synonyms) if s and s.lower() in question.lower())
-            score[r.entity] += 2 * len(asked & named) + 4 * whole
+            score[r.entity] += 2 * len(asked & rule_words) + 4 * whole
     # Words that name a table are the subject ("projects"), not a breakdown ("Risk project", "Task project").
     subject = {w for e in snap.entities for t in (_terms(e.key), _terms(e.label)) if t and t <= asked for w in t}
     named: list[Any] = []  # breakdowns the question names
@@ -366,7 +368,7 @@ DESCRIPTION_CHARS = 110  # a column's description as listed
 
 def _relabel(sql: str | None) -> bool:
     from tela_api.ask.rule_check import relabels  # the same test the rule check uses
-    return bool(sql) and relabels(sql, None)
+    return bool(sql) and bool(relabels(sql or "", None))
 
 
 def selected_rules(snap: Any, listed: set[str], question: str) -> list[Any]:

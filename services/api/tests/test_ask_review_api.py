@@ -42,7 +42,7 @@ def reviews(fake: FakeGateway) -> list[dict[str, Any]]:
     return [c for c in fake.calls if c["agent"] == "AG-03" and "Reply with verdict" in c["messages"][0]["content"]]
 
 
-async def test_a_confirmed_rules_plan_is_answered_more_surely(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_confirmed_rules_plan_is_answered_more_surely(stack: httpx.AsyncClient, world: World,
                                                               owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = FakeGateway({"AG-03": reviewer({"verdict": "confirm", "reason": "late means overdue go-lives"})})
@@ -60,7 +60,7 @@ async def test_a_confirmed_rules_plan_is_answered_more_surely(stack: httpx.Async
     assert "rows" not in sent[0]["messages"][1]["content"]
 
 
-async def test_a_different_reading_is_asked_never_swapped(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_different_reading_is_asked_never_swapped(stack: httpx.AsyncClient, world: World,
                                                           owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = FakeGateway({"AG-03": reviewer({"verdict": "correct", "replacement": {"measure": "measure:open_projects"},
@@ -84,7 +84,7 @@ async def test_a_different_reading_is_asked_never_swapped(stack: httpx.AsyncClie
     assert done["confidence"]["score"] == 0.45 and done["confidence"]["signals"]["review"] == "correct"
 
 
-async def test_an_invalid_correction_leaves_the_rules_plan(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_an_invalid_correction_leaves_the_rules_plan(stack: httpx.AsyncClient, world: World,
                                                            owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = FakeGateway({"AG-03": reviewer({"verdict": "correct", "replacement": {"measure": "measure:made_up"}})})
@@ -96,7 +96,7 @@ async def test_an_invalid_correction_leaves_the_rules_plan(stack: httpx.AsyncCli
     assert not any(i.startswith("The planner read this as") for i in done["interpreted"])
 
 
-async def test_review_off_makes_no_call(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_review_off_makes_no_call(stack: httpx.AsyncClient, world: World,
                                         owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world, on=False)
     fake = FakeGateway({"AG-03": reviewer({"verdict": "correct", "replacement": {"measure": "measure:open_projects"}})})

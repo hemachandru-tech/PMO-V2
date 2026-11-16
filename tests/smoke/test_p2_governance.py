@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(
 SQL = "SELECT cio, COUNT(*) AS n FROM projects WHERE :page_filters GROUP BY cio"
 
 
-def test_fields_custom_sql_and_certification(apis: dict[str, Api], world: dict[str, str]) -> None:  # noqa: F811
+def test_fields_custom_sql_and_certification(apis: dict[str, Api], world: dict[str, str]) -> None:
     nomsa, admin = apis["nomsa"], apis["admin"]
     cid = world["cid"]
     check = nomsa.call("POST", "/custom-sql/check", json={"connection_id": cid, "sql": SQL})

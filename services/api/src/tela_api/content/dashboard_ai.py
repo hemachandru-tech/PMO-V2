@@ -42,8 +42,8 @@ from tela_api.audit import service as audit
 from tela_api.content import wording
 from tela_api.content.access import own_dashboard
 from tela_api.content.planner import Planner, _source, build_report, layout_preview, run_placed
-from tela_api.core.db import fetch_one, tenant_tx
 from tela_api.content.reports import create_report
+from tela_api.core.db import fetch_one, tenant_tx
 from tela_api.identity.deps import require
 from tela_api.identity.permissions import Perm
 from tela_api.identity.principal import Principal
@@ -309,7 +309,7 @@ class Checker:
                 op = "in" if op == "=" else "not_in"
             if op in ("in", "not_in") and len(raws) == 1:
                 op = "=" if op == "in" else "!="
-            out.append({"ref": g.ref, "op": op, "values": raws})
+            out.append({"ref": g.ref, "op": op, "values": [r for r in raws if r is not None]})
         return out
 
     async def widget(self, report: str, w: WidgetOut | KpiOut, *, kpi: bool) -> dict[str, Any] | None:
@@ -508,8 +508,8 @@ async def plan_dashboard(request_app: Any, principal: Principal, src: Source, as
     global_filters = []
     page_entities = {cat.measures[ref_key(w["spec"]["measure"]["ref"])].entity
                      for p in reports for w in p["kpis"] + p["widgets"]}
-    for k in got.global_filters:
-        g = cat.group_bys.get(k)
+    for gk in got.global_filters:
+        g = cat.group_bys.get(gk)
         if g is None or g.temporal:
             continue
         global_filters.append({"key": g.key, "ref": g.ref, "label": g.label,
@@ -610,7 +610,7 @@ async def _run_plan(app: Any, principal: Principal, job_id: str, body: PlanIn, s
         state.update(status="planned", plan=plan)
     except TelaError as exc:
         state.update(status="failed", error=exc.message)
-    except Exception as exc:  # noqa: BLE001 - a job never dies silently
+    except Exception as exc:
         log.exception("dashboard_ai.plan_failed")
         state.update(status="failed", error=f"Planning failed: {type(exc).__name__}")
     await _put(app, job_id, state)

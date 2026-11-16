@@ -1,5 +1,8 @@
 """Ground truth for the 12 questions against MySQL `tpg` (Dataverse names). Data date 2026-10-25."""
-import json, sys, pymysql
+import json
+import sys
+
+import pymysql
 
 D = "2026-10-25"
 c = pymysql.connect(host="127.0.0.1", port=3306, user="root", password="1234", database="tpg")

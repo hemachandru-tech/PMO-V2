@@ -26,7 +26,7 @@ pytestmark = [needs_db, pytest.mark.integration]
 TIE = "action items"  # rules: Open actions and Overdue actions tie
 
 
-async def _ask(stack: httpx.AsyncClient, world: World, reply: dict[str, Any],  # noqa: F811
+async def _ask(stack: httpx.AsyncClient, world: World, reply: dict[str, Any],
                question: str = TIE) -> tuple[dict[str, Any], FakeGateway]:
     fake = FakeGateway({"AG-03": samples(reply)})
     stack.app.state.gateway = fake.client()  # type: ignore[attr-defined]
@@ -34,7 +34,7 @@ async def _ask(stack: httpx.AsyncClient, world: World, reply: dict[str, Any],  #
     return by_event(events), fake
 
 
-async def test_a_tie_is_planned_by_ag03(stack: httpx.AsyncClient, world: World) -> None:  # noqa: F811
+async def test_a_tie_is_planned_by_ag03(stack: httpx.AsyncClient, world: World) -> None:
     ev, fake = await _ask(stack, world, {"measure": "measure:open_actions", "confidence": 0.9})
     assert ev["plan"]["planner"] == "llm" and ev["plan"]["spec"]["measure"] == {"ref": "measure:open_actions"}
     assert "clarify" not in ev and "complete" in ev
@@ -43,7 +43,7 @@ async def test_a_tie_is_planned_by_ag03(stack: httpx.AsyncClient, world: World) 
 
 @pytest.mark.parametrize("reply", [{"unsupported": True, "missing_data": ["actions"]},
                                    {"measure": "measure:total_projects", "confidence": 0.9}])
-async def test_a_failed_or_other_plan_asks_which_measure(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_failed_or_other_plan_asks_which_measure(stack: httpx.AsyncClient, world: World,
                                                          reply: dict[str, Any]) -> None:
     ev, fake = await _ask(stack, world, reply)
     assert plan_calls(fake)

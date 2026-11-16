@@ -1,10 +1,11 @@
 """Test all 5 questions against live PMO V2 API and compare with MySQL Ground Truth."""
 
 import json
-import time
 import subprocess
-import pymysql
+import time
+
 import httpx
+import pymysql
 
 EDGE = "http://localhost:8088"
 CONN_ID = "01a1da60-f79e-7093-8592-dc5ee47fb344"
@@ -19,8 +20,9 @@ def run_ground_truth(sql: str):
 
 # 2. Authenticate to PMO V2
 import sys
+
 sys.path.insert(0, '/Users/prodian/Desktop/PMO V2/tests/smoke')
-from test_compose_smoke import sign_in, EDGE
+from test_compose_smoke import EDGE, sign_in
 
 with open("/Users/prodian/Desktop/PMO V2/deploy/compose/secrets/dev_admin_password") as f:
     pw = f.read().strip()
@@ -62,23 +64,23 @@ for item in QUESTIONS:
     qid = item["id"]
     q = item["question"]
     gt_sql = item["gt_sql"]
-    print(f"\n==========================================")
+    print("\n==========================================")
     print(f"Testing {qid}: {q}")
-    
+
     # Ground Truth
     gt_rows = [list(r) for r in run_ground_truth(gt_sql)]
     print(f"Ground Truth SQL: {gt_sql}")
     print(f"Ground Truth Rows ({len(gt_rows)}): {gt_rows[:3]}")
-    
+
     # API Call
     post_res = httpx.post(f"{EDGE}/api/v1/ask/turns", json={
         "question": q,
         "connection_id": CONN_ID,
         "context": {"connection_id": CONN_ID}
     }, headers=headers, timeout=30)
-    
+
     turn_id = post_res.json()["turn_id"]
-    
+
     # Poll for completion
     pmo_status = "running"
     pmo_headline = None
@@ -90,7 +92,7 @@ for item in QUESTIONS:
         if pmo_status in ("complete", "refused", "failed", "error", "awaiting_clarification"):
             pmo_headline = t.get("narrative", {}).get("headline") if t.get("narrative") else None
             break
-            
+
     # Fetch SQL & rows from turn_events
     cmd = [
         "docker", "exec", "tela-postgres-1", "psql", "-U", "tela_owner", "-d", "tela", "-t", "-A", "-c",
@@ -103,12 +105,12 @@ for item in QUESTIONS:
         data = json.loads(db_res.stdout.strip())
         pmo_sql = data.get("sql")
         pmo_rows = data.get("rows", [])
-        
+
     print(f"PMO Dashboard Status: {pmo_status}")
     print(f"PMO Dashboard SQL: {pmo_sql}")
     print(f"PMO Dashboard Headline: {pmo_headline}")
     print(f"PMO Dashboard Rows ({len(pmo_rows)}): {pmo_rows[:3]}")
-    
+
     results.append({
         "id": qid,
         "question": q,

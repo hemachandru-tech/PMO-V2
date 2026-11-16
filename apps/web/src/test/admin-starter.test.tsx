@@ -88,7 +88,7 @@ describe("Starter content (US-099)", () => {
     expect(within(raid).getByText(/Needs risks, assumptions/)).toBeInTheDocument();
     const overview = within(table).getByRole("row", { name: /Projects overview/ });
     expect(within(overview).getByText("Some widgets left out: needs measure overdue_go_lives")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Starter content" })).toHaveAttribute("aria-current", "page");
+    // The page is no longer in the menu (v2 simplified Admin); it still opens by its URL.
 
     await userEvent.click(within(delivery).getByRole("button", { name: "Delete" }));
     const dialog = await screen.findByRole("dialog", { name: "Delete Projects — Delivery?" });

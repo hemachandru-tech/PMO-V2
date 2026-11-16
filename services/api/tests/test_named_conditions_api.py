@@ -58,7 +58,7 @@ async def approved_open(api: httpx.AsyncClient, world_: World, keys: dict[str, A
 
 
 async def test_measures_store_their_conditions_with_the_model(
-        stack: httpx.AsyncClient, world: World, signing_keys: dict[str, Any]) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World, signing_keys: dict[str, Any]) -> None:
     admin = world.tokens["admin"]
     await index_model(stack, world, signing_keys)
     assert (await stack.get(Q, headers=h(world.tokens["creator"]))).status_code == 403  # Admins only
@@ -73,8 +73,8 @@ async def test_measures_store_their_conditions_with_the_model(
 
 
 async def test_conflict_waits_for_the_admin_then_the_choice_applies(
-        stack: httpx.AsyncClient, world: World, signing_keys: dict[str, Any],  # noqa: F811
-        owner_conn: psycopg.Connection, record_inactive: list[str]) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World, signing_keys: dict[str, Any],
+        owner_conn: psycopg.Connection, record_inactive: list[str]) -> None:
     admin, creator = world.tokens["admin"], world.tokens["creator"]
     definition = await approved_open(stack, world, signing_keys)
 
@@ -133,8 +133,8 @@ async def test_conflict_waits_for_the_admin_then_the_choice_applies(
 
 
 async def test_new_model_version_carries_conditions_and_the_choice(
-        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection,  # noqa: F811
-        signing_keys: dict[str, Any], record_inactive: list[str]) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection,
+        signing_keys: dict[str, Any], record_inactive: list[str]) -> None:
     admin = world.tokens["admin"]
     await approved_open(stack, world, signing_keys)
     [held] = (await conditions(stack, admin, conflicts=True))["items"]

@@ -184,7 +184,7 @@ def page_filter_notes(applied: list[str], skipped: list[str], snap: ModelSnapsho
     def label(ref: str) -> str:
         key = ref_key(ref)
         found = snap.dimension(key) if ref_kind(ref) == "dimension" else snap.field(key)
-        return found.label if found else key
+        return str(found.label) if found else key
     notes = []
     if applied:
         notes.append("Dashboard filters: " + ", ".join(label(r) for r in applied))

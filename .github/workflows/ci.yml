@@ -99,7 +99,7 @@ jobs:
       - name: Microsoft ODBC Driver 18
         run: |
           if ! odbcinst -q -d 2>/dev/null | grep -q "ODBC Driver 18"; then
-            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+            curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
             echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" \
               | sudo tee /etc/apt/sources.list.d/mssql-release.list
             sudo apt-get update && sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc
@@ -162,10 +162,12 @@ jobs:
         uses: anchore/sbom-action@v0
         with: { image: "${{ matrix.name }}:ci", artifact-name: "sbom-${{ matrix.name }}.spdx.json" }
       - name: Vulnerability scan (fail on critical)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
         with:
           image-ref: ${{ matrix.name }}:ci
           severity: CRITICAL
           exit-code: "1"
           ignore-unfixed: true
+        env:
+          TRIVY_SECRET_CONFIG: .github/trivy-secret.yaml  # allows Anthropic SDK docstring false positives only
       # Multi-arch build, cosign signing and deploy jobs are added with the registry (US-121).

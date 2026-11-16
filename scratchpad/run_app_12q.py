@@ -1,9 +1,13 @@
 """Ask the 12 questions through the Tela Ask API and save SQL, rows and headline per question."""
-import json, subprocess, sys, time
+import json
+import subprocess
+import sys
+import time
+
 import httpx
 
 sys.path.insert(0, "/Users/prodian/Desktop/PMO V2/tests/smoke")
-from test_compose_smoke import sign_in, EDGE  # noqa: E402
+from test_compose_smoke import EDGE, sign_in
 
 CONN = "01a1da60-f79e-7093-8592-dc5ee47fb344"
 OUT = sys.argv[1]

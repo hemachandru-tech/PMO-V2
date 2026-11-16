@@ -66,11 +66,12 @@ def _long(source_type: str) -> bool:
 
 async def _run(app: Any, principal: Principal, connection_id: str, version_id: str, sql: str) -> dict[str, Any] | None:
     try:
-        return await app.state.query_service.execute_custom(
+        result: dict[str, Any] = await app.state.query_service.execute_custom(
             sql, connection_id=connection_id, model_version_id=version_id, principal=principal,
             ctx=QueryContext(surface="preview", use_cache=False))
     except TelaError:
         return None
+    return result
 
 
 async def profile_entity(app: Any, principal: Principal, connection_id: str, version_id: str, entity: dict[str, Any],
@@ -88,7 +89,7 @@ async def profile_entity(app: Any, principal: Principal, connection_id: str, ver
             exprs.append(f"COUNT({c}) AS f{j}")
             if not _long(source_types.get(f["source_column"].lower(), "")):
                 exprs += [f"COUNT(DISTINCT {c}) AS d{j}", f"MIN({c}) AS lo{j}", f"MAX({c}) AS hi{j}"]
-        res = await _run(app, principal, connection_id, version_id, f"SELECT {', '.join(exprs)} FROM {table}")
+        res = await _run(app, principal, connection_id, version_id, f"SELECT {', '.join(exprs)} FROM {table}")  # noqa: S608 - quoted identifiers
         if res is None and len(part) > 1:  # one column the approved version can't read fails the whole query:
             for f in part:                 # count the others one by one
                 sub = await profile_entity(app, principal, connection_id, version_id,
@@ -114,13 +115,13 @@ async def profile_entity(app: Any, principal: Principal, connection_id: str, ver
             rx.match(str(p.high or "")) for rx, _ in DATE_PATTERNS)
         if p.distinct <= VOCAB_MAX:
             res = await _run(app, principal, connection_id, version_id,
-                             f"SELECT {c} AS v, COUNT(*) AS n FROM {table} WHERE {c} IS NOT NULL GROUP BY {c} "
+                             f"SELECT {c} AS v, COUNT(*) AS n FROM {table} WHERE {c} IS NOT NULL GROUP BY {c} "  # noqa: S608
                              f"ORDER BY COUNT(*) DESC")
             if res and res.get("rows"):
                 p.values = [(str(v), int(n)) for v, n in res["rows"][:VOCAB_MAX]]
         if looks_date:
             res = await _run(app, principal, connection_id, version_id,
-                             f"SELECT DISTINCT {c} AS v FROM {table} WHERE {c} IS NOT NULL")
+                             f"SELECT DISTINCT {c} AS v FROM {table} WHERE {c} IS NOT NULL")  # noqa: S608
             if res and res.get("rows"):
                 p.date_format = date_format([str(r[0]) for r in res["rows"][:300]])
     return out
@@ -162,7 +163,8 @@ def date_expression(column: str, fmt: str, dialect: str | None) -> str:
 
 PROFILE_KINDS = ("identifier", "json", "flag", "text_date", "category")
 PROFILE_NOTES = re.compile(
-    r"\s*(Always empty in this data: do not use\.|Secret value: never shown or queried\.|Holds one value only \(.*?\)\.|"
+    r"\s*(Always empty in this data: do not use\.|Secret value: never shown or queried\.|"
+    r"Holds one value only \(.*?\)\.|"
     r"Identifier: unique per row\..*?never group or chart by it\.|JSON document: .*?whole document\.|"
     r"Date stored as text in .*?\)\.|Flag: 1 means yes, 0 means no\.)")
 
@@ -285,7 +287,8 @@ async def infer_links(app: Any, principal: Principal, connection_id: str, versio
         if pf is None:
             continue
         table = e["source_object"].rpartition(".")[2].lower()
-        stems = {table, table[:-1] if table.endswith("s") else table, table[:-3] + "y" if table.endswith("ies") else table}
+        stems = {table, table[:-1] if table.endswith("s") else table,
+                 table[:-3] + "y" if table.endswith("ies") else table}
         for stem in stems:
             alias = f"{stem}_id"
             if alias != pf["source_column"].lower() and alias in by_col:
@@ -310,7 +313,7 @@ async def infer_links(app: Any, principal: Principal, connection_id: str, versio
                 if cf["key"] in ents[child_key].get("primary_key", []) or (parent_key, (pf["key"],), child_key) in have:
                     continue
                 c, pt = sql_name(cf["source_column"], dialect), sql_name(pf["source_column"], dialect)
-                sql = (f"SELECT COUNT(DISTINCT x.{c}) AS n, COUNT(DISTINCT CASE WHEN y.{pt} IS NOT NULL THEN x.{c} END)"
+                sql = (f"SELECT COUNT(DISTINCT x.{c}) AS n, COUNT(DISTINCT CASE WHEN y.{pt} IS NOT NULL THEN x.{c} END)"  # noqa: S608
                        f" AS hit FROM {sql_object(ents[child_key]['source_object'], dialect)} x LEFT JOIN "
                        f"{sql_object(ents[parent_key]['source_object'], dialect)} y ON y.{pt} = x.{c}")
                 res = await _run(app, principal, connection_id, version_id, sql)

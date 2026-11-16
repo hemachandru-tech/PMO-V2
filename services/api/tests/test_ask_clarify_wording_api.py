@@ -57,7 +57,7 @@ def calls(fake: FakeGateway, marker: str) -> list[dict[str, Any]]:
     return [c for c in fake.calls if c["agent"] == "AG-02" and marker in c["messages"][0]["content"]]
 
 
-async def test_labels_are_reworded_and_the_readings_kept(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_labels_are_reworded_and_the_readings_kept(stack: httpx.AsyncClient, world: World,
                                                          owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     worded = ["Projects whose go-live date has passed", "Every open project"]
@@ -84,7 +84,7 @@ async def test_labels_are_reworded_and_the_readings_kept(stack: httpx.AsyncClien
 
 
 async def test_a_label_failing_the_wording_check_keeps_the_rules_label(
-        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     worded = ["Go-lives that are overdue", "Open projects and their actual spend"]
     fake = FakeGateway({"AG-03": reviewer(CORRECT), "AG-02": ag02(question="Which did you mean?", labels=worded)})
@@ -95,7 +95,7 @@ async def test_a_label_failing_the_wording_check_keeps_the_rules_label(
     assert q["question"] == "Which did you mean?"
 
 
-async def test_a_wrong_count_of_labels_keeps_the_rules_wording(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_wrong_count_of_labels_keeps_the_rules_wording(stack: httpx.AsyncClient, world: World,
                                                                owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     def one_label(task: str, messages: list[dict[str, Any]]) -> Any:
@@ -109,7 +109,7 @@ async def test_a_wrong_count_of_labels_keeps_the_rules_wording(stack: httpx.Asyn
 
 
 async def test_the_back_check_runs_on_a_rules_plan_and_caps_a_mismatch(
-        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = FakeGateway({"AG-03": reviewer({"verdict": "confirm"}), "AG-02": ag02(answers=False)})
     stack.app.state.gateway = fake.client()  # type: ignore[attr-defined]
@@ -129,7 +129,7 @@ async def test_the_back_check_runs_on_a_rules_plan_and_caps_a_mismatch(
     assert done["confidence"]["signals"]["back_check_model"] == MISSING
 
 
-async def test_the_back_check_runs_on_an_llm_plan_with_review_on(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_the_back_check_runs_on_an_llm_plan_with_review_on(stack: httpx.AsyncClient, world: World,
                                                                   owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = FakeGateway({"AG-03": samples({**BY_REGION, "confidence": 0.9}), "AG-02": ag02(answers=False)})
@@ -140,7 +140,7 @@ async def test_the_back_check_runs_on_an_llm_plan_with_review_on(stack: httpx.As
     assert len(calls(fake, "You check a query plan")) == 1
 
 
-async def test_review_off_makes_no_ag02_call(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_review_off_makes_no_ag02_call(stack: httpx.AsyncClient, world: World,
                                              owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world, on=False)
     fake = FakeGateway({"AG-03": samples(BY_REGION, BY_PROGRAMME, TOTAL), "AG-02": ag02(answers=False)})

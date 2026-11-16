@@ -195,7 +195,7 @@ def test_assume_first_still_answers() -> None:
     assert decided.status == "ok"
 
 
-def test_a_semi_join_two_links_away_is_refused_not_compiled(snapshot: ModelSnapshot) -> None:  # noqa: F811
+def test_a_semi_join_two_links_away_is_refused_not_compiled(snapshot: ModelSnapshot) -> None:
     """A reading asked of another table can keep a semi-join the new measure reaches only through a third table; the
     validator refuses it (so ``_decide`` drops the reading) rather than the compiler failing on it."""
     far = next((m, x) for m in snapshot.measures for x in snapshot.measures

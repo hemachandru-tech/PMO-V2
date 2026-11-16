@@ -47,7 +47,7 @@ def xlsx(rows: list[list[Any]], header: list[str] | None = None) -> bytes:
     return buf.getvalue()
 
 
-async def test_template_upload_and_rows_proposed(stack: httpx.AsyncClient, knowledge_world: World,  # noqa: F811
+async def test_template_upload_and_rows_proposed(stack: httpx.AsyncClient, knowledge_world: World,
                                                  owner_conn: psycopg.Connection,
                                                  signing_keys: dict[str, Any]) -> None:
     world, admin = knowledge_world, knowledge_world.tokens["admin"]
@@ -122,7 +122,7 @@ async def test_template_upload_and_rows_proposed(stack: httpx.AsyncClient, knowl
 
 
 async def test_a_row_like_instructions_needs_acknowledgement(stack: httpx.AsyncClient,
-                                                            knowledge_world: World,  # noqa: F811
+                                                            knowledge_world: World,
                                                             signing_keys: dict[str, Any]) -> None:
     world, admin = knowledge_world, knowledge_world.tokens["admin"]
     await index_model(stack, world, signing_keys)

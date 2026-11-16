@@ -2,7 +2,8 @@
 
 For an approved model version the API builds and embeds the definition chunks itself. For an uploaded document
 the worker does the extraction: it fetches the file through the internal API, extracts text (Markdown/plain,
-PDF with pypdf, DOCX with python-docx, a business-context XLSX row by row, US-251), normalises and chunks it, and posts the chunks back. The API scans each
+PDF with pypdf, DOCX with python-docx, a business-context XLSX row by row, US-251), normalises and chunks it, and
+posts the chunks back. The API scans each
 chunk (leak, PII, injection), embeds the clean ones through the gateway and stores them; the document stays in
 ``pending_review`` until an Admin approves it. Nothing here logs document text.
 """

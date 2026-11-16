@@ -333,7 +333,9 @@ def snapshot() -> ModelSnapshot:
 
 @pytest.fixture(scope="module")
 def db() -> duckdb.DuckDBPyConnection:
-    con = duckdb.connect()
+    # One thread: rows tied on a top-N cut come back in the same order every run, so grading is repeatable
+    # (a tie at 5th place in "top 5 regions" flipped the gold-modes score between runs).
+    con = duckdb.connect(config={"threads": 1})
     con.execute("\n".join(line for line in tpg_synthetic.DDL.splitlines() if not line.startswith("DROP TABLE")))
     for table, cols, rows in tpg_synthetic.tables():
         con.executemany(f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",

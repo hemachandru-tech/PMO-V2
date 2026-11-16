@@ -181,7 +181,7 @@ def outbox_requeue(args: argparse.Namespace) -> None:
                f"WHERE {where} RETURNING topic) SELECT topic, count(*) FROM r GROUP BY topic")
     with psycopg.connect(_owner_dsn()) as conn, conn.cursor() as cur:
         cur.execute(sql, params)
-        counts = dict(sorted(cur.fetchall()))
+        counts: dict[str, int] = dict(sorted(cur.fetchall()))
         conn.commit()
     print(json.dumps({"dry_run": args.dry_run, "requeued": counts}))
 

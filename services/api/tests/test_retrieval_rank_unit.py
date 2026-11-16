@@ -12,8 +12,15 @@ from typing import Any
 from conftest import FakeGateway
 
 from tela_api.knowledge.index import context_line, contextualise, embed_text
-from tela_api.knowledge.retrieval import (LIMITED_NOTE, RERANK_NOTE, Retrieval, _rerank, bm25, parse_tsvector,
-                                          top_reranked)
+from tela_api.knowledge.retrieval import (
+    LIMITED_NOTE,
+    RERANK_NOTE,
+    Retrieval,
+    _rerank,
+    bm25,
+    parse_tsvector,
+    top_reranked,
+)
 
 
 def test_parse_tsvector_reads_weights_per_position() -> None:

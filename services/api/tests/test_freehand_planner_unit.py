@@ -104,7 +104,7 @@ def _close(a: Any, b: Any) -> bool:
 
 
 def test_problem_question_answers_certified_with_the_rule_beside_it(
-        snapshot: ModelSnapshot, db: duckdb.DuckDBPyConnection) -> None:  # noqa: F811
+        snapshot: ModelSnapshot, db: duckdb.DuckDBPyConnection) -> None:
     p = freehand_plan(PROBLEM)
     assert p.status == "ok" and p.spec is not None and not p.freehand
     assert p.spec["measure"] == {"ref": "measure:baselining_in_scope"}  # the certified "Past planning" (D1)
@@ -132,8 +132,8 @@ def test_without_the_glossary_s2_is_not_guessed() -> None:
 
 
 @pytest.mark.parametrize(("question", "expected"), CASES, ids=[c[0][:60] for c in CASES])
-def test_free_hand_questions(question: str, expected: Any, snapshot: ModelSnapshot,  # noqa: F811
-                             db: duckdb.DuckDBPyConnection) -> None:  # noqa: F811
+def test_free_hand_questions(question: str, expected: Any, snapshot: ModelSnapshot,
+                             db: duckdb.DuckDBPyConnection) -> None:
     p = freehand_plan(question)
     assert p.status == "ok" and p.freehand and p.spec is not None, (p.status, p.reason)
     assert p.spec["measure"]["ref"] == "measure:_adhoc"

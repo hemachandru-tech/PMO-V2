@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import re
 from typing import Any
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel
 
 from tela_query_spec.expr import AggExpr
 from tela_query_spec.model import Dimension, Measure, ModelEntity, ModelField, ModelLink, ModelSnapshot
@@ -39,7 +40,7 @@ def detect_field_semantic_type(col_name: str, col_type: str) -> tuple[str, str]:
         if name_low.endswith("id") or name_low.startswith("id_") or name_low == "id":
             return "integer", "identifier"
         return "integer", "numeric"
-    
+
     if any(t in type_low for t in ("decimal", "numeric", "float", "double", "money")):
         if any(w in name_low for w in ("cost", "budget", "amount", "price", "revenue", "usd", "val")):
             return "decimal", "currency"
@@ -80,7 +81,7 @@ def auto_generate_model_snapshot(
     """Generate a clean, 100% understood ModelSnapshot from raw introspected tables."""
     pk_map = primary_keys or {}
     fk_list = foreign_keys or []
-    
+
     entities: list[ModelEntity] = []
     measures: list[Measure] = []
     dimensions: list[Dimension] = []
@@ -93,22 +94,23 @@ def auto_generate_model_snapshot(
 
         fields: list[ModelField] = []
         pks = pk_map.get(tbl_name) or []
-        
+
         # If no explicit PK, pick first column or 'id'
         if not pks:
-            possible_pk = next((c["name"] for c in cols if c["name"].lower() in ("id", f"{entity_key}_id", f"{tbl_name}_id")), None)
+            pk_names = ("id", f"{entity_key}_id", f"{tbl_name}_id")
+            possible_pk = next((c["name"] for c in cols if c["name"].lower() in pk_names), None)
             pks = [possible_pk] if possible_pk else [cols[0]["name"]]
 
         for col in cols:
             col_name = col["name"]
             field_key = re.sub(r"[^a-zA-Z0-9_]", "_", col_name).lower().strip("_")
             data_type, sem_type = detect_field_semantic_type(col_name, col.get("type", "text"))
-            
+
             f = ModelField(
                 key=field_key,
                 source_column=col_name,
                 label=col_name.replace("_", " ").title(),
-                data_type=data_type,  # type: ignore[arg-type]
+                data_type=data_type,
                 semantic_type=sem_type,
             )
             fields.append(f)

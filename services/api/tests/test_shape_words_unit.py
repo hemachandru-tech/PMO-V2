@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from test_planner_gold_unit import M, SNAP, plan
+from test_planner_gold_unit import SNAP, M, plan
 
 from tela_api.ask.linking import catalogue_block
 from tela_api.ask.planner import plan_question

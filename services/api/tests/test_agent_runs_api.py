@@ -204,9 +204,13 @@ async def test_ag10_sees_only_the_tables_the_question_points_to(stack: httpx.Asy
     assert resp.status_code == 200, resp.text
     system = next(c for c in fake.calls if c["agent"] == "AG-10")["messages"][0]["content"]
     block = system.split("Tables:\n", 1)[1].split("\n\nCertified measures", 1)[0]
-    tables = [ln for ln in block.splitlines() if ln.startswith("- ") and not ln.startswith("- link:")]
+    # A small model also lists the other tables by name and column names only (v2), after the chosen ones.
+    chosen = block.split("Other tables (names and columns only", 1)[0]
+    tables = [ln for ln in chosen.splitlines() if ln.startswith("- ") and not ln.startswith("- link:")]
     assert tables and all("project" in ln.split(":", 1)[0] or "region" in ln.split(":", 1)[0] for ln in tables), tables
-    assert "other tables are not listed" in system and "SQL dialect: postgres" in system
+    assert "(text, " in tables[0] and all("(text, " not in ln for ln in block.split("Other tables", 1)[-1].splitlines()[1:])
+    assert ("Other tables (names and columns only" in system or "other tables are not listed" in system)
+    assert "SQL dialect: postgres" in system
     assert "Answer with an aggregate query" in system and "Certified measures (their rules):" in system
     run = (await runs(stack, admin, kind="custom_sql"))[0]
     assert run["agents"] == ["AG-10"] and run["llm_calls"] == 1

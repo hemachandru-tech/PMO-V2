@@ -148,7 +148,7 @@ describe("Admin → Knowledge → Flagged answers (US-183)", () => {
     });
     renderAt("/admin/knowledge/feedback");
     expect(await screen.findByRole("heading", { level: 1, name: "Knowledge" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Flagged answers" })).toHaveAttribute("aria-current", "page");
+    // The page is no longer in the menu (v2 simplified Admin); it still opens by its URL.
     const table = await screen.findByRole("table", { name: "Flagged answers" });
     expect(await within(table).findByText("How many projects are on hold?")).toBeInTheDocument();
     expect(within(table).getByText("Not what I asked")).toBeInTheDocument();

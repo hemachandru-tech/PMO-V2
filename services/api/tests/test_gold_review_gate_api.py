@@ -44,7 +44,7 @@ def model_calls(fake: FakeGateway) -> int:
     return sum(c["agent"] != "embed" for c in fake.calls)
 
 
-async def test_review_forced_off_and_on_then_gated(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_review_forced_off_and_on_then_gated(stack: httpx.AsyncClient, world: World,
                                                    owner_conn: psycopg.Connection, signing_keys: dict[str, Any],
                                                    monkeypatch: pytest.MonkeyPatch) -> None:
     admin = world.tokens["admin"]
@@ -99,7 +99,7 @@ async def test_review_forced_off_and_on_then_gated(stack: httpx.AsyncClient, wor
         cli("gold-gate", "--tenant", slug, "--off", runs["on"]["id"], "--on", runs["off"]["id"])
 
 
-async def test_api_evaluate_takes_review(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_api_evaluate_takes_review(stack: httpx.AsyncClient, world: World,
                                          owner_conn: psycopg.Connection, signing_keys: dict[str, Any]) -> None:
     admin = world.tokens["admin"]
     await index_model(stack, world, signing_keys)

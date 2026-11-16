@@ -86,9 +86,11 @@ describe("ordinal columns (US-157)", () => {
     expect(opt.series[0]!.data.every((d) => d.itemStyle.borderColor === "#edge")).toBe(true);
     expect(opt.series[0]!.label.show).toBe(true);
     expect(ordinalColour(0, 1, ramp)).toBe("#d");
-    // Without the ramp, columns stay plain values.
-    const plain = toOption({ type: "columns", x: "days_late", series: ["open_projects"] }, cols, rows) as { series: { data: number[] }[] };
-    expect(plain.series[0]!.data).toEqual([50, 9, 4, 2, 1]);
+    // Without the ramp, columns keep their values and get no ramp colour or edge (only rounded corners).
+    const plain = toOption({ type: "columns", x: "days_late", series: ["open_projects"] }, cols, rows) as
+      { series: { data: { value: number; itemStyle?: { color?: string; borderColor?: string } }[] }[] };
+    expect(plain.series[0]!.data.map((d) => d.value)).toEqual([50, 9, 4, 2, 1]);
+    expect(plain.series[0]!.data.every((d) => !d.itemStyle?.color && !d.itemStyle?.borderColor)).toBe(true);
   });
 });
 

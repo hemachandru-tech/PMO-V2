@@ -219,7 +219,8 @@ def breakdown_fixes(spec: dict[str, Any], snap: ModelSnapshot) -> dict[str, dict
     reach = [d for d in snap.dimensions if snap.join_path(m.entity, d.entity) is not None]
     cats = [d for d in reach if not d.is_temporal and not d.is_status]
     statuses = [d for d in reach if d.is_status and not d.is_temporal]
-    by = lambda d: {"op": "add_breakdown", "ref": f"dimension:{d.key}"}  # noqa: E731
+    def by(d: Any) -> dict[str, Any]:
+        return {"op": "add_breakdown", "ref": f"dimension:{d.key}"}
     fixes: dict[str, dict[str, Any]] = {}
 
     def offer(visual: str, label: str, ops: list[dict[str, Any]]) -> None:

@@ -94,7 +94,7 @@ describe("Pack Studio (US-232)", () => {
     expect(within(pmo).getByText("Released")).toBeInTheDocument();
     const mine = within(table).getByRole("row", { name: /Acme PMO/ });
     expect(within(mine).getByText("Draft")).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Packs" }).length).toBeGreaterThan(0);
+    // The page is no longer in the menu (v2 simplified Admin); it still opens by its URL.
 
     await userEvent.click(screen.getByRole("button", { name: /Create/ }));
     const blank = await screen.findByRole("menuitem", { name: /Blank pack/ });

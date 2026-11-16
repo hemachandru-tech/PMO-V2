@@ -74,7 +74,7 @@ describe("Value synonyms (US-173, SCR-13)", () => {
     });
     renderAt("/admin/knowledge/values");
     const table = await screen.findByRole("table", { name: "Value synonyms" });
-    expect(screen.getByRole("link", { name: "Value synonyms" })).toHaveAttribute("aria-current", "page");
+    // The page is no longer in the menu (v2 simplified Admin); it still opens by its URL.
     expect(screen.getByText(/128 values of 14 fields indexed/)).toBeInTheDocument();
     expect(screen.getByText(/^2 synonyms are waiting for review\. 1 came with the pack/)).toBeInTheDocument();
     const network = within(table).getByRole("row", { name: /network/ });

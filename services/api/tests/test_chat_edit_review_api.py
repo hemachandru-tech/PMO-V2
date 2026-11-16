@@ -63,7 +63,7 @@ async def edit(stack: httpx.AsyncClient, w: World, rid: str, instruction: str, *
     return dict(resp.json())
 
 
-async def test_a_phrasing_the_rules_miss_is_applied(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_phrasing_the_rules_miss_is_applied(stack: httpx.AsyncClient, world: World,
                                                     owner_conn: psycopg.Connection) -> None:
     rid, ids = await canvas(stack, world)
     fake = editor(stack, owner_conn, world, {
@@ -91,7 +91,7 @@ async def test_a_phrasing_the_rules_miss_is_applied(stack: httpx.AsyncClient, wo
     assert {i["title"]: i["w"] for i in items(undone)}["Open by region"] != 12
 
 
-async def test_an_unknown_widget_id_is_refused(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_an_unknown_widget_id_is_refused(stack: httpx.AsyncClient, world: World,
                                                owner_conn: psycopg.Connection) -> None:
     rid, ids = await canvas(stack, world)
     editor(stack, owner_conn, world, {"verdict": "correct", "replacement": {"ops": [
@@ -105,7 +105,7 @@ async def test_an_unknown_widget_id_is_refused(stack: httpx.AsyncClient, world: 
 
 
 async def test_an_unsuitable_chart_is_still_refused_with_its_alternative(
-        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:
     rid, ids = await canvas(stack, world)
     editor(stack, owner_conn, world, {"verdict": "correct", "replacement": {"ops": [
         {"op": "set_visual", "widget": ids["Open by state"], "visual": "trend"},
@@ -119,7 +119,7 @@ async def test_an_unsuitable_chart_is_still_refused_with_its_alternative(
 
 
 async def test_an_addition_on_a_widget_the_words_do_not_name_is_left_out(
-        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World, owner_conn: psycopg.Connection) -> None:
     """US-246 gate (ce13, ce19): the AI's extra ops on widgets the instruction never names are left out, with a note;
     its op on the named widget stands."""
     rid, ids = await canvas(stack, world)
@@ -154,7 +154,7 @@ async def test_an_addition_on_a_widget_the_words_do_not_name_is_left_out(
     assert [c["op"] for c in preview["changes"] if c["op"] != "refused"] == ["add_filter"]
 
 
-async def test_a_different_target_asks_which_widget(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_different_target_asks_which_widget(stack: httpx.AsyncClient, world: World,
                                                     owner_conn: psycopg.Connection) -> None:
     rid, ids = await canvas(stack, world)
     fake = editor(stack, owner_conn, world, {"verdict": "correct", "reason": "the state chart is the open one",
@@ -171,7 +171,7 @@ async def test_a_different_target_asks_which_widget(stack: httpx.AsyncClient, wo
     assert chosen["review"] is None and len(calls(fake)) == 1
 
 
-async def test_a_confirm_and_an_ask(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_confirm_and_an_ask(stack: httpx.AsyncClient, world: World,
                                     owner_conn: psycopg.Connection) -> None:
     rid, ids = await canvas(stack, world)
     editor(stack, owner_conn, world, {"verdict": "confirm", "reason": "full width"})
@@ -190,7 +190,7 @@ async def test_a_confirm_and_an_ask(stack: httpx.AsyncClient, world: World,  # n
     assert [(c["op"], c["item_id"], c["to"]) for c in picked["changes"]] == [("set_limit", ids["Open by state"], 5)]
 
 
-async def test_ag06_is_out_of_review_by_default(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_ag06_is_out_of_review_by_default(stack: httpx.AsyncClient, world: World,
                                                owner_conn: psycopg.Connection,
                                                monkeypatch: pytest.MonkeyPatch) -> None:
     """DEC-28 point 3 (US-246 final gate, EXEC-169): with the tenant's switch on, chat edits make no review call."""
@@ -202,7 +202,7 @@ async def test_ag06_is_out_of_review_by_default(stack: httpx.AsyncClient, world:
     assert calls(fake) == [] and preview["review"] is None and preview["preview_id"] is None
 
 
-async def test_review_off_keeps_todays_ops(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_review_off_keeps_todays_ops(stack: httpx.AsyncClient, world: World,
                                            owner_conn: psycopg.Connection) -> None:
     rid, ids = await canvas(stack, world)
     instruction = ("make open by region full width and show open by state as trend, then move open projects to "

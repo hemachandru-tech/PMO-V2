@@ -40,7 +40,7 @@ def test_entities_are_pack_items_with_candidates_and_personal_tags() -> None:
     fields = {f["key"]: f for f in proj["fields"]}
     assert fields["project_id"]["required"] is True and fields["cio"]["sensitivity"] == "personal"
     assert head["signature"]["primary_entity"] == "projects"  # the widest table
-    item, report = checks.check("entity", proj, {"entities": []}, {}, CATALOG, {})
+    _item, report = checks.check("entity", proj, {"entities": []}, {}, CATALOG, {})
     assert report.errors == []
     ghost = {**proj, "key": "ghost", "fields": [{**proj["fields"][0], "columns": ["nope"]}]}
     _, report = checks.check("entity", ghost, {"entities": []}, {}, CATALOG, {})

@@ -79,7 +79,7 @@ describe("Admin → Knowledge → From misses (US-198)", () => {
     serve(routes);
     renderAt("/admin/knowledge/curation");
     const table = await screen.findByRole("table", { name: "Proposals from Ask's misses" });
-    expect(screen.getByRole("link", { name: "From misses" })).toHaveAttribute("aria-current", "page");
+    // The page is no longer in the menu (v2 simplified Admin); it still opens by its URL.
     expect(await within(table).findByText("Show me stalled projects by region")).toBeInTheDocument();
     expect(within(table).getByText("and 1 more question")).toBeInTheDocument();
     expect(within(table).getByText("“stalled projects” →")).toBeInTheDocument();

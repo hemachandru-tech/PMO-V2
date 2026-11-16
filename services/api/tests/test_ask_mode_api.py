@@ -168,8 +168,9 @@ async def test_the_source_mode_picks_the_planner_and_is_recorded(stack: httpx.As
     assert turn["status"] == "complete" and turn["planner"] == "direct_sql" and turn["ask_mode"] == "direct_sql"
 
     # A refused draft ends the turn with the reason and the refused SQL, never another mode's answer.
+    # (A new question: the same words again would reuse the SQL that passed last time, from the answer memory.)
     stack.app.state.gateway = FakeGateway({"AG-10": {"sql": "DELETE FROM projects", "explanation": "x"}}).client()  # type: ignore[attr-defined]
-    _, events = await ask(stack, admin, "list of active projects")
+    _, events = await ask(stack, admin, "list of projects on hold")
     err = by_event(events)["error"]
     assert err["code"] == "direct_sql_refused" and err["sql"] == "DELETE FROM projects" and "complete" not in by_event(events)
 

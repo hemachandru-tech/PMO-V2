@@ -46,7 +46,8 @@ def slim(payload: dict[str, Any]) -> dict[str, Any]:
 def footer_template(payload: dict[str, Any]) -> str:
     text = html.escape(payload.get("footer", ""))
     return (
-        '<div style="width:100%;font-family:system-ui,-apple-system,\'Segoe UI\',Roboto,Arial,sans-serif;font-size:7.5px;color:#4b5563;'
+        '<div style="width:100%;font-family:system-ui,-apple-system,\'Segoe UI\',Roboto,Arial,sans-serif;'
+            'font-size:7.5px;color:#4b5563;'
         'padding:0 10mm;display:flex;justify-content:space-between;gap:12px">'
         f'<span>{text}</span>'
         '<span style="white-space:nowrap">Page <span class="pageNumber"></span> of '

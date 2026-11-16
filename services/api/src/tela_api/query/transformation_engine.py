@@ -6,9 +6,9 @@ metric normalization, and dynamic grouping across tabular query results.
 
 from __future__ import annotations
 
-import math
 from typing import Any
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel
 
 
 class TimeSeriesPoint(BaseModel):
@@ -31,7 +31,7 @@ def compute_time_intelligence(
     """Compute Period-over-Period (PoP), Month-over-Month (MoM) growth rates and variances."""
     out: list[TimeSeriesPoint] = []
     prev_val: float | None = None
-    
+
     for period, val in series:
         if prev_val is None:
             out.append(TimeSeriesPoint(
@@ -52,7 +52,7 @@ def compute_time_intelligence(
                 change_pct=round(pct, 1),
             ))
         prev_val = val
-        
+
     return out
 
 
@@ -67,20 +67,20 @@ def pivot_tabular_data(
     unique_rows: list[str] = []
     unique_cols: list[str] = []
     cell_values: dict[tuple[str, str], list[float]] = {}
-    
+
     for r in rows:
         row_key = str(r[row_idx] if r[row_idx] is not None else "None")
         col_key = str(r[col_idx] if r[col_idx] is not None else "None")
         raw_val = r[val_idx]
         val = float(raw_val) if isinstance(raw_val, int | float) else 0.0
-        
+
         if row_key not in unique_rows:
             unique_rows.append(row_key)
         if col_key not in unique_cols:
             unique_cols.append(col_key)
-            
+
         cell_values.setdefault((row_key, col_key), []).append(val)
-        
+
     matrix: list[list[Any]] = []
     for r_k in unique_rows:
         row_cells: list[Any] = [r_k]
@@ -95,7 +95,7 @@ def pivot_tabular_data(
             else:  # sum
                 row_cells.append(round(sum(vals), 2))
         matrix.append(row_cells)
-        
+
     return PivotedTable(
         row_headers=["Category"],
         column_headers=["Category", *unique_cols],
@@ -111,7 +111,7 @@ def calculate_variance_metrics(
     var_abs = actual - target
     var_pct = (var_abs / target * 100) if target != 0 else 0.0
     completion_ratio = (actual / target) if target != 0 else 0.0
-    
+
     return {
         "actual": round(actual, 2),
         "target": round(target, 2),

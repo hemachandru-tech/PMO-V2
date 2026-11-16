@@ -13,6 +13,21 @@ import { cn } from "../../lib/utils";
  * every figure still comes from the API.
  */
 
+/** The parts of the browser's Web Speech API the composer uses (not in TypeScript's DOM types). */
+interface SpeechResultEvent { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }
+interface SpeechRecognizer {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechResultEvent) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+type SpeechRecognizerClass = new () => SpeechRecognizer;
+
 export function UserMessage({ children }: { children: ReactNode }) {
   return (
     <p data-ask-question className="max-w-[85%] justify-self-end whitespace-pre-wrap break-words rounded-[16px] rounded-br-[6px] bg-surface-sunken px-4 py-2.5 text-ink">
@@ -150,7 +165,7 @@ export const Composer = forwardRef<ComposerHandle, {
 }>(function Composer({ id, label, value, onChange, onSubmit, placeholder, submitLabel = "Ask", children, footer, className, maxLength = 2000 }, ref) {
   const box = useRef<HTMLTextAreaElement>(null);
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognizer | null>(null);
 
   useImperativeHandle(ref, () => ({ focus: () => box.current?.focus() }), []);
   useEffect(() => {
@@ -166,8 +181,8 @@ export const Composer = forwardRef<ComposerHandle, {
   };
 
   const toggleVoice = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as unknown as { SpeechRecognition?: SpeechRecognizerClass; webkitSpeechRecognition?: SpeechRecognizerClass };
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
       return;
@@ -191,14 +206,16 @@ export const Composer = forwardRef<ComposerHandle, {
         toast.info("Listening... speak your question now.");
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechResultEvent) => {
         let interimTranscript = "";
         let finalTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
+          const result = event.results[i];
+          if (!result) continue;
+          if (result.isFinal) {
+            finalTranscript += result[0].transcript;
           } else {
-            interimTranscript += event.results[i][0].transcript;
+            interimTranscript += result[0].transcript;
           }
         }
         const text = (finalTranscript || interimTranscript).trim();
@@ -207,7 +224,7 @@ export const Composer = forwardRef<ComposerHandle, {
         }
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: { error: string }) => {
         console.error("Speech recognition error:", event.error);
         setListening(false);
         if (event.error !== "no-speech") {
@@ -225,7 +242,7 @@ export const Composer = forwardRef<ComposerHandle, {
       };
 
       recognition.start();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("SpeechRecognition start failed", err);
       setListening(false);
       toast.error("Could not start voice recognition.");

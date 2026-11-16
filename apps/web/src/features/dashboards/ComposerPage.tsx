@@ -62,7 +62,9 @@ export function ComposerPage() {
       else next.add(reportId);
       try {
         sessionStorage.setItem(`tela.dashboard.${id}.hidden_reports`, JSON.stringify(Array.from(next)));
-      } catch {}
+      } catch {
+        // Storage can be blocked (private mode): hiding still works for this visit.
+      }
       return next;
     });
   };
@@ -71,7 +73,9 @@ export function ComposerPage() {
     setHiddenReportIds(new Set<string>());
     try {
       sessionStorage.removeItem(`tela.dashboard.${id}.hidden_reports`);
-    } catch {}
+    } catch {
+      // Storage can be blocked (private mode): nothing was saved to remove.
+    }
   };
 
   const filteredPreview = useMemo(() => {

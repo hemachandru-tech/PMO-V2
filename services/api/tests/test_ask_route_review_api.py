@@ -36,7 +36,7 @@ def route_calls(fake: FakeGateway) -> list[dict[str, Any]]:
     return [c for c in fake.calls if c["agent"] == "AG-01" and c["task"] != "frame"]
 
 
-async def test_a_confirmed_route_is_kept(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_confirmed_route_is_kept(stack: httpx.AsyncClient, world: World,
                                          owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = router({"verdict": "confirm", "reason": "a count of overdue go-lives"})
@@ -52,7 +52,7 @@ async def test_a_confirmed_route_is_kept(stack: httpx.AsyncClient, world: World,
     assert src["connection_id"] == world.connection_id and "Overdue go-lives" in src["measures"]
 
 
-async def test_a_data_question_read_as_a_definition_is_asked(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_data_question_read_as_a_definition_is_asked(stack: httpx.AsyncClient, world: World,
                                                             owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = router({"verdict": "correct", "replacement": {"intent": "definition", "subject": "overdue go-lives"},
@@ -79,7 +79,7 @@ async def test_a_data_question_read_as_a_definition_is_asked(stack: httpx.AsyncC
     assert memory is not None and "intent" not in (memory[0] or {})
 
 
-async def test_another_intent_leaves_the_rules(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_another_intent_leaves_the_rules(stack: httpx.AsyncClient, world: World,
                                                owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = router({"verdict": "correct", "replacement": {"intent": "field"}, "reason": "a grouping"})
@@ -94,7 +94,7 @@ async def test_another_intent_leaves_the_rules(stack: httpx.AsyncClient, world: 
     assert "complete" in ev and ev["intent"]["review"] == "fallback"  # a term the question doesn't hold
 
 
-async def test_a_write_refusal_is_never_overturned(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_write_refusal_is_never_overturned(stack: httpx.AsyncClient, world: World,
                                                    owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world)
     fake = router({"verdict": "correct", "replacement": {"intent": "data"}, "reason": "counts projects"})
@@ -104,7 +104,7 @@ async def test_a_write_refusal_is_never_overturned(stack: httpx.AsyncClient, wor
     assert route_calls(fake) == []
 
 
-async def test_review_off_makes_no_route_call(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_review_off_makes_no_route_call(stack: httpx.AsyncClient, world: World,
                                               owner_conn: psycopg.Connection) -> None:
     review_on(owner_conn, world, on=False)
     fake = router({"verdict": "correct", "replacement": {"intent": "definition"}})
@@ -114,7 +114,7 @@ async def test_review_off_makes_no_route_call(stack: httpx.AsyncClient, world: W
     assert "complete" in ev and "review" not in ev["intent"] and route_calls(fake) == []
 
 
-async def test_a_different_source_is_asked(stack: httpx.AsyncClient, world: World,  # noqa: F811
+async def test_a_different_source_is_asked(stack: httpx.AsyncClient, world: World,
                                            owner_conn: psycopg.Connection, tpg_source: dict[str, Any]) -> None:
     admin = world.tokens["admin"]
     replica = await second_source(stack, world, tpg_source)

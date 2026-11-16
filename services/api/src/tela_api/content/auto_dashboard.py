@@ -7,7 +7,8 @@ adaptive grid layouts, and semantic grounding.
 from __future__ import annotations
 
 import re
-from typing import Any, Literal
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from tela_query_spec.model import ModelSnapshot
@@ -65,11 +66,11 @@ def plan_dashboard_from_intent(
 ) -> AutoDashboardPlan:
     """Generate a structured, governed dashboard plan matching user intent and semantic entities."""
     words = set(re.findall(r"[a-z0-9_]+", prompt.lower()))
-    
+
     # 1. Identify relevant entities & measures from snapshot
     measures = snapshot.measures
     matched_measures = [
-        m for m in measures 
+        m for m in measures
         if any(w in m.key.lower() or w in m.label.lower() for w in words)
     ]
     if not matched_measures and measures:
@@ -82,7 +83,7 @@ def plan_dashboard_from_intent(
 
     # 3. Build Widgets with Adaptive Layout Grid (12-column grid)
     widgets: list[GeneratedWidget] = []
-    
+
     # Tier 1: Headline KPI Cards (Top Row)
     kpi_count = min(len(matched_measures), 3)
     kpi_width = 12 // max(1, kpi_count)
@@ -111,7 +112,7 @@ def plan_dashboard_from_intent(
             layout=LayoutSlot(x=0, y=row_y, w=8, h=5),
             description=f"Historical trend analysis over {time_dims[0].label}.",
         ))
-        
+
         # Category Breakdown
         cat_dim = cat_dims[0] if cat_dims else None
         if cat_dim:

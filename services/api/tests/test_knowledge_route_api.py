@@ -41,7 +41,7 @@ def states(spec: dict[str, Any]) -> set[str]:
     return {v for f in spec["filters"] if f["ref"] == "dimension:current_state" for v in f["values"]}
 
 
-async def test_exec115_question_is_counted_by_the_stated_states(stack: httpx.AsyncClient, exec115: World) -> None:  # noqa: F811
+async def test_exec115_question_is_counted_by_the_stated_states(stack: httpx.AsyncClient, exec115: World) -> None:
     fake = FakeGateway({"AG-03": samples({"measure": "measure:open_projects"})})
     stack.app.state.gateway = fake.client()  # type: ignore[attr-defined]
     _, events = await ask(stack, exec115.tokens["admin"], EXEC115)
@@ -83,7 +83,7 @@ async def test_exec115_question_on_the_decided_rule_is_open_projects(stack: http
 
 
 async def test_the_same_question_without_criteria_answers_the_certified_measure(
-        stack: httpx.AsyncClient, exec115: World) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, exec115: World) -> None:
     _, events = await ask(stack, exec115.tokens["admin"], PLAIN)
     ev = by_event(events)
     assert ev["plan"]["planner"] == "rules" and ev["plan"]["spec"]["measure"] == {"ref": "measure:open_projects"}
@@ -92,7 +92,7 @@ async def test_the_same_question_without_criteria_answers_the_certified_measure(
 
 
 async def test_the_right_mapping_keeps_the_rules_and_their_checks(
-        stack: httpx.AsyncClient, world: World) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, world: World) -> None:
     """Status reads the record state, the question the current state: not the rule's field, so no route (W4); the
     rules' plan leaves On Hold out and US-205 asks, with the stated states among the readings."""
     _, events = await ask(stack, world.tokens["admin"], EXEC115)
@@ -104,8 +104,8 @@ async def test_the_right_mapping_keeps_the_rules_and_their_checks(
 
 
 async def test_an_approved_definition_is_applied_and_cited(
-        stack: httpx.AsyncClient, knowledge_world: World, signing_keys: dict[str, Any],  # noqa: F811
-        record_inactive: list[str]) -> None:  # noqa: F811
+        stack: httpx.AsyncClient, knowledge_world: World, signing_keys: dict[str, Any],
+        record_inactive: list[str]) -> None:
     world_ = knowledge_world
     admin = world_.tokens["admin"]
     await indexed_doc(stack, world_, signing_keys, approve=True)
