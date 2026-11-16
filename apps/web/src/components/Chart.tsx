@@ -185,6 +185,17 @@ export function EChart({ spec, columns, rows, onMark, title, still, highlight, b
  * A KPI card's sparkline (US-139): a small line over the points the widget run API returned (never computed here).
  * Decorative for screen readers, which get the same series as text from `label`.
  */
+export const MODERN_CHART_COLORS = [
+  "#2B59FF", // Royal Blue
+  "#38BDF8", // Sky Blue
+  "#F43F5E", // Rose Coral
+  "#10B981", // Emerald
+  "#8B5CF6", // Purple
+  "#F59E0B", // Amber
+  "#6366F1", // Indigo
+  "#EC4899", // Pink
+];
+
 export function Sparkline({ points, label }: { points: { period: string; value: number | null }[]; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const { resolved } = useTheme();
@@ -195,10 +206,32 @@ export function Sparkline({ points, label }: { points: { period: string; value: 
     const chart = echarts.init(ref.current, chartTheme(resolved, paletteKey, layout), { renderer: "canvas" });
     chart.setOption({
       animation: false,
-      grid: { left: 2, right: 2, top: 4, bottom: 4 },
+      grid: { left: 0, right: 0, top: 2, bottom: 2 },
       xAxis: { type: "category", show: false, data: points.map((p) => p.period), boundaryGap: false },
       yAxis: { type: "value", show: false, scale: true },
-      series: [{ type: "line", data: points.map((p) => p.value), symbol: "none", lineStyle: { width: 1.5 }, areaStyle: { opacity: 0.12 } }],
+      series: [
+        {
+          type: "line",
+          data: points.map((p) => p.value),
+          smooth: 0.4,
+          symbol: "none",
+          lineStyle: { width: 2.5, color: "#2B59FF" },
+          areaStyle: {
+            opacity: 0.2,
+            color: {
+              type: "linear",
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color: "#2B59FF" },
+                { offset: 1, color: "rgba(43, 89, 255, 0.01)" },
+              ],
+            },
+          },
+        },
+      ],
     });
     const resize = () => chart.resize();
     window.addEventListener("resize", resize);
@@ -240,11 +273,28 @@ export function toOption(spec: ChartSpec, columns: Column[], rows: unknown[][], 
   const tooltip = { trigger: spec.type === "donut" ? "item" : "axis" };
   // The widget's chart colours (US-224); without them the theme's palette applies as before.
   const paint = resolve ? chartPaint(spec.colours, (spec.type === "donut" ? measureIdx.slice(0, 1) : measureIdx).map((mi) => columns[mi]?.label ?? ""), labels) : null;
+  const horizontal = spec.type === "ranked_bar";
   const paintPoint = (v: unknown, si: number, i: number) => {
     const t = paint?.point(si, i);
-    if (!t || !resolve || spec.type === "trend") return v;
-    if (v !== null && typeof v === "object") return "itemStyle" in v ? v : { ...v, itemStyle: { color: resolve(t) } };
-    return { value: v, itemStyle: { color: resolve(t) } };
+    const radius = horizontal ? [0, 8, 8, 0] : [8, 8, 0, 0];
+    if (v !== null && typeof v === "object") {
+      const existing = (v as { itemStyle?: Record<string, unknown> }).itemStyle ?? {};
+      return {
+        ...v,
+        itemStyle: {
+          borderRadius: radius,
+          ...(t && resolve ? { color: resolve(t) } : {}),
+          ...existing,
+        },
+      };
+    }
+    return {
+      value: v,
+      itemStyle: {
+        borderRadius: radius,
+        ...(t && resolve ? { color: resolve(t) } : {}),
+      },
+    };
   };
   // US-176: a derived figure or share of the total labels the series it is worked out from, never a bar of its own.
   const companionText = (mi: number, row: unknown[] | undefined) =>
@@ -257,10 +307,36 @@ export function toOption(spec: ChartSpec, columns: Column[], rows: unknown[][], 
   if (spec.type === "donut") {
     const mi = measureIdx[0] ?? -1;
     const label = companionText(mi, rows[0]) ? { formatter: (p: { name: string; dataIndex: number }) => `${p.name}: ${companionText(mi, rows[p.dataIndex])}` } : undefined;
-    return { tooltip, series: [{ type: "pie", radius: ["45%", "70%"], label, data: rows.map((r, i) => ({ name: labels[i], value: r[mi],
-      ...(paint && resolve ? { itemStyle: { color: resolve(paint.slice(i)) } } : {}) })) }] };
+    return {
+      tooltip,
+      series: [
+        {
+          type: "pie",
+          radius: ["55%", "78%"],
+          padAngle: 3,
+          itemStyle: {
+            borderRadius: 8,
+            borderColor: "#ffffff",
+            borderWidth: 2,
+          },
+          label,
+          data: rows.map((r, i) => {
+            const sliceColor = paint && resolve ? resolve(paint.slice(i)) : MODERN_CHART_COLORS[i % MODERN_CHART_COLORS.length];
+            return {
+              name: labels[i],
+              value: r[mi],
+              itemStyle: {
+                color: sliceColor,
+                borderRadius: 8,
+                borderColor: "#ffffff",
+                borderWidth: 2,
+              },
+            };
+          }),
+        },
+      ],
+    };
   }
-  const horizontal = spec.type === "ranked_bar";
   const cat = { type: "category", data: labels, axisLabel: { overflow: "truncate", width: 120 } };
   const first = columns[measureIdx[0] ?? -1];
   const integer = first?.format === "integer" || first?.data_type === "integer";
@@ -279,21 +355,41 @@ export function toOption(spec: ChartSpec, columns: Column[], rows: unknown[][], 
   };
   // Several lines are named at their ends instead of in a legend; labels that would collide move apart (US-188).
   const ends = spec.type === "trend" && measureIdx.length > 1;
-  const series = measureIdx.map((mi, si) => ({
-    name: columns[mi]?.label,
-    type: spec.type === "trend" ? "line" : "bar",
-    ...(paint && resolve ? { itemStyle: { color: resolve(paint.series(si)) }, ...(spec.type === "trend" ? { lineStyle: { color: resolve(paint.series(si)) } } : {}) } : {}),
-    // Ordered buckets: one ramp step per bucket, its value on top, so the colour is never the only signal.
-    data: ordinal
-      ? rows.map((r, i) => ({ value: r[mi], itemStyle: { color: ordinalColour(i, rows.length, colours.ramp), borderColor: colours.edge, borderWidth: 1 } }))
-      : rows.map((r, i) => paintPoint(marked(r, mi, i), si, i)),
-    label: ordinal
-      ? { show: true, position: "top", formatter: (p: { value: number }) => fmt(mi)(p.value) }
-      : companionText(mi, rows[0])
-        ? { show: true, position: horizontal ? "right" : "top", formatter: (p: { dataIndex: number }) => companionText(mi, rows[p.dataIndex]) }
-        : undefined,
-    ...(ends ? { endLabel: { show: true, formatter: "{a}", width: 110, overflow: "truncate" }, labelLayout: { moveOverlap: "shiftY" } } : {}),
-  }));
+  const series = measureIdx.map((mi, si) => {
+    const isLine = spec.type === "trend";
+    const defaultColor = MODERN_CHART_COLORS[si % MODERN_CHART_COLORS.length];
+    const seriesColor = paint && resolve ? resolve(paint.series(si)) : defaultColor;
+    return {
+      name: columns[mi]?.label,
+      type: isLine ? "line" : "bar",
+      barMaxWidth: horizontal ? 24 : 32,
+      smooth: isLine ? 0.35 : undefined,
+      showSymbol: isLine ? false : undefined,
+      lineStyle: isLine ? { width: 3, color: seriesColor } : undefined,
+      itemStyle: {
+        borderRadius: horizontal ? [0, 8, 8, 0] : [8, 8, 0, 0],
+        color: seriesColor,
+      },
+      // Ordered buckets: one ramp step per bucket, its value on top, so the colour is never the only signal.
+      data: ordinal
+        ? rows.map((r, i) => ({
+            value: r[mi],
+            itemStyle: {
+              color: ordinalColour(i, rows.length, colours.ramp),
+              borderColor: colours.edge,
+              borderWidth: 1,
+              borderRadius: horizontal ? [0, 8, 8, 0] : [8, 8, 0, 0],
+            },
+          }))
+        : rows.map((r, i) => paintPoint(marked(r, mi, i), si, i)),
+      label: ordinal
+        ? { show: true, position: "top", formatter: (p: { value: number }) => fmt(mi)(p.value) }
+        : companionText(mi, rows[0])
+          ? { show: true, position: horizontal ? "right" : "top", formatter: (p: { dataIndex: number }) => companionText(mi, rows[p.dataIndex]) }
+          : undefined,
+      ...(ends ? { endLabel: { show: true, formatter: "{a}", width: 110, overflow: "truncate" }, labelLayout: { moveOverlap: "shiftY" } } : {}),
+    };
+  });
   return {
     tooltip,
     legend: series.length > 1 && !ends ? {} : undefined,

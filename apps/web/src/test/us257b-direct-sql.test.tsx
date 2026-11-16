@@ -129,7 +129,7 @@ describe("Direct SQL answers", () => {
     await userEvent.click(await screen.findByRole("menuitem", { name: "Donut" }));
 
     await userEvent.click(within(card).getByRole("button", { name: "Pin" }));
-    const dialog = await screen.findByRole("dialog", { name: "Pin to a report" });
+    const dialog = await screen.findByRole("dialog", { name: "Pin to a dashboard or report" });
     expect(within(dialog).getByLabelText("Visual")).toHaveValue("donut");
     await screen.findByRole("option", { name: "PMO weekly" });
     await userEvent.selectOptions(within(dialog).getByLabelText("Report"), "r1");

@@ -65,7 +65,7 @@ export function RechartsChart({ spec, columns, rows, onMark, title, still, highl
       <PieChart width={width} height={height}>
         {tip}
         {s && (
-          <Pie data={data} dataKey={s.key} nameKey="label" innerRadius="40%" outerRadius="62%" stroke="var(--tl-surface-raised)" strokeWidth={2}
+          <Pie data={data} dataKey={s.key} nameKey="label" innerRadius="55%" outerRadius="78%" stroke="#ffffff" strokeWidth={3}
             isAnimationActive={anim} animationDuration={500} label={pieLabel} labelLine={{ stroke: "var(--tl-chart-axis)" }} onClick={(_, i) => click(i)} cursor={onMark ? "pointer" : undefined}>
             {data.map((d, i) => <Cell key={String(d.label)} fill={c.slice(i)} />)}
           </Pie>
@@ -84,7 +84,7 @@ export function RechartsChart({ spec, columns, rows, onMark, title, still, highl
         <YAxis tick={TICK} tickLine={false} axisLine={false} tickFormatter={valueTick} allowDecimals={!c.integer} width={64} />
         {tip}
         {c.series.map((s, si) => (
-          <Line key={s.key} dataKey={s.key} name={s.label} type="linear" stroke={s.colour} strokeWidth={2} isAnimationActive={anim} animationDuration={500} connectNulls
+          <Line key={s.key} dataKey={s.key} name={s.label} type="monotone" stroke={s.colour} strokeWidth={2.5} isAnimationActive={anim} animationDuration={500} connectNulls
             dot={(p: { cx?: number; cy?: number; index?: number }) => {
               const big = c.focus?.has(c.labels[p.index ?? -1] ?? "");
               return <circle key={p.index} cx={p.cx} cy={p.cy} r={big ? 5 : 3} fill={s.colour} stroke="var(--tl-surface-raised)" strokeWidth={1} />;
@@ -108,7 +108,7 @@ export function RechartsChart({ spec, columns, rows, onMark, title, still, highl
         {horizontal ? <YAxis {...category} width={130} axisLine={{ stroke: "var(--tl-chart-axis)" }} interval={0} /> : <YAxis {...value} width={64} />}
         {tip}
         {c.series.map((s, si) => (
-          <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.colour} radius={horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]} isAnimationActive={anim} animationDuration={500}
+          <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.colour} radius={horizontal ? [0, 8, 8, 0] : [8, 8, 0, 0]} barSize={horizontal ? 20 : 30} isAnimationActive={anim} animationDuration={500}
             onClick={(_, i) => click(i, s.label)} cursor={onMark ? "pointer" : undefined}>
             {(c.ordinal || c.focus || data.some((_, i) => c.point(si, i))) && data.map((d, i) => (
               <Cell key={String(d.label)} fill={c.ordinal ? rampAt(i, data.length) : c.focus && !c.focus.has(c.labels[i]!) ? c.muted(si, i) : c.point(si, i) ?? s.colour}

@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Award, BookOpen, CircleAlert, FileText, Pencil, Pin, Rows3, Shapes, Undo2, Workflow } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -182,6 +182,10 @@ export function TurnList({ session, onAsk, pinTarget = null, pinDashboard = null
 }) {
   const { turns, answer, refine, undo } = session;
   const latest = turns[turns.length - 1]?.id;
+  // Turns seen thinking in this view: when the latest of them gets its reply, the loading ring bursts once.
+  const thinking = useRef(new Set<string>());
+  for (const t of turns) if (!t.complete && !t.error && !t.clarify) thinking.current.add(t.id);
+  const burstFor = (id: string) => id === latest && thinking.current.has(id);
   return (
     <ol className="grid gap-8" aria-label="Conversation">
       {turns.map((t) => (
@@ -189,7 +193,7 @@ export function TurnList({ session, onAsk, pinTarget = null, pinDashboard = null
           <UserMessage>{t.question}</UserMessage>
           {!t.complete && !t.error && !t.clarify && <Thinking stages={t.stages} />}
           {t.clarify && (
-            <AssistantMessage>
+            <AssistantMessage burst={burstFor(t.id)}>
               <div role="group" aria-label="Clarifying question" className="grid gap-3">
                 <p>{t.clarify.question}</p>
                 {t.clarify.why && t.clarify.why.length > 0 && <p className="text-small text-ink-muted">Why I'm asking: {t.clarify.why.join("; ")}.</p>}
@@ -199,9 +203,9 @@ export function TurnList({ session, onAsk, pinTarget = null, pinDashboard = null
               </div>
             </AssistantMessage>
           )}
-          {t.error && <AssistantMessage><TurnError turn={t} onAsk={onAsk} /></AssistantMessage>}
+          {t.error && <AssistantMessage burst={burstFor(t.id)}><TurnError turn={t} onAsk={onAsk} /></AssistantMessage>}
           {t.complete && (
-            <AssistantMessage>
+            <AssistantMessage burst={burstFor(t.id)}>
               <AnswerCard turn={t} pinTarget={pinTarget} pinDashboard={pinDashboard} latest={t.id === latest} onRefine={(b, l) => void refine(t, b, l)}
                 onUndo={() => void undo(t.id, t.question)} onFollowUp={(q) => onAsk(q, t.complete?.connection_id ?? undefined)} />
             </AssistantMessage>

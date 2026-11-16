@@ -120,6 +120,33 @@ describe("dashboard composer (US-142)", () => {
     expect(screen.getByRole("link", { name: /Request publish/ })).toHaveAttribute("href", "/dashboards/d1/publish");
   });
 
+  it("hides and unhides reports in order and filters the composer preview", async () => {
+    sessionStorage.clear();
+    serve(creator, (url) => {
+      if (url.endsWith("/api/v1/dashboards/d1")) return json(DASH);
+      if (url.endsWith("/api/v1/dashboards/d1/view")) return json(VIEW);
+      if (url.endsWith("/api/v1/reports")) return json({ items: [] });
+      return undefined;
+    });
+    renderAt("/dashboards/d1/edit");
+    const list = await screen.findByRole("list", { name: "Reports on this dashboard" });
+    expect(await screen.findByRole("tab", { name: "Delivery" })).toBeInTheDocument();
+
+    const hideBtn = within(list).getByRole("button", { name: "Hide Delivery" });
+    await userEvent.click(hideBtn);
+
+    // "Hidden" badge and "1 hidden" header badge appear
+    expect(within(list).getByText("Hidden")).toBeInTheDocument();
+    expect(screen.getByText("1 hidden")).toBeInTheDocument();
+    // Delivery tab should no longer be in the preview tabs
+    expect(screen.queryByRole("tab", { name: "Delivery" })).not.toBeInTheDocument();
+
+    // Clicking unhide all restores it
+    await userEvent.click(screen.getByRole("button", { name: "Unhide all" }));
+    expect(screen.queryByText("1 hidden")).not.toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "Delivery" })).toBeInTheDocument();
+  });
+
   it("tells an Admin about an open request and a Creator why theirs came back", async () => {
     const request = { id: "pr1", dashboard: { id: "d1", title: "Gulf delivery" }, requested_by: { id: "u2", name: "Cleo Creator" }, roles: [ROLES[0]],
       note: "October review", status: "open", created_at: new Date().toISOString(), decided_by: null, decided_at: null, decision_note: null, version: null };

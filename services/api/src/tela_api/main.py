@@ -50,6 +50,7 @@ from tela_api.knowledge import curation as curation_router
 from tela_api.knowledge import definitions as definitions_router
 from tela_api.knowledge import documents as knowledge_router
 from tela_api.knowledge import gold as gold_router
+from tela_api.knowledge import sql_examples as sql_examples_router
 from tela_api.knowledge import values as values_router
 from tela_api.llm import router as llm_router
 from tela_api.llm import runs_router as agent_runs_router
@@ -221,6 +222,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(knowledge_router.router)
     app.include_router(knowledge_router.internal)
     app.include_router(gold_router.router)
+    app.include_router(sql_examples_router.router)
     app.include_router(gold_router.internal)
     app.include_router(values_router.router)
     app.include_router(values_router.internal)

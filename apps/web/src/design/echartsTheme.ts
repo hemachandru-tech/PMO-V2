@@ -54,9 +54,15 @@ export function echartsTheme(theme: ResolvedTheme, series: string[] = CHART_SERI
       extraCssText: `border-radius: 6px; box-shadow: ${tokens.shadow.tokens.find((t) => t.name === "shadow-overlay")!.value[theme]};`,
       axisPointer: { lineStyle: { color: c("chart-axis") }, crossStyle: { color: c("chart-axis") } },
     },
-    line: { symbol: "circle", symbolSize: 6, lineStyle: { width: 2 } },
+    line: { symbol: "circle", symbolSize: 6, lineStyle: { width: 2.5 }, smooth: 0.35 },
+    bar: {
+      barMaxWidth: 32,
+      itemStyle: {
+        borderRadius: [8, 8, 0, 0],
+      },
+    },
     pie: {
-      itemStyle: { borderColor: c("surface-raised"), borderWidth: 2 },
+      itemStyle: { borderColor: c("surface-raised"), borderWidth: 2, borderRadius: 8 },
       label: { color: c("ink-muted"), fontFamily: sans, fontSize: 12, textBorderWidth: 0 },
       labelLine: { lineStyle: { color: c("chart-axis") } },
     },

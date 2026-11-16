@@ -198,8 +198,14 @@ function AccountMenu({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Account menu">
-          <span aria-hidden className="grid size-7 place-items-center rounded-full bg-(--nav-current-bg) text-small font-semibold text-(--nav-current-ink)">{initials(me.display_name)}</span>
+        <Button variant="ghost" className="h-9 gap-2.5 rounded-full px-2 hover:bg-surface-sunken" aria-label="Account menu">
+          <span aria-hidden className="grid size-7 place-items-center rounded-full bg-[#2B59FF] text-xs font-semibold text-white shadow-sm">
+            {initials(me.display_name)}
+          </span>
+          <div className="hidden sm:flex flex-col text-left text-xs leading-none">
+            <span className="font-semibold text-ink">{me.display_name}</span>
+            <span className="text-[10px] text-ink-muted mt-0.5">{levelLabel(me)}</span>
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">

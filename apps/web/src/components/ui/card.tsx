@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /** Card: the frame of widgets and KPI cards. Hairline edge, no shadow (shadows are for things that float). */
 const Card = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<"div">>(function Card({ className, ...props }, ref) {
-  return <div ref={ref} data-slot="card" className={cn("flex flex-col rounded-lg border border-line bg-surface-raised text-ink", className)} {...props} />;
+  return <div ref={ref} data-slot="card" className={cn("flex flex-col rounded-2xl border border-line bg-surface-raised text-ink shadow-[0_4px_20px_-2px_rgba(50,50,93,0.05),0_2px_6px_-1px_rgba(0,0,0,0.04)] transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(50,50,93,0.08),0_4px_10px_-2px_rgba(0,0,0,0.05)]", className)} {...props} />;
 });
 
 const CardHeader = forwardRef<ElementRef<"div">, ComponentPropsWithoutRef<"div">>(function CardHeader({ className, ...props }, ref) {

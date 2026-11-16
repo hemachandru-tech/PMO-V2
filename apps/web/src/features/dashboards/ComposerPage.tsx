@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, Cloud, Eye, History, Loader2, PackagePlus, Send, Share2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -46,6 +46,44 @@ export function ComposerPage() {
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
   const [sharing, setSharing] = useState(false);
   const me = useMe().data;
+  const [hiddenReportIds, setHiddenReportIds] = useState<Set<string>>(() => {
+    try {
+      const saved = sessionStorage.getItem(`tela.dashboard.${id}.hidden_reports`);
+      return saved ? new Set<string>(JSON.parse(saved)) : new Set<string>();
+    } catch {
+      return new Set<string>();
+    }
+  });
+
+  const toggleHide = (reportId: string) => {
+    setHiddenReportIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(reportId)) next.delete(reportId);
+      else next.add(reportId);
+      try {
+        sessionStorage.setItem(`tela.dashboard.${id}.hidden_reports`, JSON.stringify(Array.from(next)));
+      } catch {}
+      return next;
+    });
+  };
+
+  const unhideAll = () => {
+    setHiddenReportIds(new Set<string>());
+    try {
+      sessionStorage.removeItem(`tela.dashboard.${id}.hidden_reports`);
+    } catch {}
+  };
+
+  const filteredPreview = useMemo(() => {
+    if (!preview.data) return undefined;
+    if (hiddenReportIds.size === 0) return preview.data;
+    return {
+      ...preview.data,
+      tabs: (preview.data.tabs ?? []).filter(
+        (tab) => !hiddenReportIds.has(tab.id) && !hiddenReportIds.has(tab.report_id ?? "")
+      ),
+    };
+  }, [preview.data, hiddenReportIds]);
 
   if (d.isLoading) return <ComposerSkeleton />;
   if (d.error) return <div className="tl"><FormAlert error={asApiError(d.error)} /></div>;
@@ -121,7 +159,15 @@ export function ComposerPage() {
       <div className="grid items-start gap-4 xl:grid-cols-[24rem_minmax(0,1fr)]">
         <div className="grid min-w-0 gap-4">
           <Card className="grid min-w-0 gap-5 p-4">
-            <ReportOrder dashboard={dash} reports={reports.data?.items ?? []} starters={starters.data?.items ?? []} onOrder={order} />
+            <ReportOrder
+              dashboard={dash}
+              reports={reports.data?.items ?? []}
+              starters={starters.data?.items ?? []}
+              onOrder={order}
+              hiddenReportIds={hiddenReportIds}
+              onToggleHide={toggleHide}
+              onUnhideAll={unhideAll}
+            />
             <section aria-labelledby="layout-heading" className="grid gap-2">
               <h2 id="layout-heading" className="text-heading">Layout</h2>
               <RadioGroup value={dash.layout} disabled={!dash.can_edit} aria-labelledby="layout-heading" className="grid grid-cols-2 gap-2"
@@ -147,7 +193,13 @@ export function ComposerPage() {
             : preview.error ? <FormAlert error={asApiError(preview.error)} />
               : preview.data && (
                 <div className={preview.isFetching ? "opacity-60 transition-opacity" : undefined} aria-busy={preview.isFetching}>
-                  <DashboardBody key={`${preview.data.layout}:${(preview.data.tabs ?? []).map((t) => t.id).join(",")}`} dashboard={preview.data} draft preview chat />
+                  <DashboardBody
+                    key={`${preview.data.layout}:${(filteredPreview?.tabs ?? preview.data.tabs ?? []).map((t) => t.id).join(",")}`}
+                    dashboard={filteredPreview ?? preview.data}
+                    draft
+                    preview
+                    chat
+                  />
                 </div>
               )}
         </Card>

@@ -1,5 +1,5 @@
 import { ArrowUp, BarChart3, Check, Copy, Mic, MicOff, Table2 } from "lucide-react";
-import { BrandLoader, BrandMark } from "../../components/BrandLoader";
+import { BrandBurst, BrandLoader, BrandMark, useBurst } from "../../components/BrandLoader";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ComponentPropsWithoutRef, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -22,25 +22,29 @@ export function UserMessage({ children }: { children: ReactNode }) {
 }
 
 /** The assistant's side of a turn: a small avatar and the content beside it, with no box around plain text. */
-export function AssistantMessage({ children, className }: { children: ReactNode; className?: string }) {
+export function AssistantMessage({ children, className, burst = false }: { children: ReactNode; className?: string; burst?: boolean }) {
   return (
     <div data-ask-reply className={cn("grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-3", className)}>
-      <AssistantAvatar />
+      <AssistantAvatar burst={burst} />
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">{children}</div>
     </div>
   );
 }
 
-export function AssistantAvatar({ busy = false }: { busy?: boolean }) {
-  // The brand logo; while the answer is being worked out it sits inside the turning brand ring.
-  return busy
-    ? <span data-ask-avatar aria-hidden className="mt-0.5 inline-flex"><BrandLoader size={32} /></span>
-    : (
-      <span data-ask-avatar aria-hidden
-        className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-surface shadow-sm ring-1 ring-line">
+export function AssistantAvatar({ busy = false, burst = false }: { busy?: boolean; burst?: boolean }) {
+  // The brand logo; while the answer is being worked out it sits inside the turning brand ring, and when the answer
+  // has just arrived (``burst``) the ring bursts like a firecracker once before the logo settles.
+  const bursting = useBurst(burst && !busy);
+  if (busy) return <span data-ask-avatar aria-hidden className="mt-0.5 inline-flex"><BrandLoader size={32} /></span>;
+  return (
+    <span data-ask-avatar aria-hidden className="relative mt-0.5 inline-flex size-8 shrink-0">
+      <span className={cn("inline-flex size-8 items-center justify-center rounded-full bg-surface shadow-sm ring-1 ring-line",
+        bursting && "brand-pop")}>
         <BrandMark size={20} />
       </span>
-    );
+      {bursting && <BrandBurst size={32} />}
+    </span>
+  );
 }
 
 const STAGES: [string, string][] = [

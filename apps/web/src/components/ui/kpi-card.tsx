@@ -85,7 +85,7 @@ export function KpiCard({
       )}
       {tone && <ToneBadge tone={tone} />}
       {delta && (
-        <span className={cn("inline-flex items-center gap-1 text-small", deltaTone)}>
+        <span data-delta-pill className={cn("inline-flex items-center gap-1 text-small", deltaTone)}>
           <Arrow aria-hidden className="size-3.5" />
           {delta.text}
         </span>
