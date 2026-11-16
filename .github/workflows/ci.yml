@@ -168,4 +168,6 @@ jobs:
           severity: CRITICAL
           exit-code: "1"
           ignore-unfixed: true
+        env:
+          TRIVY_SECRET_CONFIG: .github/trivy-secret.yaml  # allows Anthropic SDK docstring false positives only
       # Multi-arch build, cosign signing and deploy jobs are added with the registry (US-121).
