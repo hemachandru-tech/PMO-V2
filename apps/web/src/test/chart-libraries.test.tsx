@@ -77,10 +77,11 @@ describe("shadcn/ui Charts on Recharts (US-207)", () => {
   });
 
   it("draws grouped bars with a legend for several series, and horizontal bars", async () => {
-    const two = render(<RechartsChart spec={{ type: "columns", x: "status", series: ["n", "share"] }} columns={STATUS} rows={ROWS} />);
+    // Drawn still (no entry animation): the bars and legend are what is checked, and CI runners are slow.
+    const two = render(<RechartsChart spec={{ type: "columns", x: "status", series: ["n", "share"] }} columns={STATUS} rows={ROWS} still />);
     await waitFor(() => expect(two.container.querySelectorAll(".recharts-bar-rectangle path")).toHaveLength(6));
     expect(two.container).toHaveTextContent("ProjectsShare");
-    const ranked = render(<RechartsChart spec={{ type: "ranked_bar", x: "status", series: ["n"] }} columns={STATUS} rows={ROWS} />);
+    const ranked = render(<RechartsChart spec={{ type: "ranked_bar", x: "status", series: ["n"] }} columns={STATUS} rows={ROWS} still />);
     await waitFor(() => expect(ranked.container.querySelectorAll(".recharts-bar-rectangle path")).toHaveLength(3));
   });
 
