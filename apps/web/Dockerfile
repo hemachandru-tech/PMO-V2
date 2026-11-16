@@ -10,6 +10,10 @@ COPY apps/web/ ./
 RUN pnpm build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
+# Pull Alpine security fixes released after the base image was built (CI fails on critical CVEs).
+USER root
+RUN apk upgrade --no-cache
+USER 101
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /web/dist /usr/share/nginx/html
 EXPOSE 8080
